@@ -42,25 +42,25 @@ class ProdukController extends Controller
 
     public function edit(string $id)
     {
-        // Menggunakan findOrFail agar otomatis 404 jika ID salah
         $produk = Produk::findOrFail($id);
-        return view('produk.edit', compact('produk'));
+        $customers = Customer::all(); 
+        return view('produk.edit', compact('produk', 'customers'));
     }
 
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'nama'   => 'required|string|max:255',
-            'satuan' => 'required|string|max:50'
+            'nama'        => 'required|string|max:255',
+            'satuan'      => 'required|string|max:50',
+            'customer_id' => 'nullable|exists:customer,id' // Validasi customer_id
         ]);
 
         $produk = Produk::findOrFail($id);
         
-        // Kita update secara spesifik agar stok_total dan harga_rata_rata 
-        // tidak sengaja berubah lewat form edit
         $produk->update([
-            'nama'   => trim($request->nama),
-            'satuan' => trim($request->satuan),
+            'nama'        => trim($request->nama),
+            'satuan'      => trim($request->satuan),
+            'customer_id' => $request->customer_id, // Masukkan ke dalam update
         ]);
 
         return redirect('/produk')->with('success', 'Data produk berhasil diubah!');

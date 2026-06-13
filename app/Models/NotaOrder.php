@@ -20,8 +20,14 @@ class NotaOrder extends Model
         'harga_deal',
         'nominal_dp_masuk',
         'status_bayar',
+        'rincian_harga_nota',
         'status_order'
     ];
+
+    protected $casts = [
+    // Mengubah string JSON di database otomatis menjadi Array PHP biasa saat diakses
+    'rincian_harga_nota' => 'array',
+];
 
     /**
      * TAMBAHKAN INI: Relasi ke tabel Customer (Sesuai ERD)

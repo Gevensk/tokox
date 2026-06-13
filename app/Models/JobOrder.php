@@ -19,8 +19,6 @@ use HasFactory;
         'jumlah',
         'biaya_jasa_satuan',
         'is_custom',
-        'ld_req',
-        'pb_req',
         'catatan_custom',
         'foto_desain',
         'total_biaya_bahan',

@@ -59,12 +59,11 @@
                     <table class="table table-bordered align-middle" id="tabel-job-order">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 20%;">Pilih Produk</th>
-                                <th style="width: 20%;">Pilih Varian</th>
-                                <th style="width: 8%;">Qty</th>
-                                <th style="width: 12%;">Ongkos Jasa Satuan</th>
-                                <th style="width: 8%;">Custom?</th>
-                                <th style="width: 27%;">Spesifikasi Kustomisasi</th>
+                                <th style="width: 25%;">Pilih Produk</th>
+                                <th style="width: 25%;">Pilih Varian</th>
+                                <th style="width: 10%;">Qty</th>
+                                <th style="width: 10%;">Custom?</th>
+                                <th style="width: 25%;">Spesifikasi Kustomisasi</th>
                                 <th style="width: 5%;">Aksi</th>
                             </tr>
                         </thead>
@@ -87,9 +86,6 @@
                                     <input type="number" name="items[0][jumlah]" class="form-control" min="1" value="1" required>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[0][biaya_jasa_satuan]" class="form-control" placeholder="Jasa jahit" required>
-                                </td>
-                                <td>
                                     <select name="items[0][is_custom]" class="form-select select-is-custom">
                                         <option value="0">Standar</option>
                                         <option value="1">Custom</option>
@@ -97,15 +93,7 @@
                                 </td>
                                 <td>
                                     <div class="wrapper-fitur-custom d-none">
-                                        <div class="row g-2 mb-2">
-                                            <div class="col-6">
-                                                <input type="text" name="items[0][ld_req]" class="form-control form-control-sm" placeholder="LD (Contoh: 105cm)">
-                                            </div>
-                                            <div class="col-6">
-                                                <input type="text" name="items[0][pb_req]" class="form-control form-control-sm" placeholder="PB (Contoh: 75cm)">
-                                            </div>
-                                        </div>
-                                        <input type="text" name="items[0][catatan_custom]" class="form-control form-control-sm" placeholder="Catatan: Lengan 3/4, kancing merah">
+                                        <input type="text" name="items[0][catatan_custom]" class="form-control form-control-sm" placeholder="Contoh: LD 105cm, PB 75cm, Lengan 3/4, kancing merah">
                                     </div>
                                     <span class="text-muted standar-label">Mengikuti Spek Standard</span>
                                 </td>
@@ -212,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(error => {
                     console.error('Gagal memuat varian:', error);
                     selectVarian.innerHTML = '<option value="">Gagal memuat data</option>';
+                    selectVarian.setAttribute('disabled', 'disabled');
                 });
         }
 
@@ -227,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 wrapperCustom.classList.add('d-none');
                 standarLabel.classList.remove('d-none');
-                wrapperCustom.querySelectorAll('input').forEach(input => input.value = '');
+                wrapperCustom.querySelector('input').value = ''; // Hanya mereset input catatan_custom
             }
         }
     });

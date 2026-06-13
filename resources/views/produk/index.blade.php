@@ -16,7 +16,7 @@
                 <tr>
                     <th>Nama</th>
                     <th>Satuan</th>
-                    <th>Customer (jika ada)</th>
+                    <th>Tipe Produk</th>
                     <th>Last Updated</th>
                     <th>DetailVarian</th>
                     <th>Aksi</th>
@@ -27,7 +27,13 @@
                 <tr>
                     <td>{{ $d->nama }}</td>
                     <td>{{ $d->satuan }}</td>
-                    <td>{{$d->customer_id}}</td>
+                    <td>
+                    @if($d->customer)
+                        <span class="badge bg-primary">Custom: {{ $d->customer->nama }}</span>
+                    @else
+                        <span class="badge bg-secondary">Umum / Reguler</span>
+                    @endif
+                </td>
                     <td>{{$d->updated_at}}</td>
                     <td><a href="/produk/{{ $d->id }}" class="btn btn-info btn-sm text-white">Detail Varian</a></td>
                     <td>

@@ -1,32 +1,39 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-            <h4>Edit Penjahit</h4>
-        </div>
-        <div class="card-body">
-            <form action="/penjahit/{{ $penjahit->id }}" method="POST">
-                @csrf
-                @method('PUT') {{-- WAJIB: Laravel butuh ini untuk update data --}}
-                
-                <label>Nama:</label><br>
-                <input type="text" name="nama" value="{{ $penjahit->nama }}" required><br><br>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Form Edit Penjahit</h5>
+            </div>
+            <div class="card-body">
+                <form action="/penjahit/{{ $penjahit->id }}" method="POST">
+                    @csrf
+                    @method('PUT') 
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nama</label>
+                        <input type="text" name="nama" class="form-control" value="{{ $penjahit->nama }}" placeholder="Masukkan nama penjahit" required>
+                    </div>
 
-                <label>Alamat:</label><br>
-                <input type="text" name="alamat" value="{{ $penjahit->alamat }}" required><br><br>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Alamat</label>
+                        <input type="text" name="alamat" class="form-control" value="{{ $penjahit->alamat }}" placeholder="Masukkan alamat lengkap" required>
+                    </div>
 
-                <label>No HP:</label><br>
-                <input type="text" name="no_hp" value="{{ $penjahit->no_hp }}" required><br><br>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">No HP</label>
+                        <input type="text" name="no_hp" class="form-control" value="{{ $penjahit->no_hp }}" placeholder="Contoh: 08123456789" required>
+                    </div>
 
-                <div class="d-inline btn-sm">
-                    <a href="/penjahit" class="btn btn-secondary">Kembali</a>
-                    <button type="submit" class="btn btn-success">Update Data</button>
-                </div>
-            </form>        
+                    <div class="d-flex justify-content-start gap-2 mt-4">
+                        <a href="/penjahit" class="btn btn-secondary">Kembali</a>
+                        <button type="submit" class="btn btn-primary">Update Data</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 @endsection
-

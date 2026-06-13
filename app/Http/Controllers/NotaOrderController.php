@@ -9,10 +9,89 @@ use App\Models\JobOrder;
 use App\Models\Produk;
 use App\Models\ProdukVarian;
 use App\Models\Customer;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB; 
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class NotaOrderController extends Controller
 {
+    public function show($id)
+    {
+        $notaOrder = NotaOrder::with([
+            'customer', 
+            'job_orders.produk_varian.produk', 
+            'job_orders.pemakaian_bahan.bahan_baku'
+        ])->findOrFail($id);
+
+        return view('nota_order.show', compact('notaOrder'));
+    }
+
+    // 2. HALAMAN EDIT INFO NOTA
+    public function edit($id)
+    {
+        $notaOrder = NotaOrder::with('job_orders.produk_varian.produk')->findOrFail($id);
+        $customers = Customer::orderBy('nama', 'asc')->get();
+
+        return view('nota_order.edit', compact('notaOrder', 'customers'));
+    }
+
+    // 3. PROSES UPDATE DATA INFO NOTA
+    public function update(Request $request, $id)
+    {
+        $notaOrder = NotaOrder::findOrFail($id);
+
+        $request->validate([
+            'tipe_order'    => 'required|in:Customer,Internal',
+            'tgl_deadline'  => 'required|date',
+            'harga_deal'    => 'required|numeric|min:0',
+            'nominal_dp_masuk' => 'required|numeric|min:0',
+            'status_bayar'  => 'required|in:Belum Lunas,Lunas',
+        ]);
+
+        $notaOrder->update([
+            'tipe_order'       => $request->tipe_order,
+            'customer_id'      => $request->tipe_order === 'Customer' ? $request->customer_id : null,
+            'tgl_deadline'     => $request->tgl_deadline,
+            'harga_deal'       => $request->harga_deal,
+            'nominal_dp_masuk' => $request->nominal_dp_masuk,
+            'status_bayar'     => $request->status_bayar,
+        ]);
+
+        return redirect()->route('nota_order.index')->with('success', 'Informasi nota order berhasil diperbarui.');
+    }
+
+    // 4. 🔥 PROSES HAPUS CASCADE (MEMBERSIHKAN SEMUA DATA TURUNAN)
+    public function destroy($id)
+    {
+        $notaOrder = NotaOrder::with('job_orders')->findOrFail($id);
+
+        // Proteksi: Jika ada salah satu item baju yang sudah masuk proses produksi, nota jangan boleh dihapus!
+        foreach ($notaOrder->job_orders as $job) {
+            if ($job->status_pesanan !== 'Antrean' || !is_null($job->nota_produksi_id)) {
+                return redirect()->back()->with('error', 'Gagal Menghapus! Beberapa item dalam nota ini sudah diproses ke meja produksi CMT.');
+            }
+        }
+
+        // Gunakan Database Transaction agar jika satu gagal, semua dibatalkan
+        DB::beginTransaction();
+        try {
+            foreach ($notaOrder->job_orders as $job) {
+                // A. Bersihkan data pemakaian kain (BoM draf) milik job ini terlebih dahulu
+                DB::table('pemakaian_bahan')->where('job_order_id', $job->id)->delete();
+                
+                // B. Hapus baris data Job Order-nya
+                $job->delete();
+            }
+
+            // C. Terakhir, hapus data induk Nota Order
+            $notaOrder->delete();
+
+            DB::commit();
+            return redirect()->route('nota_order.index')->with('success', 'Nota Order beserta seluruh antrean job dan draf pemakaian kain berhasil dihapus bersih.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
+    }
     public function store(Request $request)
     {
         // 1. Validasi inputan dari form web
@@ -22,20 +101,24 @@ class NotaOrderController extends Controller
             'tgl_deadline' => 'required|date',
             'harga_deal' => 'required|numeric',
             'nominal_dp_masuk' => 'required|numeric',
-            'items' => 'required|array|min:1', // List baju yang dipesan
+            'items' => 'required|array|min:1', 
+            'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
+            'items.*.jumlah' => 'required|numeric|min:1',
         ]);
 
-        // Amankan transaksi database dengan DB::beginTransaction
         DB::beginTransaction();
 
         try {
-            // 2. Generate Nomor Order Otomatis (Contoh: ORD-202606-0001)
+            // 2. Generate Nomor Order Otomatis
             $tahunBulan = date('Ym');
             $hitungOrderBulanIni = NotaOrder::whereYear('tgl_order', date('Y'))
                                             ->whereMonth('tgl_order', date('m'))
                                             ->count();
             $nomorUrutNext = $hitungOrderBulanIni + 1;
             $noOrderOtomatis = 'ORD-' . $tahunBulan . '-' . str_pad($nomorUrutNext, 4, '0', STR_PAD_LEFT);
+
+            // 💡 Cukup tambah baris ini: ambil semua 'harga_satuan_jual' lalu petakan berdasarkan 'produk_varian_id'
+            $hargajual = array_column($request->items, 'harga_satuan_jual', 'produk_varian_id');
 
             // 3. Simpan data induk ke table nota_order
             $nota = NotaOrder::create([
@@ -48,58 +131,69 @@ class NotaOrderController extends Controller
                 'nominal_dp_masuk' => $request->nominal_dp_masuk,
                 'status_bayar' => $request->nominal_dp_masuk >= $request->harga_deal ? 'Lunas' : 'Belum Lunas',
                 'status_order' => 'Valid',
+                'rincian_harga_nota' => $hargajual, // 🔥 Cukup sisipkan ini
             ]);
 
-            // 4. Looping untuk menyimpan detail ke table job_order
+            // 4. Looping untuk menyimpan detail ke table job_order & pemakaian_bahan
             foreach ($request->items as $item) {
-                
-                // --- KITA KEMBALIKAN LOGIKA BoM LANGSUNG KE PRODUK_VARIAN ---
-                // Sesuai ERD: produk_varian -> bill_of_materials -> bahan_baku
-                $varian = ProdukVarian::with('bill_of_materials.bahan_baku')->find($item['produk_varian_id']);
-                
-                $estimasiBiayaBahanPerPcs = 0;
-                
-                // Cek jika varian ini memiliki racikan BoM di database
-                if ($varian && $varian->bill_of_materials) {
-                    foreach ($varian->bill_of_materials as $bom) {
-                        // Rumus: Takaran bahan baku di BoM x Harga Rata-rata Bahan Saat ini
-                        if ($bom->bahan_baku) {
-                            $estimasiBiayaBahanPerPcs += ($bom->jumlah * $bom->bahan_baku->harga_rata_rata);
-                        }
-                    }
-                }
+    
+    $varian = ProdukVarian::with('bill_of_materials.bahan_baku')->find($item['produk_varian_id']);
+    $estimasiBiayaBahanPerPcs = 0;
+    $daftarBahanOtomatis = [];
+    
+    if ($varian && $varian->bill_of_materials) {
+        foreach ($varian->bill_of_materials as $bom) {
+            if ($bom->bahan_baku) {
+                // Ambil harga rata-rata bahan baku saat ini dari master data
+                $hargaBahanSaatIni = $bom->bahan_baku->harga_rata_rata;
 
-                $totalBiayaBahanJob = $estimasiBiayaBahanPerPcs * $item['jumlah'];
-                $totalHppJob = $totalBiayaBahanJob + ($item['biaya_jasa_satuan'] * $item['jumlah']);
-                // ---------------------------------------------------------------------
-
-                // Simpan baris detail baju (Job Order)
-                JobOrder::create([
-                    'nota_order_id' => $nota->id,
-                    'produk_varian_id' => $item['produk_varian_id'],
-                    'jumlah' => $item['jumlah'],
-                    'biaya_jasa_satuan' => $item['biaya_jasa_satuan'],
-                    'is_custom' => $item['is_custom'] ?? 0,
-                    'ld_req' => $item['ld_req'] ?? null,
-                    'pb_req' => $item['pb_req'] ?? null,
-                    'catatan_custom' => $item['catatan_custom'] ?? null,
-                    'total_biaya_bahan' => $totalBiayaBahanJob, 
-                    'total_hpp_job' => $totalHppJob,       
-                    'status_pesanan' => 'Antrean',
-                ]);
+                $estimasiBiayaBahanPerPcs += ($bom->jumlah * $hargaBahanSaatIni);
+                
+                // 💡 MASUKKAN harga_rata_saat_ini KE SINI
+                $daftarBahanOtomatis[] = [
+                    'bahan_baku_id'        => $bom->bahan_baku_id,
+                    'jumlah'               => $bom->jumlah * $item['jumlah'],
+                    'harga_rata_saat_ini'  => $hargaBahanSaatIni, 
+                    'tgl_keluar'           => null,
+                ];
             }
+        }
+    }
 
-            // --- INI PERBAIKANNYA ---
-            // 1. Kunci data ke database agar tidak hilang / ter-rollback
+    $totalBiayaBahanJob = $estimasiBiayaBahanPerPcs * $item['jumlah'];
+    $totalHppJobInitial = $totalBiayaBahanJob; 
+
+    // Simpan baris Job Order
+    $jobOrder = JobOrder::create([
+        'nota_order_id'     => $nota->id,
+        'produk_varian_id'  => $item['produk_varian_id'],
+        'jumlah'            => $item['jumlah'],
+        'biaya_jasa_satuan' => 0, 
+        'is_custom'         => $item['is_custom'] ?? 0,
+        'catatan_custom'    => $item['catatan_custom'] ?? null,
+        'total_biaya_bahan' => $totalBiayaBahanJob, 
+        'total_hpp_job'     => $totalHppJobInitial,    
+        'status_pesanan'    => 'Antrean',
+    ]);
+
+    // Saat menyimpan ke pemakaian_bahan, pastikan kolomnya ikut terisi
+    foreach ($daftarBahanOtomatis as $bahan) {
+        // Asumsi kamu menggunakan relasi Eloquent atau DB::table
+        $jobOrder->pemakaian_bahan()->create([
+            'bahan_baku_id'        => $bahan['bahan_baku_id'],
+            'jumlah'               => $bahan['jumlah'],
+            'harga_rata_saat_ini'  => $bahan['harga_rata_saat_ini'], // 🔥 Pastikan tersimpan ke DB
+            'tgl_keluar'           => $bahan['tgl_keluar'],
+        ]);
+    }
+}
+
             DB::commit();
-
-            // 2. Alihkan halaman ke index dengan pesan sukses
             return redirect()->route('nota_order.index')->with('success', 'Nota Order berhasil disimpan!');
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Gagal...'.$e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage())->withInput();
         }
     }
 
@@ -129,5 +223,20 @@ class NotaOrderController extends Controller
                                 ->paginate(10); // Menggunakan pagination agar rapi
 
         return view('nota_order.index', compact('notaOrders'));
+    }
+
+
+
+    public function cetakPdf($id)
+    {
+        // Mengambil data induk NotaOrder beserta relasi-relasinya
+        $notaOrder = NotaOrder::with([
+            'customer', 
+            'job_orders.produk_varian.produk', 
+            'job_orders.pemakaian_bahan.bahan_baku'
+        ])->findOrFail($id);
+
+        // Mengembalikan view biasa (bukan pdf stream), persis seperti pola Surat Jalan kamu
+        return view('nota_order.pdf_nota_order', compact('notaOrder'));
     }
 }

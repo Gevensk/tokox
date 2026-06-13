@@ -147,6 +147,11 @@
                     <i class="fa-solid fa-boxes-packing"></i> Penyesuaian Stok
                 </a>
             </li>
+            <li>
+                <a href="{{ route('job_order.index') }}" class="nav-link {{ Request::is('job_order*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-boxes-packing me-2"></i> Job Order
+                </a>
+            </li>   
 
             <div class="menu-header">Transaksi Nota</div>
             <li>

@@ -14,7 +14,7 @@ class Produk extends Model
         return $this->hasMany(ProdukVarian::class,'produk_id');
     }
 
-    public function customers(){
+    public function customer(){
         return $this->belongsTo(Customer::class,'customer_id');
     }
 }
