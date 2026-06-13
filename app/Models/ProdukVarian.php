@@ -14,7 +14,8 @@ class ProdukVarian extends Model
         return $this->belongsTo(Produk::class,'produk_id');
     }
 
-    public function boms(){
-        return $this->hasMany(BillOfMaterial::class,'produk_varian_id');
+    public function bill_of_materials()
+    {
+        return $this->hasMany(BillOfMaterial::class, 'produk_varian_id'); 
     }
 }

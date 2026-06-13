@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Produk;
 use App\Models\ProdukVarian;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 
 class ProdukController extends Controller
@@ -16,20 +17,20 @@ class ProdukController extends Controller
 
     public function create()
     {
-        return view('produk.create');
+        $customers = Customer::all();
+        return view('produk.create',compact('customers'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-        'nama'   => 'required|string|max:255', 
-        'satuan' => 'required|string|max:50'
+        $validatedData = $request->validate([
+        'nama' => 'required|string|max:255',
+        'satuan' => 'required|string|max:50',
+        'customer_id' => 'nullable|exists:customer,id', 
         ]);
 
-        Produk::create([
-            'nama'            => trim($request->nama),
-            'satuan'          => trim($request->satuan),
-        ]);
+
+        Produk::create($validatedData);
 
         return redirect('/produk')->with('success', 'Produk berhasil ditambahkan!');
     }
@@ -77,37 +78,64 @@ class ProdukController extends Controller
 
     public function storeVarian(Request $request)
     {
+        // 1. Validasi input array ukuran
         $request->validate([
             'produk_id' => 'required|exists:produk,id',
-            'warna'     => 'nullable|string|max:50',
-            'ukuran'    => 'nullable|string|max:20',
+            'warna'     => 'required|string|max:50', // Diwajibkan agar tidak null kosong
+            'ukuran'    => 'required|array|min:1', 
         ]);
 
-        // --- PROSES CEK DUPLIKAT ---
-        // Cari apakah sudah ada produk_id dengan warna & ukuran yang sama
-        $cekDuplikat = ProdukVarian::where('produk_id', $request->produk_id)
-                        ->where('warna', trim($request->warna))
-                        ->where('ukuran', trim($request->ukuran))
-                        ->where('is_defect', 0) // Pastikan hanya cek yang status normal
-                        ->first();
+        $produkId = $request->produk_id;
+        // Gunakan ucwords agar jika admin mengetik "hitam" atau "HITAM", otomatis tersimpan rapi menjadi "Hitam"
+        $warnaInput = ucwords(strtolower(trim($request->warna))); 
+        $ukurans = $request->ukuran; 
 
-        if ($cekDuplikat) {
-            return redirect()->back()
-                ->withInput() // Agar ketikan user tidak hilang
-                ->with('error', 'Varian dengan warna dan ukuran tersebut sudah terdaftar!');
+        $varianBerhasil = 0;
+        $varianDuplikat = [];
+
+        foreach ($ukurans as $ukuranRaw) {
+            $ukuranInput = trim($ukuranRaw);
+
+            // --- PROSES CEK DUPLIKAT ---
+            $cekDuplikat = ProdukVarian::where('produk_id', $produkId)
+                            ->where('warna', $warnaInput)
+                            ->where('ukuran', $ukuranInput)
+                            ->where('is_defect', 0) 
+                            ->first();
+
+            if ($cekDuplikat) {
+                $varianDuplikat[] = $ukuranInput;
+                continue; 
+            }
+            // ---------------------------
+
+            // Simpan ke database dengan nilai default operasional konveksimu
+            ProdukVarian::create([
+                'produk_id'        => $produkId,
+                'warna'            => $warnaInput,
+                'ukuran'           => $ukuranInput, // S, M, L, XL, atau "Custom Size" akan masuk ke sini
+                'stok_tersedia'    => 0,
+                'harga_avg_produk' => 0,
+                'is_defect'        => 0,
+            ]);
+
+            $varianBerhasil++;
         }
-        // ---------------------------
 
-        ProdukVarian::create([
-            'produk_id'        => $request->produk_id,
-            'warna'            => trim($request->warna),
-            'ukuran'           => trim($request->ukuran),
-            'stok_tersedia'    => 0,
-            'harga_avg_produk' => 0,
-            'is_defect'        => 0,
-        ]);
+        // 3. Response feedback yang lebih rapi ke pengguna
+        if ($varianBerhasil === 0 && count($varianDuplikat) > 0) {
+            $listDuplikat = implode(', ', $varianDuplikat);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', "Gagal! Ukuran [$listDuplikat] untuk warna $warnaInput sudah terdaftar.");
+        }
 
-        return redirect()->back()->with('success', 'Varian berhasil ditambahkan!');
+        if (count($varianDuplikat) > 0) {
+            $listDuplikat = implode(', ', $varianDuplikat);
+            return redirect()->back()->with('success', "Berhasil menambah $varianBerhasil varian baru untuk warna $warnaInput. (Catatan: Ukuran [$listDuplikat] dilewati karena sudah ada).");
+        }
+
+        return redirect()->back()->with('success', "Semua varian ukuran untuk warna $warnaInput berhasil ditambahkan!");
     }
 
     public function destroyVarian(string $id){

@@ -13,7 +13,7 @@ class BillOfMaterial extends Model
     protected $table = 'bill_of_materials';
     protected $fillable = ['bahan_baku_id','produk_varian_id','jumlah'];
 
-    public function bahanBaku(){
+    public function bahan_baku(){
         return $this->belongsTo(BahanBaku::class,'bahan_baku_id');
     }
 

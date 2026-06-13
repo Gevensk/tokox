@@ -16,6 +16,7 @@
                 <tr>
                     <th>Nama</th>
                     <th>Satuan</th>
+                    <th>Customer (jika ada)</th>
                     <th>Last Updated</th>
                     <th>DetailVarian</th>
                     <th>Aksi</th>
@@ -26,6 +27,7 @@
                 <tr>
                     <td>{{ $d->nama }}</td>
                     <td>{{ $d->satuan }}</td>
+                    <td>{{$d->customer_id}}</td>
                     <td>{{$d->updated_at}}</td>
                     <td><a href="/produk/{{ $d->id }}" class="btn btn-info btn-sm text-white">Detail Varian</a></td>
                     <td>

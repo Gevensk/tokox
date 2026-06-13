@@ -1,84 +1,95 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container-fluid p-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Riwayat Pembelian Bahan Baku</h2>
+        <h3 class="mb-0">Riwayat Pembelian Bahan Baku</h3>
         <a href="{{ route('nota_pembelian.create') }}" class="btn btn-primary">
             + Input Nota Baru
         </a>
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     @endif
 
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Tanggal Beli</th>
-                        <th>Supplier</th>
-                        <th>Total Harga Bahan</th>
-                        <th>Ongkir</th>
-                        <th>Total Bayar</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($history as $item)
-                    <tr>
-                        <td>{{ date('d-m-Y H:i', strtotime($item->tgl_beli)) }}</td>
-                        <td>{{ $item->supplier->nama }}</td>
-                        <td>Rp {{ number_format($item->total_harga_bahan, 0, ',', '.') }}</td>
-                        <td>Rp {{ number_format($item->ongkir, 0, ',', '.') }}</td>
-                        <td><strong>Rp {{ number_format($item->total_bayar, 0, ',', '.') }}</strong></td>
-                        <td>
-                            <button class="btn btn-sm btn-info btn-detail" data-id="{{ $item->id }}">
-                                Detail
-                            </button>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tanggal Beli</th>
+                            <th>Supplier</th>
+                            <th>Total Harga Bahan</th>
+                            <th>Ongkir</th>
+                            <th>Total Bayar</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($history as $item)
+                        <tr>
+                            <td>{{ date('d M Y H:i', strtotime($item->tgl_beli)) }}</td>
+                            <td>
+                                <span class="badge bg-info text-dark">Vendor</span> 
+                                {{ $item->supplier->nama }}
+                            </td>
+                            <td>Rp {{ number_format($item->total_harga_bahan, 0, ',', '.') }}</td>
+                            <td><span class="text-muted">Rp {{ number_format($item->ongkir, 0, ',', '.') }}</span></td>
+                            <td><strong class="text-success">Rp {{ number_format($item->total_bayar, 0, ',', '.') }}</strong></td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-secondary btn-detail text-nowrap" data-id="{{ $item->id }}">
+                                    👁 Detail Nota
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalDetail" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detail Nota Pembelian: <span id="det-nomor"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="exampleModalLabel">Detail Nota Pembelian: <span id="det-nomor" class="fw-bold text-warning"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="row mb-3">
+            <div class="modal-body p-4">
+                <div class="row mb-4 pb-3 border-bottom">
                     <div class="col-6">
-                        <p><strong>Supplier:</strong> <span id="det-supplier"></span></p>
-                        <p><strong>Tanggal:</strong> <span id="det-tgl"></span></p>
+                        <p class="mb-1 text-muted small text-uppercase fw-bold">Pemasok / Vendor</p>
+                        <h5 id="det-supplier" class="text-dark fw-bold">-</h5>
+                        <p class="mb-0 text-secondary small"><i class="fa-regular fa-calendar me-1"></i> <span id="det-tgl">-</span></p>
                     </div>
-                    <div class="col-6 text-right">
-                        <p><strong>Ongkir:</strong> Rp <span id="det-ongkir"></span></p>
-                        <p><strong>Total Bayar:</strong> <span id="det-total" class="font-weight-bold text-primary"></span></p>
+                    <div class="col-6 text-end">
+                        <p class="mb-1 text-secondary">Ongkos Kirim: <span class="fw-bold text-dark">Rp <span id="det-ongkir">0</span></span></p>
+                        <h4 class="mb-0 fw-bold text-success">Total: <span id="det-total">Rp 0</span></h4>
                     </div>
                 </div>
-                <table class="table table-sm table-bordered">
-                    <thead>
-                        <tr class="bg-light">
-                            <th>Bahan Baku</th>
-                            <th>Jumlah</th>
-                            <th>Harga Satuan</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody id="det-list-bahan">
-                        </tbody>
-                </table>
+                
+                <h6 class="fw-bold mb-3 text-secondary">Daftar Muatan Bahan Baku</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Bahan Baku</th>
+                                <th class="text-center" style="width: 15%">Jumlah</th>
+                                <th style="width: 25%">Harga Satuan</th>
+                                <th style="width: 25%">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="det-list-bahan">
+                            </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -100,10 +111,10 @@ $(document).ready(function() {
 
             data.details.forEach(function(item) {
                 let row = `<tr>
-                    <td>${item.bahan_baku.nama}</td>
-                    <td>${item.jumlah} ${item.bahan_baku.satuan}</td>
+                    <td><span class="fw-bold">${item.bahan_baku.nama}</span></td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">${item.jumlah} ${item.bahan_baku.satuan}</span></td>
                     <td>Rp ${new Intl.NumberFormat('id-ID').format(item.harga_satuan)}</td>
-                    <td>Rp ${new Intl.NumberFormat('id-ID').format(item.subtotal)}</td>
+                    <td><strong class="text-dark">Rp ${new Intl.NumberFormat('id-ID').format(item.subtotal)}</strong></td>
                 </tr>`;
                 $('#det-list-bahan').append(row);
             });

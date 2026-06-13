@@ -10,53 +10,88 @@
             <hr>
 
             <div class="card mb-4">
-                <div class="card-header">Tambah Varian Baru</div>
+                <div class="card-header fw-bold">Tambah Varian Baru Sekaligus</div>
                 
                 @if(session('error'))
                     <div class="alert alert-danger">
                         {{ session('error') }}
                     </div>
                 @endif
+                @if(session('success'))
+                    <div class="alert alert-success">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
                 <div class="card-body">
-                      <form action="{{ route('produk_varian.store') }}" method="POST">
+                    {{-- Form ini sekarang akan mengirimkan data array ukuran sekaligus --}}
+                    <form action="{{ route('produk_varian.store') }}" method="POST">
                         @csrf
                         <input type="hidden" name="produk_id" value="{{ $produk->id }}">
-                        <div class="row">
+                        
+                        <div class="row align-items-center">
+                            {{-- Input Warna (Cukup ketik sekali, misal: Hitam) --}}
                             <div class="col-md-3">
-                                <label>Warna</label>
-                                <input type="text" name="warna" class="form-control" placeholder="Contoh: Merah">
+                                <label class="form-label fw-bold">Warna</label>
+                                <input type="text" name="warna" class="form-control" placeholder="Contoh: Hitam" required>
                             </div>
-                            <div class="col-md-2">
-                                <label>Ukuran</label>
-                                <input type="text" name="ukuran" class="form-control" placeholder="Contoh: XL">
+                            
+                            {{-- Pilihan Banyak Ukuran Sekaligus menggunakan Checkbox --}}
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold d-block">Pilih Ukuran yang Tersedia</label>
+                                <div class="d-flex gap-3 flex-wrap mt-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="S" id="sizeS" checked>
+                                        <label class="form-check-label" for="sizeS">S</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="M" id="sizeM" checked>
+                                        <label class="form-check-label" for="sizeM">M</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="L" id="sizeL" checked>
+                                        <label class="form-check-label" for="sizeL">L</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="XL" id="sizeXL" checked>
+                                        <label class="form-check-label" for="sizeXL">XL</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="Custom Size" id="sizeCustom" checked>
+                                        <label class="form-check-label" for="sizeCustom" class="text-primary fw-bold">Custom Size</label>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-3 mt-4">
-                                <button type="submit" class="btn btn-primary">Simpan Varian</button>
+                            
+                            {{-- Tombol Eksekusi Masal --}}
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary w-100 mt-3">Simpan Semua Varian</button>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
 
+            {{-- Bagian Tabel ke Bawah Tetap Sama dengan Kode Aslimu --}}
             <div class="card">
-                <div class="card-header">Daftar Varian Produk</div>
+                <div class="card-header fw-bold">Daftar Varian Produk</div>
                 <div class="card-body">
-                    <table class="table table-bordered">
-                        <thead>
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
                             <tr>
                                 <th>Warna</th>
                                 <th>Ukuran</th>
                                 <th>Stok</th>
                                 <th>Harga Modal (Avg)</th>
                                 <th>Status</th>
-                                <th>Aksi</th>
+                                <th width="100">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($produk->varians as $v)
                             <tr>
                                 <td>{{ $v->warna ?? '-' }}</td>
-                                <td>{{ $v->ukuran ?? '-' }}</td>
+                                <td class="{{ $v->ukuran == 'Custom Size' ? 'fw-bold text-primary' : '' }}">{{ $v->ukuran ?? '-' }}</td>
                                 <td>{{ $v->stok_tersedia }}</td>
                                 <td>Rp {{ number_format($v->harga_avg_produk, 0, ',', '.') }}</td>
                                 <td>
@@ -67,7 +102,6 @@
                                     @endif
                                 </td>
                                 <td>
-                                    {{-- Tombol Hapus Varian --}}
                                     <form action="{{ url('/produk_varian/'.$v->id) }}" method="POST" onsubmit="return confirm('Hapus varian ini?')">
                                         @csrf
                                         @method('DELETE')
@@ -77,7 +111,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center">Belum ada varian.</td>
+                                <td colspan="6" class="text-center text-muted">Belum ada varian untuk produk ini.</td>
                             </tr>
                             @endforelse
                         </tbody>

@@ -8,9 +8,13 @@ class Produk extends Model
 {
     //
     protected $table='produk';
-    protected $fillable=['nama','satuan','harga_jual'];
+    protected $fillable=['nama','satuan','customer_id','harga_jual'];
 
     public function varians(){
         return $this->hasMany(ProdukVarian::class,'produk_id');
+    }
+
+    public function customers(){
+        return $this->belongsTo(Customer::class,'customer_id');
     }
 }

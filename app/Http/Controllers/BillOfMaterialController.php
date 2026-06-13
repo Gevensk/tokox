@@ -15,7 +15,7 @@ class BillOfMaterialController extends Controller
     public function index()
 {
 
-    $boms = BillOfMaterial::with(['varian.produk', 'bahanBaku'])
+    $boms = BillOfMaterial::with(['varian.produk', 'bahan_baku'])
             ->get()
             ->groupBy('produk_varian_id');
 
@@ -92,6 +92,25 @@ class BillOfMaterialController extends Controller
         catch(\Exception $e){
             DB::rollBack();
             return back()->with('error','Gagal update: '.$e->getMessage());
+        }
+    }
+
+    public function destroy($produk_varian_id)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Hapus seluruh baris resep yang terikat dengan ID varian ini
+            BillOfMaterial::where('produk_varian_id', $produk_varian_id)->delete();
+
+            DB::commit();
+            return redirect()->route('bill_of_material.index')
+                ->with('success', 'Seluruh resep BoM untuk varian tersebut berhasil dihapus!');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->route('bill_of_material.index')
+                ->with('error', 'Gagal menghapus resep: ' . $e->getMessage());
         }
     }
 }
