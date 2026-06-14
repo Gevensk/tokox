@@ -140,113 +140,130 @@ class NotaOrderController extends Controller
         return view('nota_order.show', compact('notaOrder'));
     }
 
-    public function edit($id)
+public function edit($id)
     {
         $notaOrder = NotaOrder::with('job_orders.produk_varian.produk')->findOrFail($id);
         $customers = Customer::orderBy('nama', 'asc')->get();
-        $produks = Produk::all(); // Perbaikan: Menambahkan variabel $produks untuk select dropdown di form edit
+        $produks = Produk::all(); 
+        
+        // PENCEGEKAN: Jika ada salah satu item yang sudah bukan 'Antrean', tolak akses edit
+        foreach ($notaOrder->job_orders as $job) {
+            if ($job->status_pesanan !== 'Antrean' || !is_null($job->nota_produksi_id)) {
+                return redirect()->route('nota_order.index')
+                    ->with('error', 'Gagal Mengubah! Nota ini tidak bisa diedit karena beberapa item sudah masuk proses produksi.');
+            }
+        }
         
         return view('nota_order.edit', compact('notaOrder', 'customers', 'produks'));
     }
 
 public function update(Request $request, $id)
-{
-    $notaOrder = NotaOrder::with('job_orders')->findOrFail($id);
-    
-    $request->validate([
-        'tipe_order' => 'required|in:Customer,Internal',
-        'tgl_deadline' => 'required|date',
-        'total_harga' => 'required|numeric|min:0',
-        'nominal_dp_masuk' => 'required|numeric|min:0',
-        'status_bayar' => 'required|in:Belum Lunas,Lunas',
-        'harga_satuan_items' => 'required|numeric|min:0', // <--- Wajib validasi di sini
-        'items' => 'required|array|min:1',
-        'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
-        'items.*.jumlah' => 'required|numeric|min:1',
-        'items.*.harga_satuan_jual' => 'required|numeric|min:0',
-    ]);
-
-    DB::beginTransaction();
-    try {
-        // 1. Update data parent (NotaOrder)
-        $notaOrder->update([
-            'tipe_order' => $request->tipe_order,
-            'customer_id' => $request->tipe_order === 'Customer' ? $request->customer_id : null,
-            'tgl_deadline' => $request->tgl_deadline,
-            'total_harga' => $request->total_harga,
-            'nominal_dp_masuk' => $request->nominal_dp_masuk,
-            'status_bayar' => $request->status_bayar,
-            'harga_satuan_items' => $request->harga_satuan_items, // <--- PERBAIKAN UTAMA: Sekarang data ter-update riil ke DB!
-        ]);
-
-        // 2. Hapus data job order lama beserta pemakaian bahannya terlebih dahulu
-        foreach ($notaOrder->job_orders as $job) {
-            DB::table('pemakaian_bahan')->where('job_order_id', $job->id)->delete();
-            $job->delete();
-        }
-
-        // 3. Masukkan kembali data item baru/pembaruan dari form
-        foreach ($request->items as $item) {
-            $varian = ProdukVarian::with('bill_of_materials.bahan_baku')->find($item['produk_varian_id']);
-            $estimasiBiayaBahanPerPcs = 0;
-            $daftarBahanOtomatis = [];
-            
-            if ($varian && $varian->bill_of_materials) {
-                foreach ($varian->bill_of_materials as $bom) {
-                    if ($bom->bahan_baku) {
-                        $hargaBahanSaatIni = $bom->bahan_baku->harga_rata_rata;
-                        $estimasiBiayaBahanPerPcs += ($bom->jumlah * $hargaBahanSaatIni);
-                        
-                        $daftarBahanOtomatis[] = [
-                            'bahan_baku_id' => $bom->bahan_baku_id,
-                            'jumlah' => $bom->jumlah * $item['jumlah'],
-                            'harga_rata_saat_ini' => $hargaBahanSaatIni,
-                            'tgl_keluar' => null,
-                        ];
-                    }
-                }
-            }
-
-            $totalBiayaBahanJob = $estimasiBiayaBahanPerPcs * $item['jumlah'];
-
-            $newJob = JobOrder::create([
-                'nota_order_id' => $notaOrder->id,
-                'produk_varian_id' => $item['produk_varian_id'],
-                'jumlah' => $item['jumlah'],
-                'biaya_jasa_satuan' => 0, 
-                'is_custom' => $item['is_custom'] ?? 0,
-                'catatan_custom' => $item['catatan_custom'] ?? null,
-                'total_biaya_bahan' => $totalBiayaBahanJob,
-                'total_hpp_job' => $totalBiayaBahanJob,
-                'status_pesanan' => 'Antrean',
-            ]);
-
-            foreach ($daftarBahanOtomatis as $bahan) {
-                $newJob->pemakaian_bahan()->create([
-                    'bahan_baku_id' => $bahan['bahan_baku_id'],
-                    'jumlah' => $bahan['jumlah'],
-                    'harga_rata_saat_ini' => $bahan['harga_rata_saat_ini'],
-                    'tgl_keluar' => $bahan['tgl_keluar'],
-                ]);
-            }
-        }
-
-        DB::commit();
-        return redirect()->route('nota_order.index')->with('success', 'Nota Order dan seluruh item berhasil diperbarui.');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return redirect()->back()->with('error', 'Gagal memperbarui transaksi: ' . $e->getMessage())->withInput();
-    }
-}
-
-    public function destroy($id)
     {
         $notaOrder = NotaOrder::with('job_orders')->findOrFail($id);
         
+        // PENCEGEKAN KEAMANAN SISI SERVER: Kuatkan kembali sebelum eksekusi update database
         foreach ($notaOrder->job_orders as $job) {
             if ($job->status_pesanan !== 'Antrean' || !is_null($job->nota_produksi_id)) {
-                return redirect()->back()->with('error', 'Gagal Menghapus! Beberapa item dalam nota ini sudah diproses.');
+                return redirect()->route('nota_order.index')
+                    ->with('error', 'Gagal Memperbarui! Transaksi dikunci karena item sedang diproduksi.');
+            }
+        }
+        
+        $request->validate([
+            'tipe_order' => 'required|in:Customer,Internal',
+            'tgl_deadline' => 'required|date',
+            'total_harga' => 'required|numeric|min:0',
+            'nominal_dp_masuk' => 'required|numeric|min:0',
+            'status_bayar' => 'required|in:Belum Lunas,Lunas',
+            'harga_satuan_items' => 'required|numeric|min:0', 
+            'items' => 'required|array|min:1',
+            'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
+            'items.*.jumlah' => 'required|numeric|min:1',
+            'items.*.harga_satuan_jual' => 'required|numeric|min:0',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // 1. Update data parent (NotaOrder)
+            $notaOrder->update([
+                'tipe_order' => $request->tipe_order,
+                'customer_id' => $request->tipe_order === 'Customer' ? $request->customer_id : null,
+                'tgl_deadline' => $request->tgl_deadline,
+                'total_harga' => $request->total_harga,
+                'nominal_dp_masuk' => $request->nominal_dp_masuk,
+                'status_bayar' => $request->status_bayar,
+                'harga_satuan_items' => $request->harga_satuan_items, 
+            ]);
+
+            // 2. Hapus data job order lama beserta pemakaian bahannya terlebih dahulu
+            foreach ($notaOrder->job_orders as $job) {
+                DB::table('pemakaian_bahan')->where('job_order_id', $job->id)->delete();
+                $job->delete();
+            }
+
+            // 3. Masukkan kembali data item baru/pembaruan dari form
+            foreach ($request->items as $item) {
+                $varian = ProdukVarian::with('bill_of_materials.bahan_baku')->find($item['produk_varian_id']);
+                $estimasiBiayaBahanPerPcs = 0;
+                $daftarBahanOtomatis = [];
+                
+                if ($varian && $varian->bill_of_materials) {
+                    foreach ($varian->bill_of_materials as $bom) {
+                        if ($bom->bahan_baku) {
+                            $hargaBahanSaatIni = $bom->bahan_baku->harga_rata_rata;
+                            $estimasiBiayaBahanPerPcs += ($bom->jumlah * $hargaBahanSaatIni);
+                            
+                            $daftarBahanOtomatis[] = [
+                                'bahan_baku_id' => $bom->bahan_baku_id,
+                                'jumlah' => $bom->jumlah * $item['jumlah'],
+                                'harga_rata_saat_ini' => $hargaBahanSaatIni,
+                                'tgl_keluar' => null,
+                            ];
+                        }
+                    }
+                }
+
+                $totalBiayaBahanJob = $estimasiBiayaBahanPerPcs * $item['jumlah'];
+
+                $newJob = JobOrder::create([
+                    'nota_order_id' => $notaOrder->id,
+                    'produk_varian_id' => $item['produk_varian_id'],
+                    'jumlah' => $item['jumlah'],
+                    'biaya_jasa_satuan' => 0, 
+                    'is_custom' => $item['is_custom'] ?? 0,
+                    'catatan_custom' => $item['catatan_custom'] ?? null,
+                    'total_biaya_bahan' => $totalBiayaBahanJob,
+                    'total_hpp_job' => $totalBiayaBahanJob,
+                    'status_pesanan' => 'Antrean', // Tetap kembali ke status antrean awal
+                ]);
+
+                foreach ($daftarBahanOtomatis as $bahan) {
+                    $newJob->pemakaian_bahan()->create([
+                        'bahan_baku_id' => $bahan['bahan_baku_id'],
+                        'jumlah' => $bahan['jumlah'],
+                        'harga_rata_saat_ini' => $bahan['harga_rata_saat_ini'],
+                        'tgl_keluar' => $bahan['tgl_keluar'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('nota_order.index')->with('success', 'Nota Order dan seluruh item berhasil diperbarui.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal memperbarui transaksi: ' . $e->getMessage())->withInput();
+        }
+    }
+
+public function destroy($id)
+    {
+        $notaOrder = NotaOrder::with('job_orders')->findOrFail($id);
+        
+        // PENCEGEKAN: Memastikan tidak ada satu pun item yang lolos dari status 'Antrean'
+        foreach ($notaOrder->job_orders as $job) {
+            if ($job->status_pesanan !== 'Antrean' || !is_null($job->nota_produksi_id)) {
+                return redirect()->back()->with('error', 'Gagal Menghapus! Nota ini tidak bisa dihapus karena beberapa item sudah masuk proses produksi.');
             }
         }
 

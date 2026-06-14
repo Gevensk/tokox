@@ -1,168 +1,189 @@
-@extends('layouts.app') {{-- Sesuaikan dengan nama layout induk skripsimu, misal layouts.admin atau layouts.main --}}
+@extends('layouts.app')
 
 @section('content')
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-9">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center py-3">
-                    <h5 class="mb-0 fw-bold"><i class="bi bi-shield-check"></i> Form Penerimaan Hasil Jadi & Quality Control (QC)</h5>
-                    <span class="badge bg-light text-success fw-bold p-2">JOB-ORDER ID: {{ $job->id }}</span>
+        <div class="col-md-8">
+            
+            {{-- Alert Notifikasi Sukses / Gagal --}}
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Gagal!</strong> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Gagal Validasi!</strong> Periksa kembali input Anda:
+                    <ul class="mb-0 mt-2">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Form Quality Control & Terima Hasil Produksi</h5>
+                    <span class="badge bg-light text-primary">ID Job: #{{ $job->id }}</span>
                 </div>
                 
-                <div class="card-body p-4">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-3" role="alert">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-                                <div><strong>Berhasil!</strong> {{ session('success') }}</div>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="card-body">
+                    {{-- Informasi Singkat Job Order --}}
+                    <div class="row mb-4 p-3 bg-light rounded mx-1">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Nota Order Induk:</small>
+                            <strong>{{ $job->nota_order->no_order ?? '-' }}</strong>
+                            
+                            <small class="text-muted d-block mt-2">Produk & Varian:</small>
+                            <strong>{{ $job->produk_varian->produk->nama ?? 'Produk Tidak Diketahui' }}</strong> 
+                            <span class="badge bg-secondary">
+                                {{ $job->produk_varian->warna ?? '-' }} - {{ $job->produk_varian->ukuran ?? '-' }}
+                            </span>
                         </div>
-                    @endif
+                        <div class="col-md-6 border-start">
+                            <small class="text-muted d-block">Target Total Produksi:</small>
+                            <span class="fs-5 text-dark fw-bold">{{ $job->jumlah }} Pcs</span>
+                            
+                            <small class="text-muted d-block mt-2">Sudah Masuk QC Sebelumnya:</small>
+                            <span class="text-info fw-bold">{{ $totalTerQCSebelumnya ?? 0 }} Pcs</span>
 
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-3" role="alert">
-                            <div class="d-flex align-items-center">
-                                <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
-                                <div><strong>Sistem Menolak:</strong> {{ session('error') }}</div>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <small class="text-muted d-block mt-2">Maksimal Sisa Tanggungan:</small>
+                            <span class="text-danger fw-bold fs-5" id="sisa-tanggungan">{{ $sisaTanggungan }} Pcs</span>
                         </div>
-                    @endif
-                    <div class="alert alert-secondary border-0 mb-4">
-                        <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-info-circle-fill"></i> Monitoring Progress Kerja Parsial Penjahit:</h6>
-                        <div class="row text-center small">
-                            <div class="col-4 border-end">
-                                <span class="text-muted d-block">Target Total Pesanan</span>
-                                <strong class="fs-6 text-dark">{{ $job->jumlah }} Pcs</strong>
-                            </div>
-                            <div class="col-4 border-end">
-                                <span class="text-muted d-block">Sudah Masuk Gudang</span>
-                                <strong class="fs-6 text-success">{{ $totalSudahDiterima }} Pcs</strong>
-                            </div>
-                            <div class="col-4">
-                                <span class="text-muted d-block">Sisa Batas Tagihan</span>
-                                <strong class="fs-5 text-danger" id="sisa_wajib">{{ $sisaTanggungan }} Pcs</strong>
-                            </div>
-                        </div>
-                        
-                        @if($totalSudahDiterima > 0)
-                        <div class="mt-2 pt-2 border-top text-muted text-center xsmall">
-                            <i class="bi bi-clock-history"></i> Penjahit sudah pernah menyetor data sebelumnya. Form ini ditujukan untuk memproses batch/tahap berikutnya.
-                        </div>
-                        @endif
                     </div>
 
+                    {{-- Form Input QC Hasil Produksi --}}
                     <form action="{{ route('hasil_produksi.store') }}" method="POST">
                         @csrf
-                        {{-- Hidden Input penting untuk mengirimkan ID Job Order ke Controller --}}
+                        
+                        {{-- Hidden Input ID Job Order --}}
                         <input type="hidden" name="job_order_id" value="{{ $job->id }}">
 
-                        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-calculator"></i> 1. Input Pembagian Kuantitas Hasil Pemeriksaan QC Batch Hari Ini:</h6>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
-                                <label class="form-label text-success fw-bold">Layak / Lolos QC (Qty Accepted)</label>
-                                <input type="number" id="qty_accepted" name="qty_accepted" class="form-control form-control-lg border-success text-center fw-bold text-success" min="0" value="0" required>
-                                <div class="form-text text-success small">Akan menambah <strong>stok_tersedia</strong> di gudang.</div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <label class="form-label text-warning fw-bold">Cacat Bahan (Qty Defect)</label>
-                                <input type="number" id="qty_rejected_defect" name="qty_rejected_defect" class="form-control form-control-lg border-warning text-center fw-bold text-warning" min="0" value="0" required>
-                                <div class="form-text text-warning small">Baju rusak total/cacat bahan baku bawaan.</div>
+                        <div class="row">
+                            {{-- Qty Lolos QC (Accepted) --}}
+                            <div class="col-md-4 mb-3">
+                                <label for="qty_accepted" class="form-label text-success fw-bold">1. Qty Accepted (Lolos QC)</label>
+                                <input type="number" name="qty_accepted" id="qty_accepted" class="form-control form-control-lg border-success input-hitung" value="{{ old('qty_accepted', 0) }}" min="0" required>
+                                <small class="text-muted">Akan menambah stok gudang baju jadi.</small>
                             </div>
 
-                            <div class="col-md-4">
-                                <label class="form-label text-danger fw-bold">Perbaikan/Rework (Qty Rejected)</label>
-                                <input type="number" id="qty_rejected" name="qty_rejected" class="form-control form-control-lg border-danger text-center fw-bold text-danger" min="0" value="0" required>
-                                <div class="form-text text-danger small">Ditolak sementara untuk dijahit ulang penjahit.</div>
+                            {{-- Qty Defect (Bisa Diperbaiki) --}}
+                            <div class="col-md-4 mb-3">
+                                <label for="qty_rejected_defect" class="form-label text-warning fw-bold">2. Qty Defect (Rework)</label>
+                                <input type="number" name="qty_rejected_defect" id="qty_rejected_defect" class="form-control form-control-lg border-warning input-hitung" value="{{ old('qty_rejected_defect', 0) }}" min="0" required>
+                                <small class="text-muted">Baju reject yang bisa diperbaiki/dijahit ulang.</small>
+                            </div>
+
+                            {{-- Qty Rejected (Rusak Total / Buang) --}}
+                            <div class="col-md-4 mb-3">
+                                <label for="qty_rejected" class="form-label text-danger fw-bold">3. Qty Rejected (Gagal)</label>
+                                <input type="number" name="qty_rejected" id="qty_rejected" class="form-control form-control-lg border-danger input-hitung" value="{{ old('qty_rejected', 0) }}" min="0" required>
+                                <small class="text-muted">Rusak parah, kain bolong, atau tidak bisa dipakai.</small>
                             </div>
                         </div>
 
-                        <hr class="my-4">
+                        {{-- Total Kalkulasi Realtime via JS --}}
+                        <div class="alert alert-secondary d-flex justify-content-between align-items-center my-2 py-2">
+                            <span>Total yang akan diinput sekarang:</span>
+                            <strong class="fs-5" id="total-input-sekarang">0 Pcs</strong>
+                        </div>
 
-                        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-truck"></i> 2. Logistik & Catatan QC:</h6>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-5">
-                                <label class="form-label fw-bold">Ongkos Kirim Balik Batch Ini (Rp)</label>
+                        <hr>
+
+                        <div class="row">
+                            {{-- Ongkir Pengiriman Hasil Jadi --}}
+                            <div class="col-md-6 mb-3">
+                                <label for="ongkir_hasil_produksi" class="form-label fw-bold">Ongkos Kirim Balik Setoran (Rp)</label>
                                 <div class="input-group">
                                     <span class="input-group-text">Rp</span>
-                                    <input type="number" name="ongkir_hasil_produksi" class="form-control" value="0" min="0" required>
+                                    <input type="number" name="ongkir_hasil_produksi" id="ongkir_hasil_produksi" class="form-control" value="{{ old('ongkir_hasil_produksi', 0) }}" min="0" required>
                                 </div>
-                                <div class="form-text small text-muted">Biaya pengiriman barang dari penjahit ke gudang utama untuk tahap ini.</div>
+                                <small class="text-muted">Biaya logistik pengiriman baju dari penjahit ke gudang Anda.</small>
                             </div>
 
-                            <div class="col-md-7">
-                                <label class="form-label fw-bold">Catatan Hasil Pemeriksaan Lapangan</label>
-                                <textarea name="catatan_qc" class="form-control" rows="2" placeholder="Contoh: Setoran parsial tahap 1 aman, sisa pengerjaan dilanjut besok." maxlength="45"></textarea>
-                                <div class="form-text small text-muted">Maksimal 45 karakter sesuai struktur database.</div>
+                            {{-- Catatan QC --}}
+                            <div class="col-md-6 mb-3">
+                                <label for="catatan_qc" class="form-label fw-bold">Catatan Tim QC</label>
+                                <input type="text" name="catatan_qc" id="catatan_qc" class="form-control" placeholder="Contoh: Jahitan lengan kiri agak renggang" value="{{ old('catatan_qc') }}" maxlength="45">
                             </div>
                         </div>
 
-                        <div id="validator_box" class="alert alert-warning d-flex justify-content-between align-items-center p-3 mb-4">
-                            <div class="fw-bold">
-                                Total Diinput Sekarang: <span id="total_hitung">0</span> Pcs
-                            </div>
-                            <div class="small fw-bold text-end" id="status_keterangan">
-                                Masukkan kuantitas barang untuk membuka tombol kunci.
-                            </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ route('job_order.index') }}" class="btn btn-light border">Kembali</a>
+                            <button type="submit" id="btn-submit" class="btn btn-primary px-4 fw-bold">Simpan Setoran / QC</button>
                         </div>
 
-                        <div class="d-flex justify-content-between pt-2">
-                            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary px-4"><i class="bi bi-arrow-left"></i> Kembali</a>
-                            <button type="submit" id="btn_submit" class="btn btn-success px-5 fw-bold" disabled>
-                                <i class="bi bi-cloud-arrow-up-fill"></i> Kunci Batch Ini
-                            </button>
-                        </div>
                     </form>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
 
+{{-- JavaScript Real-Time Validation & Calculation --}}
 <script>
-    const sisaMaksimal = {{ $sisaTanggungan }};
-    const inputAcc = document.getElementById('qty_accepted');
-    const inputDef = document.getElementById('qty_rejected_defect');
-    const inputRej = document.getElementById('qty_rejected');
+document.addEventListener("DOMContentLoaded", function() {
+    const inputs = document.querySelectorAll('.input-hitung');
+    const totalDisplay = document.getElementById('total-input-sekarang');
+    const btnSubmit = document.getElementById('btn-submit');
     
-    const displayTotal = document.getElementById('total_hitung');
-    const validatorBox = document.getElementById('validator_box');
-    const btnSubmit = document.getElementById('btn_submit');
-    const statusKeterangan = document.getElementById('status_keterangan');
+    let sisaTanggungan = parseInt("{{ $sisaTanggungan }}");
+    if (isNaN(sisaTanggungan)) {
+        sisaTanggungan = parseInt("{{ $job->jumlah ?? 0 }}") || 0;
+    }
 
-    function validasiKuantitasParsial() {
-        const valAcc = parseInt(inputAcc.value) || 0;
-        const valDef = parseInt(inputDef.value) || 0;
-        const valRej = parseInt(inputRej.value) || 0;
+    function hitungTotal() {
+        let total = 0;
+        inputs.forEach(input => {
+            total += parseInt(input.value) || 0;
+        });
         
-        // Menghitung berapa yang mau di-QC saat ini saja
-        const totalInputSekarang = valAcc + valDef + valRej;
-        displayTotal.innerText = totalInputSekarang;
+        totalDisplay.innerText = total + " Pcs";
 
-        if (totalInputSekarang > 0 && totalInputSekarang <= sisaMaksimal) {
-            // Kondisi Aman: Inputan valid dan di bawah atau pas dengan sisa kuantitas baju yang belum disetor
-            validatorBox.className = "alert alert-success d-flex justify-content-between align-items-center p-3 mb-4";
-            statusKeterangan.innerHTML = `<i class="bi bi-check-circle-fill"></i> Valid (Sisa kuantitas aman: ${sisaMaksimal - totalInputSekarang} Pcs)`;
-            btnSubmit.removeAttribute('disabled');
-        } else if (totalInputSekarang > sisaMaksimal) {
-            // Kondisi Error: Inputan melampaui sisa orderan (Over-input)
-            validatorBox.className = "alert alert-danger d-flex justify-content-between align-items-center p-3 mb-4";
-            statusKeterangan.innerHTML = `<i class="bi bi-exclamation-octagon-fill"></i> Over-Input! Maksimal sisa hanya ${sisaMaksimal} Pcs.`;
-            btnSubmit.setAttribute('disabled', 'true');
+        // Jika kuota sisa tanggungan dari database sudah 0 (Pekerjaan Selesai)
+        if (sisaTanggungan <= 0) {
+            totalDisplay.innerText = "0 Pcs (Sudah Terpenuhi)";
+            btnSubmit.disabled = true;
+            btnSubmit.className = "btn btn-success px-4 fw-bold";
+            btnSubmit.innerText = "Job Order Selesai";
+            inputs.forEach(input => input.disabled = true);
+            return;
+        }
+
+        // Validasi pembatasan inputan user secara realtime
+        if (total > sisaTanggungan) {
+            totalDisplay.classList.remove('text-dark');
+            totalDisplay.classList.add('text-danger', 'fw-bold');
+            btnSubmit.disabled = true; 
+            btnSubmit.innerText = "Melebihi Sisa Kuota (" + sisaTanggungan + " Pcs)!";
+        } else if (total <= 0) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "Jumlah Setoran Tidak Boleh 0";
         } else {
-            // Kondisi Awal / Masih Kosong (0 pcs)
-            validatorBox.className = "alert alert-warning d-flex justify-content-between align-items-center p-3 mb-4";
-            statusKeterangan.innerText = "Masukkan kuantitas barang untuk membuka tombol kunci.";
-            btnSubmit.setAttribute('disabled', 'true');
+            totalDisplay.classList.remove('text-danger');
+            totalDisplay.classList.add('text-dark');
+            btnSubmit.disabled = false; 
+            
+            // Perubahan teks tombol dinamis mengikuti target hitungan
+            if (total === sisaTanggungan) {
+                btnSubmit.innerText = "Simpan & Selesaikan Job Order";
+            } else {
+                btnSubmit.innerText = "Simpan Setoran / QC (Parsial)";
+            }
         }
     }
 
-    // Pasang listener ketikan keyboard pada ketiga kolom input kuantitas
-    inputAcc.addEventListener('input', validasiKuantitasParsial);
-    inputDef.addEventListener('input', validasiKuantitasParsial);
-    inputRej.addEventListener('input', validasiKuantitasParsial);
+    inputs.forEach(input => {
+        input.addEventListener('input', hitungTotal);
+    });
+
+    // Jalankan kalkulasi pertama kali saat halaman dimuat
+    hitungTotal();
+});
 </script>
 @endsection

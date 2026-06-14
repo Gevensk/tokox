@@ -13,6 +13,7 @@ use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\NotaOrderController;
 use App\Http\Controllers\PenyesuaianStokBahanController;
 use App\Http\Controllers\NotaStokKeluarController;
+use App\Http\Controllers\HasilProduksiController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -70,5 +71,8 @@ Route::prefix('penyesuaian_stok')->name('penyesuaian_stok.')->group(function () 
 });
 
 Route::resource('nota-stok-keluar', NotaStokKeluarController::class)->names('nota_keluar');
+
+Route::get('/hasil-produksi/create', [HasilProduksiController::class, 'create'])->name('hasil_produksi.create');
+Route::post('/hasil-produksi/store', [HasilProduksiController::class, 'store'])->name('hasil_produksi.store');
 
 

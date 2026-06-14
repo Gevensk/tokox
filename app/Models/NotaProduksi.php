@@ -10,7 +10,7 @@ class NotaProduksi extends Model
     //
     use HasFactory;
     protected $table ='nota_produksi';
-    protected $fillable = ['penjahit_id','no_surat_jalan','tgl_order','tgl_kirim','status_nota','status_kirim','ongkir_kirim_bahan'];
+    protected $fillable = ['penjahit_id','no_surat_jalan','tgl_order','tgl_kirim','status_nota','status_kirim','ongkir_kirim_bahan','catatan'];
 
     public function penjahit()
     {

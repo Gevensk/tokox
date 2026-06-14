@@ -2,7 +2,18 @@
 
 @section('content')
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    @php
+        // Cek apakah nota sudah masuk produksi atau belum
+        $bisaDimodifikasi = true;
+        foreach($notaOrder->job_orders as $job) {
+            if($job->status_pesanan !== 'Antrean' || !is_null($job->nota_produksi_id)) {
+                $bisaDimodifikasi = false;
+                break;
+            }
+        }
+    @endphp
+
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
         <div>
             <a href="{{ route('nota_order.index') }}" class="btn btn-sm btn-outline-secondary">← Kembali ke Daftar</a>
         </div>
@@ -10,14 +21,20 @@
             <a href="{{ route('nota_order.print', $notaOrder->id) }}" target="_blank" class="btn btn-success fw-bold">
                 Cetak / Simpan PDF
             </a>
-            <a href="{{ route('nota_order.edit', $notaOrder->id) }}" class="btn btn-warning fw-bold">
-                Edit Order
-            </a>
-            <form action="{{ route('nota_order.destroy', $notaOrder->id) }}" method="POST" onsubmit="return confirm('Hapus nota?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-danger fw-bold">Hapus Total</button>
-            </form>
+            
+            {{-- Tombol Edit & Hapus hanya tampil jika belum diproduksi --}}
+            @if($bisaDimodifikasi)
+                <a href="{{ route('nota_order.edit', $notaOrder->id) }}" class="btn btn-warning fw-bold">
+                    Edit Order
+                </a>
+                <form action="{{ route('nota_order.destroy', $notaOrder->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus total nota order ini?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger fw-bold">Hapus Total</button>
+                </form>
+            @else
+                <button class="btn btn-secondary fw-bold" disabled title="Sudah diproduksi"> Locked / Sedang Diproduksi</button>
+            @endif
         </div>
     </div>
 

@@ -87,7 +87,7 @@
                                                     🔒 Terima Hasil
                                                 </button>
                                             @else
-                                                <a href="{{ route('nota_production.show', $prod->id) }}" class="btn btn-sm btn-success fw-bold text-nowrap" style="width: 120px;">
+                                                <a href="{{ route('hasil_produksi.create', ['job_id' => $prod->jobOrders->first()->id ?? 0]) }}" class="btn btn-sm btn-success fw-bold text-nowrap" style="width: 120px;">
                                                     ✔ Terima & QC
                                                 </a>
                                             @endif
