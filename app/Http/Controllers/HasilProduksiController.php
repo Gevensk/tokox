@@ -47,7 +47,8 @@ class HasilProduksiController extends Controller
         DB::beginTransaction();
 
         try {
-            $job = JobOrder::with('nota_order')->lockForUpdate()->findOrFail($request->job_order_id);
+            // Ambil data job order beserta varian produk utamanya
+            $job = JobOrder::with(['nota_order', 'produk_varian'])->lockForUpdate()->findOrFail($request->job_order_id);
 
             // Hitung akumulasi qty yang sudah masuk QC sebelumnya
             $totalSudahQC = HasilProduksi::where('job_order_id', $job->id)
@@ -84,16 +85,78 @@ class HasilProduksiController extends Controller
             $hasil->catatan_qc          = $request->catatan_qc;
             $hasil->save();
 
-            // 3. Tambah stok komoditas di tabel produk_varian (Hanya yang Accepted)
-            if ($request->qty_accepted > 0) {
-                $varian = ProdukVarian::lockForUpdate()->find($job->produk_varian_id);
-                if ($varian) {
-                    $varian->stok_tersedia += $request->qty_accepted;
-                    $varian->save();
+            // Total fisik yang selamat dan bernilai ekonomis (bisa dijual) pada batch ini
+            $totalBarangLayakJual = $request->qty_accepted + $request->qty_rejected_defect;
+
+            // ========================================================================
+            // HITUNG HPP AKTUAL & MOVING AVERAGE (LOGIKA SKRIPSI AKUNTANSI)
+            // ========================================================================
+            if ($totalBarangLayakJual > 0) {
+                $varianNormal = $job->produk_varian;
+
+                if ($varianNormal) {
+                    // A. Ambil porsi nilai Job Order induk (Bahan baku + Jasa + Ongkir Kirim Awal) yang tersimpan di total_hpp_job
+                    // Nilai ini dialokasikan secara proporsional berdasarkan jumlah barang layak jual dari batch ini terhadap target total job
+                    $porsiModalIndukBatchIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
+
+                    // B. Tambahkan biaya ongkir kurir balik (ongkir hasil produksi) secara penuh untuk batch penerimaan saat ini
+                    $totalModalAktualBatchIni = $porsiModalIndukBatchIni + $request->ongkir_hasil_produksi;
+
+                    // C. Hitung HPP Satuan Aktual Baru untuk batch ini
+                    $hppSatuanAktual = $totalModalAktualBatchIni / $totalBarangLayakJual;
+
+                    // 3. TAMBAH STOK & HITUNG MOVING AVERAGE PRODUK BAGUS (GRADE A - ACCEPTED)
+                    if ($request->qty_accepted > 0) {
+                        $stokLamaA = $varianNormal->stok_tersedia;
+                        $hargaAvgLamaA = $varianNormal->harga_rata_rata;
+
+                        // Rumus Baku Moving Average: (Stok Lama * Avg Lama) + (Qty Baru * HPP Baru) / (Stok Lama + Qty Baru)
+                        if (($stokLamaA + $request->qty_accepted) > 0) {
+                            $hargaAvgBaruA = (($stokLamaA * $hargaAvgLamaA) + ($request->qty_accepted * $hppSatuanAktual)) / ($stokLamaA + $request->qty_accepted);
+                            $varianNormal->harga_rata_rata = $hargaAvgBaruA;
+                        }
+
+                        $varianNormal->stok_tersedia += $request->qty_accepted;
+                        $varianNormal->save();
+                    }
+
+                    // 4. TAMBAH STOK & HITUNG MOVING AVERAGE PRODUK CACAT (GRADE B - REJECTED DEFECT)
+                    if ($request->qty_rejected_defect > 0) {
+                        // Cari baris produk cacat yang berakhiran SKU '-DF' atau bertanda is_defect = 1
+                        $varianDefect = ProdukVarian::where('produk_id', $varianNormal->produk_id)
+                            ->where('sku', $varianNormal->sku . '-DF')
+                            ->where('is_defect', 1)
+                            ->first();
+
+                        // Jika item penampung produk cacat belum pernah ada di database, buat otomatis
+                        if (!$varianDefect) {
+                            $varianDefect = ProdukVarian::create([
+                                'produk_id'       => $varianNormal->produk_id,
+                                'nama_varian'     => $varianNormal->nama_varian . ' (Defect/Grade B)',
+                                'sku'             => $varianNormal->sku . '-DF',
+                                'harga_jual'      => $varianNormal->harga_jual * 0.6, // Otomatis diskon harga jual 40%
+                                'stok_tersedia'   => 0,
+                                'harga_rata_rata' => 0,
+                                'is_defect'       => 1
+                            ]);
+                        }
+
+                        $stokLamaB = $varianDefect->stok_tersedia;
+                        $hargaAvgLamaB = $varianDefect->harga_rata_rata;
+
+                        // Perhitungan Moving Average untuk produk Cacat menggunakan nilai dasar HPP yang sama adilnya
+                        if (($stokLamaB + $request->qty_rejected_defect) > 0) {
+                            $hargaAvgBaruB = (($stokLamaB * $hargaAvgLamaB) + ($request->qty_rejected_defect * $hppSatuanAktual)) / ($stokLamaB + $request->qty_rejected_defect);
+                            $varianDefect->harga_rata_rata = $hargaAvgBaruB;
+                        }
+
+                        $varianDefect->stok_tersedia += $request->qty_rejected_defect;
+                        $varianDefect->save();
+                    }
                 }
             }
 
-            // 4. Update Status Job Order dengan standarisasi tipe data Integer
+            // 5. Update Status Job Order dengan standarisasi tipe data Integer
             $totalSetelahQCBaru = (int)$totalSudahQC + (int)$totalInputSekarang;
             $targetJumlah = (int)$job->jumlah;
             
@@ -108,28 +171,25 @@ class HasilProduksiController extends Controller
                 ]);
             }
 
-            // 5. OTOMATISASI UPDATE STATUS PADA NOTA PRODUKSI (Halaman Surat Jalan Monitoring)
+            // 6. OTOMATISASI UPDATE STATUS PADA NOTA PRODUKSI (Halaman Surat Jalan Monitoring)
             if ($job->nota_produksi_id) {
-                // Tarik semua job order yang berada di bawah satu surat jalan nota jahit ini
                 $semuaJobDiNotaProduksi = JobOrder::where('nota_produksi_id', $job->nota_produksi_id)->get();
                 
                 $jumlahJobSelesaiQC = $semuaJobDiNotaProduksi->where('status_pesanan', 'Selesai')->count();
                 $totalJobDiNotaProduksi = $semuaJobDiNotaProduksi->count();
 
                 if ($jumlahJobSelesaiQC === $totalJobDiNotaProduksi) {
-                    // Jika seluruh item di nota produksi ini berstatus 'Selesai', tandai Nota Produksi Utama sebagai Selesai
                     DB::table('nota_produksi')
                         ->where('id', $job->nota_produksi_id)
                         ->update(['status_nota' => 'Selesai']);
                 } else {
-                    // Jika masih ada sisa item jahit yang belum lunas
                     DB::table('nota_produksi')
                         ->where('id', $job->nota_produksi_id)
                         ->update(['status_nota' => 'Proses']);
                 }
             }
 
-            // 6. Otomatisasi Penutupan Status Nota Order Induk (Pesanan Pelanggan)
+            // 7. Otomatisasi Penutupan Status Nota Order Induk (Pesanan Pelanggan)
             if ($job->nota_order_id) {
                 $semuaJobDiNotaIni = JobOrder::where('nota_order_id', $job->nota_order_id)->get();
                 $jumlahJobSelesai  = $semuaJobDiNotaIni->where('status_pesanan', 'Selesai')->count();
@@ -148,7 +208,7 @@ class HasilProduksiController extends Controller
 
             DB::commit();
             return redirect()->route('job_order.index')
-                ->with('success', "Setoran berhasil disimpan! {$request->qty_accepted} Pcs masuk ke stok produk jadi.");
+                ->with('success', "Setoran berhasil disimpan! Stok produk diperbarui dan Nilai HPP Rata-rata (Moving Average) berhasil dikalkulasi ulang otomatis.");
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -10,18 +10,6 @@
             <div class="card-body">
                 <form action="/customer" method="POST">
                     @csrf
-                    
-                    <div class="mb-3">
-                        <label class="form-label d-block">Tipe Customer</label>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="tipe" id="tipeCustomer" value="customer" checked onclick="toggleInput(false)">
-                            <label class="form-check-label" for="tipeCustomer">Pelanggan Umum (Custom)</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="tipe" id="tipeInternal" value="internal" onclick="toggleInput(true)">
-                            <label class="form-check-label" for="tipeInternal">Internal (Stok Toko)</label>
-                        </div>
-                    </div>
 
                     <div class="mb-3">
                         <label class="form-label">Nama Customer</label>

@@ -7,8 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class JobOrder extends Model
 {
-    //
-use HasFactory;
+    use HasFactory;
 
     protected $table = 'job_order';
 
@@ -31,7 +30,7 @@ use HasFactory;
 
     public function nota_produksi()
     {
-        return $this->belongsTo(NotaProduksi::class,'nota_produksi_id');
+        return $this->belongsTo(NotaProduksi::class, 'nota_produksi_id');
     }
 
     public function nota_order()
@@ -46,7 +45,29 @@ use HasFactory;
 
     public function pemakaian_bahan()
     {
-        // Hubungkan ke model PemakaianBahan dengan foreign key job_order_id
         return $this->hasMany(PemakaianBahan::class, 'job_order_id');
+    }
+
+    /**
+     * Mengambil data penjahit secara tidak langsung melalui Nota Produksi (Surat Jalan)
+     */
+    public function penjahit()
+    {
+        return $this->hasOneThrough(
+            Penjahit::class,
+            NotaProduksi::class,
+            'id', // Foreign key di nota_produksi mendatangi job_order
+            'id', // Foreign key di penjahit mendatangi nota_produksi
+            'nota_produksi_id', // Local key di job_order
+            'penjahit_id' // Local key di nota_produksi
+        );
+    }
+
+    /**
+     * Relasi ke hasil produksi / setoran QC
+     */
+    public function hasil_produksis()
+    {
+        return $this->hasMany(HasilProduksi::class, 'job_order_id'); 
     }
 }

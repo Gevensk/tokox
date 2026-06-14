@@ -149,7 +149,7 @@
             </li>
             <li>
                 <a href="{{ route('job_order.index') }}" class="nav-link {{ Request::is('job_order*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-boxes-packing me-2"></i> Job Order
+                    <i class="fa-solid fa-boxes-packing me-2"></i> Daftar Job Order
                 </a>
             </li>   
 

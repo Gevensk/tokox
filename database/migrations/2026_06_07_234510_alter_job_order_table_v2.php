@@ -9,42 +9,29 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-      public function up(): void
+    public function up()
     {
-        Schema::disableForeignKeyConstraints();
-
         Schema::table('job_order', function (Blueprint $table) {
-            if (Schema::hasColumn('job_order', 'customer_id')) {
-                $table->dropColumn('customer_id');
-            }
-   
-            if (Schema::hasColumn('job_order', 'ongkir_terima_barang')) {
-                $table->dropColumn('ongkir_terima_barang');
-            }
+            // 1. Hapus foreign key-nya terlebih dahulu
+            $table->dropForeign(['customer_id']); 
+            // ATAU gunakan nama constraint-nya langsung jika di atas gagal:
+            // $table->dropForeign('job_order_customer_id_foreign');
 
-            if (!Schema::hasColumn('job_order', 'nota_order_id')) {
-                $table->foreignId('nota_order_id')->after('id')->constrained('nota_order')->onDelete('cascade');
-            }
-
-            $table->foreignId('nota_produksi_id')->nullable()->change();
-            $table->enum('status_pesanan', ['Antrean', 'Diproduksi', 'Selesai Parsial', 'Selesai'])->default('Antrean')->change();
+            // 2. Baru setelah itu kolomnya aman untuk dihapus
+            $table->dropColumn('customer_id');
         });
-
-        Schema::enableForeignKeyConstraints();
     }
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        Schema::table('job_order', function (Blueprint $table) {
-            // Logika untuk mengembalikan struktur jika kamu melakukan rollback (opsional)
-            $table->dropForeign(['nota_order_id']);
-            $table->dropColumn('nota_order_id');
-            $table->foreignId('customer_id')->constrained('customer');
-            $table->decimal('ongkir_terima_barang', 15, 2)->default(0);
-            $table->foreignId('nota_produksi_id')->nullable(false)->change();
-            $table->string('status_pesanan')->default('Pending')->change();
-        });
-    }
+public function down()
+{
+    Schema::table('job_order', function (Blueprint $table) {
+        // 1. Buat kembali kolomnya
+        $table->unsignedBigInteger('customer_id')->nullable(); 
+
+        // 2. Pasang kembali foreign key relasinya
+        $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
+    });
+}
 };

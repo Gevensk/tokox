@@ -9,13 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('job_order', function (Blueprint $table) {
-            // Menghapus kolom ld_req dan pb_req dari tabel job_order
-            $table->dropColumn(['ld_req', 'pb_req']);
-        });
-    }
+public function up()
+{
+    Schema::table('job_order', function (Blueprint $table) {
+        // Cek dulu apakah kolom 'ld_req' ada, kalau ada baru hapus
+        if (Schema::hasColumn('job_order', 'ld_req')) {
+            $table->dropColumn('ld_req');
+        }
+        
+        // Cek dulu apakah kolom 'pb_req' ada, kalau ada baru hapus
+        if (Schema::hasColumn('job_order', 'pb_req')) {
+            $table->dropColumn('pb_req');
+        }
+    });
+}
 
     /**
      * Reverse the migrations.

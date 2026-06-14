@@ -55,11 +55,7 @@
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="ukuran[]" value="XL" id="sizeXL" checked>
                                         <label class="form-check-label" for="sizeXL">XL</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="Custom Size" id="sizeCustom" checked>
-                                        <label class="form-check-label" for="sizeCustom" class="text-primary fw-bold">Custom Size</label>
-                                    </div>
+                                    </div>                               
                                 </div>
                             </div>
                             
