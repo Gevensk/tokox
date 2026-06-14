@@ -41,8 +41,8 @@
 
                 <div class="row mb-4">
                     <div class="col-md-4 mb-3">
-                        <label class="form-label">Total Harga Deal (Rp)</label>
-                        <input type="number" name="harga_deal" class="form-control" placeholder="Contoh: 160000" required>
+                        <label class="form-label">Total Keseluruhan (Rp)</label>
+                        <input type="number" name="total_harga" id="total_harga" class="form-control" placeholder="Otomatis terhitung" readonly required>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Nominal DP Masuk (Rp)</label>
@@ -59,11 +59,12 @@
                     <table class="table table-bordered align-middle" id="tabel-job-order">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 25%;">Pilih Produk</th>
-                                <th style="width: 25%;">Pilih Varian</th>
+                                <th style="width: 20%;">Pilih Produk</th>
+                                <th style="width: 20%;">Pilih Varian</th>
                                 <th style="width: 10%;">Qty</th>
+                                <th style="width: 15%;">Harga Satuan (Rp)</th>
                                 <th style="width: 10%;">Custom?</th>
-                                <th style="width: 25%;">Spesifikasi Kustomisasi</th>
+                                <th style="width: 20%;">Spesifikasi Kustomisasi</th>
                                 <th style="width: 5%;">Aksi</th>
                             </tr>
                         </thead>
@@ -83,7 +84,10 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[0][jumlah]" class="form-control" min="1" value="1" required>
+                                    <input type="number" name="items[0][jumlah]" class="form-control input-qty" min="1" value="1" required>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[0][harga_satuan_jual]" class="form-control input-harga" placeholder="Input Harga" min="0" required>
                                 </td>
                                 <td>
                                     <select name="items[0][is_custom]" class="form-select select-is-custom">
@@ -93,7 +97,7 @@
                                 </td>
                                 <td>
                                     <div class="wrapper-fitur-custom d-none">
-                                        <input type="text" name="items[0][catatan_custom]" class="form-control form-control-sm" placeholder="Contoh: LD 105cm, PB 75cm, Lengan 3/4, kancing merah">
+                                        <input type="text" name="items[0][catatan_custom]" class="form-control form-control-sm" placeholder="Spesifikasi kustom">
                                     </div>
                                     <span class="text-muted standar-label">Mengikuti Spek Standard</span>
                                 </td>
@@ -118,13 +122,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let barisIndex = 1;
-
     const containerBaris = document.getElementById('container-baris-order');
     const btnTambah = document.getElementById('btn-tambah-baris');
     const tipeOrder = document.getElementById('tipe_order');
     const wrapperCustomer = document.getElementById('wrapper_customer');
 
-    // 1. Sembunyikan Customer jika internal stok toko sendiri
     tipeOrder.addEventListener('change', function() {
         if (this.value === 'Internal') {
             wrapperCustomer.classList.add('d-none');
@@ -135,26 +137,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 2. Klik Tambah Baris Baru Secara Dinamis
     btnTambah.addEventListener('click', function() {
         const barisPertama = containerBaris.querySelector('.baris-job');
         const barisBaru = barisPertama.cloneNode(true);
-
         barisBaru.setAttribute('data-index', barisIndex);
         
-        // Reset input value di baris baru
-        barisBaru.querySelectorAll('input').forEach(input => input.value = input.type === 'number' ? 1 : '');
+        barisBaru.querySelectorAll('input').forEach(input => {
+            input.value = input.classList.contains('input-qty') ? 1 : '';
+        });
         barisBaru.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
         
-        // Reset Dropdown varian agar terkunci kembali di baris baru
         const selectVarianBaru = barisBaru.querySelector('.select-varian');
         selectVarianBaru.innerHTML = '<option value="">-- Pilih Varian --</option>';
         selectVarianBaru.setAttribute('disabled', 'disabled');
-
         barisBaru.querySelector('.wrapper-fitur-custom').classList.add('d-none');
         barisBaru.querySelector('.standar-label').classList.remove('d-none');
 
-        // Mapping ulang nama attribute array index html (items[0] -> items[1])
         barisBaru.querySelectorAll('[name]').forEach(element => {
             const nameAttr = element.getAttribute('name');
             const updatedName = nameAttr.replace(/items\[\d+\]/, `items[${barisIndex}]`);
@@ -166,10 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         barisIndex++;
     });
 
-    // 3. Logika Utama: Fetch API Dropdown Berantai Saat Produk Dipilih
     containerBaris.addEventListener('change', function(e) {
-        
-        // JIKA DROPDOWN PRODUK DIUBAH
         if (e.target.classList.contains('select-produk')) {
             const produkId = e.target.value;
             const baris = e.target.closest('.baris-job');
@@ -181,30 +176,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Panggil API Varian sesuai ID produk
             fetch(`/api/produk/${produkId}/varian`)
                 .then(response => response.json())
                 .then(data => {
                     selectVarian.innerHTML = '<option value="">-- Pilih Varian --</option>';
-                    
                     if (data.length > 0) {
                         data.forEach(varian => {
-                            selectVarian.innerHTML += `<option value="${varian.id}">${varian.warna} - Sizing: ${varian.ukuran} (Stok: ${varian.stok_tersedia ?? 0})</option>`;
+                            selectVarian.innerHTML += `<option value="${varian.id}">${varian.warna} - Sizing: ${varian.ukuran}</option>`;
                         });
                         selectVarian.removeAttribute('disabled');
                     } else {
                         selectVarian.innerHTML = '<option value="">Belum ada data varian</option>';
                         selectVarian.setAttribute('disabled', 'disabled');
                     }
-                })
-                .catch(error => {
-                    console.error('Gagal memuat varian:', error);
-                    selectVarian.innerHTML = '<option value="">Gagal memuat data</option>';
-                    selectVarian.setAttribute('disabled', 'disabled');
                 });
         }
 
-        // JIKA DROPDOWN IS_CUSTOM DIUBAH
         if (e.target.classList.contains('select-is-custom')) {
             const baris = e.target.closest('.baris-job');
             const wrapperCustom = baris.querySelector('.wrapper-fitur-custom');
@@ -216,15 +203,32 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 wrapperCustom.classList.add('d-none');
                 standarLabel.classList.remove('d-none');
-                wrapperCustom.querySelector('input').value = ''; // Hanya mereset input catatan_custom
+                wrapperCustom.querySelector('input').value = '';
             }
         }
     });
 
-    // 4. Tombol Hapus Baris
+    // Otomatisasi Perhitungan Total Grand Harga
+    containerBaris.addEventListener('input', function() {
+        let grandTotal = 0;
+        containerBaris.querySelectorAll('.baris-job').forEach(baris => {
+            const qty = parseFloat(baris.querySelector('.input-qty').value) || 0;
+            const harga = parseFloat(baris.querySelector('.input-harga').value) || 0;
+            grandTotal += (qty * harga);
+        });
+        document.getElementById('total_harga').value = grandTotal;
+    });
+
     containerBaris.addEventListener('click', function(e) {
         if (e.target.classList.contains('btn-hapus-baris')) {
             e.target.closest('.baris-job').remove();
+            let grandTotal = 0;
+            containerBaris.querySelectorAll('.baris-job').forEach(baris => {
+                const qty = parseFloat(baris.querySelector('.input-qty').value) || 0;
+                const harga = parseFloat(baris.querySelector('.input-harga').value) || 0;
+                grandTotal += (qty * harga);
+            });
+            document.getElementById('total_harga').value = grandTotal;
         }
     });
 });

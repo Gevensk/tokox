@@ -40,13 +40,13 @@ Route::resource('nota_produksi', NotaProduksiController::class);
 
 Route::resource('job_order',JobOrderController::class);
 
-// Route reguler untuk Nota Order
+Route::get('/api/produk/{id}/varian', [App\Http\Controllers\NotaOrderController::class, 'getVarianByProduk']);
+
+// Route CRUD Nota Order
 Route::resource('nota_order', NotaOrderController::class);
 
-// Route khusus untuk melayani AJAX JavaScript penarik varian produk
-Route::get('/api/produk/{id}/varian', [NotaOrderController::class, 'getVarianByProduk']);
-// Sesuaikan bagian ->name() menjadi 'nota_order.pdf'
-Route::get('nota_order/{id}/pdf', [NotaOrderController::class, 'cetakPdf'])->name('nota_order.pdf');
+// Route khusus untuk mencetak Nota ke PDF / halaman print khusus
+Route::get('nota_order/{id}/print', [NotaOrderController::class, 'cetakPdf'])->name('nota_order.print');
 
 Route::resource('nota_production', App\Http\Controllers\NotaProduksiController::class);
 Route::post('nota_production/{id}/finish', [App\Http\Controllers\NotaProduksiController::class, 'finish'])->name('nota_production.finish');

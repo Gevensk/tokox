@@ -17,33 +17,20 @@ class NotaOrder extends Model
         'customer_id',
         'tgl_order',
         'tgl_deadline',
-        'harga_deal',
+        'total_harga',        
         'nominal_dp_masuk',
+        'harga_satuan_items', // Nilai default single decimal/opsional
         'status_bayar',
-        'rincian_harga_nota',
         'status_order'
     ];
 
-    protected $casts = [
-    // Mengubah string JSON di database otomatis menjadi Array PHP biasa saat diakses
-    'rincian_harga_nota' => 'array',
-];
-
-    /**
-     * TAMBAHKAN INI: Relasi ke tabel Customer (Sesuai ERD)
-     */
     public function customer()
     {
-        // Menyatakan bahwa nota_order dimiliki oleh satu customer melalui customer_id
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
-    /**
-     * PASTIKAN INI JUGA ADA: Relasi ke detail Job Order
-     */
     public function job_orders()
     {
-        // Menyatakan bahwa satu nota_order memiliki banyak baris job_order
         return $this->hasMany(JobOrder::class, 'nota_order_id');
     }
 }
