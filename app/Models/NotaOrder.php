@@ -19,7 +19,7 @@ class NotaOrder extends Model
         'tgl_deadline',
         'total_harga',        
         'nominal_dp_masuk',
-        'harga_satuan_items', // Nilai default single decimal/opsional
+        'harga_satuan_items', 
         'status_bayar',
         'status_order'
     ];

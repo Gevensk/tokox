@@ -29,6 +29,11 @@ use HasFactory;
         'tgl_selesai',
     ];
 
+    public function nota_produksi()
+    {
+        return $this->belongsTo(NotaProduksi::class,'nota_produksi_id');
+    }
+
     public function nota_order()
     {
         return $this->belongsTo(NotaOrder::class, 'nota_order_id');
