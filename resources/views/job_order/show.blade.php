@@ -54,7 +54,7 @@
                                 <td class="text-end text-danger fw-semibold">+ Rp {{ number_format($ongkirKirimAwal, 0, ',', '.') }}</td>
                             </tr>
                             <tr class="table-light">
-                                <td class="fw-bold">Total Modal Diinvestasikan</td>
+                                <td class="fw-bold">Total Modal</td>
                                 <td class="text-end fw-bold text-dark">Rp {{ number_format($job->total_hpp_job, 0, ',', '.') }}</td>
                             </tr>
                             <tr class="border-bottom">

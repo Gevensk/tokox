@@ -81,7 +81,7 @@
                                             </button>
                                         @endif
 
-                                        @if(($prod->status_nota ?? 'Proses') == 'Proses')
+                                        {{-- @if(($prod->status_nota ?? 'Proses') == 'Proses')
                                             @if(($prod->status_kirim ?? 'Belum Dikirim') == 'Belum Dikirim')
                                                 <button class="btn btn-sm btn-secondary text-white text-nowrap" disabled data-bs-toggle="tooltip" title="Kirim bahan terlebih dahulu" style="width: 120px;">
                                                     🔒 Terima Hasil
@@ -95,7 +95,7 @@
                                             <span class="badge bg-success py-2 text-nowrap text-center d-inline-block" style="width: 120px; line-height: 1.5;">
                                                 ✓ Selesai
                                             </span>
-                                        @endif
+                                        @endif --}}
                                     </div>
                                 </td>
                             </tr>

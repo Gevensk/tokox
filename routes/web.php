@@ -59,7 +59,7 @@ Route::post('nota_production/{id}/kirim-bahan', [App\Http\Controllers\NotaProduk
 Route::get('nota_production/{id}/cetak-pdf', [App\Http\Controllers\NotaProduksiController::class, 'cetakPdf'])->name('nota_production.cetak_pdf');
 
 // Route untuk menampilkan halaman form terima hasil & QC
-Route::get('/nota-produksi/terima/{job_id}', [NotaProduksiController::class, 'createHasilProduksi'])->name('hasil_produksi.create');
+Route::get('/nota-produksi/terima/{job_id}', [NotaProduksiController::class, 'createHasilProduksi'])->name('nota_produksi.terima_hasil');
 
 // Route untuk memproses simpan data QC & penerimaan barang
 Route::post('/nota-produksi/terima/store', [NotaProduksiController::class, 'storeHasilProduksi'])->name('hasil_produksi.store');

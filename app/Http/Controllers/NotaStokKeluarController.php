@@ -39,80 +39,102 @@ class NotaStokKeluarController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'customer_id'   => 'required|exists:customer,id',
-            'tipe_keluar'   => 'required|in:penjualan_order,penjualan_langsung',
-            'nota_order_id' => 'nullable|required_if:tipe_keluar,penjualan_order|exists:nota_order,id',
-            'total_bayar'   => 'required|numeric|min:0',
-            'items'         => 'required|array|min:1',
-            'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
-            'items.*.qty'              => 'required|integer|min:1',
-            'items.*.harga_satuan'     => 'required|numeric|min:0',
+{
+    $request->validate([
+        'customer_id'   => 'required|exists:customer,id',
+        'tipe_keluar'   => 'required|in:penjualan_order,penjualan_langsung',
+        'nota_order_id' => 'nullable|required_if:tipe_keluar,penjualan_order|exists:nota_order,id',
+        'total_bayar'   => 'required|numeric|min:0',
+        'items'         => 'required|array|min:1',
+        'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
+        'items.*.qty'              => 'required|integer|min:1',
+        'items.*.harga_satuan'     => 'required|numeric|min:0',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+        $notaOrderId = $request->nota_order_id;
+        $totalBayarInput = $request->total_bayar;
+
+        // VALIDASI SKENARIO 1: JIKA MELALUI NOTA ORDER (INDEN / CUSTOM BUDI & SITI)
+        if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
+            $notaOrder = NotaOrder::findOrFail($notaOrderId);
+            
+            // Hitung sisa yang harus dilunasi
+            $sisaPelunasan = $notaOrder->harga_deal - $notaOrder->nominal_dp_masuk;
+
+            // Aturan: Barang TIDAK BISA KELUAR jika pembayaran kurang dari sisa pelunasan
+            if ($totalBayarInput < $sisaPelunasan) {
+                return redirect()->back()
+                    ->with('error', "Gagal! Sisa pelunasan order ini adalah Rp " . number_format($sisaPelunasan, 0, ',', '.') . ". Uang yang dibayarkan kurang.")
+                    ->withInput();
+            }
+
+            $notaOrder->update(['status_bayar' => 'Lunas']);
+        }
+
+        // 1. Simpan data induk (Header)
+        $notaKeluar = NotaStokKeluar::create([
+            'customer_id'   => $request->customer_id,
+            'nota_order_id' => $request->tipe_keluar === 'penjualan_order' ? $notaOrderId : null,
+            'tipe_keluar'   => $request->tipe_keluar,
+            'total_bayar'   => $totalBayarInput, 
         ]);
 
-        DB::beginTransaction();
+        // 2. Simpan detail barang & potong stok pintar (Mengakomodasi Custom Order)
+        foreach ($request->items as $item) {
+            $produkVarian = ProdukVarian::findOrFail($item['produk_varian_id']);
+            $subtotal = $item['qty'] * $item['harga_satuan'];
 
-        try {
-            $notaOrderId = $request->nota_order_id;
-            $totalBayarInput = $request->total_bayar;
-
-            // VALIDASI SKENARIO 1: JIKA MELALUI NOTA ORDER (INDEN)
-            if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
-                $notaOrder = NotaOrder::findOrFail($notaOrderId);
+            // =========================================================================
+            // PERUBAHAN LOGIKA POTONG STOK
+            // =========================================================================
+            if ($request->tipe_keluar === 'penjualan_langsung') {
                 
-                // Hitung sisa yang harus dilunasi
-                $sisaPelunasan = $notaOrder->harga_deal - $notaOrder->nominal_dp_masuk;
-
-                // Aturan: Barang TIDAK BISA KELUAR jika pembayaran kurang dari sisa pelunasan
-                if ($totalBayarInput < $sisaPelunasan) {
-                    return redirect()->back()
-                        ->with('error', "Gagal! Sisa pelunasan order ini adalah Rp " . number_format($sisaPelunasan, 0, ',', '.') . ". Uang yang dibayarkan kurang.")
-                        ->withInput();
-                }
-
-                // PENYESUAIAN: Mengubah update status menggunakan huruf kapital 'Lunas' agar terbaca di View kamu
-                $notaOrder->update(['status_bayar' => 'Lunas']);
-            }
-
-            // 1. Simpan data induk (Header)
-            $notaKeluar = NotaStokKeluar::create([
-                'customer_id'   => $request->customer_id,
-                'nota_order_id' => $request->tipe_keluar === 'penjualan_order' ? $notaOrderId : null,
-                'tipe_keluar'   => $request->tipe_keluar,
-                'total_bayar'   => $totalBayarInput, // Uang tunai yang diterima hari ini
-            ]);
-
-            // 2. Simpan detail barang & potong stok
-            foreach ($request->items as $item) {
-                $produkVarian = ProdukVarian::findOrFail($item['produk_varian_id']);
-
-                // Validasi fisik kuantitas gudang
+                // SKENARIO A: Pembelian Langsung Toko -> Validasi & Potong Stok Toko Ready
                 if ($produkVarian->stok_tersedia < $item['qty']) {
-                    throw new \Exception("Stok tidak mencukupi untuk varian produk: {$produkVarian->nama_varian}");
+                    throw new \Exception("Stok toko tidak mencukupi untuk varian produk: {$produkVarian->warna} - {$produkVarian->ukuran}");
                 }
-
-                $subtotal = $item['qty'] * $item['harga_satuan'];
-
-                // Manfaatkan method relasi 'nota_keluar' milikmu untuk insert ke tabel pivot detail
-                $notaKeluar->nota_keluar()->create([
-                    'produk_varian_id' => $item['produk_varian_id'],
-                    'qty'              => $item['qty'],
-                    'harga_satuan'     => $item['harga_satuan'],
-                    'subtotal'         => $subtotal,
-                ]);
-
-                // Potong stok barang ready di gudang
+                
                 $produkVarian->stok_tersedia -= $item['qty'];
                 $produkVarian->save();
+
+            } else {
+                
+                // SKENARIO B: Pengambilan Pesanan Order (Budi / Siti)
+                // Kita validasi apakah jumlah baju custom mereka yang sudah selesai di tabel hasil_produksi mencukupi
+                $stokCustomReady = \App\Models\HasilProduksi::where('produk_varian_id', $item['produk_varian_id'])
+                    ->whereHas('job_order', function($query) use ($notaOrderId) {
+                        $query->where('nota_order_id', $notaOrderId);
+                    })
+                    ->where('status_alokasi', 'Pesanan Customer')
+                    ->sum('qty_accepted');
+
+                if ($stokCustomReady < $item['qty']) {
+                    throw new \Exception("Gagal Keluar! Jumlah baju custom yang selesai diproduksi ({$stokCustomReady} Pcs) kurang dari jumlah yang mau diambil ({$item['qty']} Pcs).");
+                }
+
+                // Catatan: Untuk pesanan customer, kita TIDAK memotong $produkVarian->stok_tersedia 
+                // karena dari awal sewaktu QC (Langkah 2) kodingan kita memang sengaja tidak menambahkannya ke stok_tersedia toko.
             }
+            // =========================================================================
 
-            DB::commit();
-            return redirect()->route('nota_keluar.index')->with('success', 'Nota stok keluar berhasil diterbitkan!');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+            // Simpan ke tabel pivot detail
+            $notaKeluar->nota_keluar()->create([
+                'produk_varian_id' => $item['produk_varian_id'],
+                'qty'              => $item['qty'],
+                'harga_satuan'     => $item['harga_satuan'],
+                'subtotal'         => $subtotal,
+            ]);
         }
+
+        DB::commit();
+        return redirect()->route('nota_keluar.index')->with('success', 'Nota stok keluar berhasil diterbitkan dan stok disesuaikan dengan akurat!');
+
+    } catch (\Exception $e) {
+        DB::rollback();
+        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
     }
+}
 }

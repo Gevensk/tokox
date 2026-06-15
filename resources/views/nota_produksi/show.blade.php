@@ -98,7 +98,7 @@
                                         <td class="text-center">
                                         @if($job->status_pesanan == 'Diproduksi')
                                             @if($nota->status_kirim == 'Dikirim')
-                                                <a href="{{ route('hasil_produksi.create', $job->id) }}" class="btn btn-sm btn-success fw-bold">
+                                                <a href="{{ route('nota_produksi.terima_hasil', ['job_id' => $job->id]) }}" class="btn btn-sm btn-success fw-bold">
                                                     <i class="bi bi-shield-check"></i> Terima Hasil & QC
                                                 </a>
                                             @else

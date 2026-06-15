@@ -38,13 +38,20 @@
                         @forelse($jobOrders as $job)
                         <tr>
                             <td class="text-center font-weight-bold text-secondary">#{{ $job->id }}</td>
+                            
                             <td>
-                                @if($job->foto_desain)
-                                    <img src="{{ asset('storage/' . $job->foto_desain) }}" class="img-thumbnail rounded" style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imgModal{{ $job->id }}">
+                                @if(!empty($job->foto_desain))
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($job->foto_desain) }}" 
+                                         class="img-thumbnail rounded" 
+                                         style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" 
+                                         data-bs-toggle="modal" 
+                                         data-bs-target="#imgModal{{ $job->id }}"
+                                         onerror="this.onerror=null; this.src='{{ asset('storage/' . $job->foto_desain) }}';">
                                 @else
                                     <div class="bg-light rounded text-center text-muted d-flex align-items-center justify-content-center border" style="width: 50px; height: 50px; font-size: 0.75rem;">No Img</div>
                                 @endif
                             </td>
+
                             <td>
                                 <span class="fw-bold text-dark">{{ $job->nota_produksi->penjahit->nama ?? 'Belum Ditunjuk' }}</span>
                                 <div class="small text-muted">SJ: {{ $job->nota_produksi->no_surat_jalan ?? '-' }}</div>
@@ -70,7 +77,7 @@
                                     </a>
 
                                     @if($job->status_pesanan != 'Selesai')
-                                    <a href="{{ route('hasil_produksi.create', ['job_id' => $job->id]) }}" class="btn btn-sm btn-success fw-bold">
+                                    <a href="{{ route('nota_produksi.terima_hasil', ['job_id' => $job->id]) }}" class="btn btn-sm btn-success fw-bold">
                                         <i class="fas fa-check-circle"></i> Input QC
                                     </a>
                                     @else
@@ -79,23 +86,6 @@
                                 </div>
                             </td>
                         </tr>
-
-                        @if($job->foto_desain)
-                        <div class="modal fade" id="imgModal{{ $job->id }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-dark text-white">
-                                        <h5 class="modal-title">Sketsa Desain Job #{{ $job->id }}</h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body text-center p-2 bg-light">
-                                        <img src="{{ asset('storage/' . $job->foto_desain) }}" class="img-fluid rounded shadow-sm">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
                         @empty
                         <tr>
                             <td colspan="7" class="text-center py-5 text-muted">📭 Belum ada Job Order yang berjalan saat ini.</td>
