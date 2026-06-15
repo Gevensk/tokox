@@ -100,7 +100,6 @@ class ProdukController extends Controller
             $cekDuplikat = ProdukVarian::where('produk_id', $produkId)
                             ->where('warna', $warnaInput)
                             ->where('ukuran', $ukuranInput)
-                            ->where('is_defect', 0) 
                             ->first();
 
             if ($cekDuplikat) {
@@ -115,8 +114,9 @@ class ProdukController extends Controller
                 'warna'            => $warnaInput,
                 'ukuran'           => $ukuranInput, // S, M, L, XL, atau "Custom Size" akan masuk ke sini
                 'stok_tersedia'    => 0,
+                'stok_defect'      => 0,
                 'harga_avg_produk' => 0,
-                'is_defect'        => 0,
+
             ]);
 
             $varianBerhasil++;

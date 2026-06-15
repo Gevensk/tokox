@@ -17,7 +17,6 @@
                     <th>Nama</th>
                     <th>Alamat</th>
                     <th>No HP</th>
-                    <th>Tipe</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -27,7 +26,6 @@
                     <td>{{ $s->nama }}</td>
                     <td>{{ $s->alamat }}</td>
                     <td>{{ $s->no_hp }}</td>
-                    <td>{{ $s->tipe }}</td>
                     <td>
                         <a href="/customer/{{ $s->id }}/edit" class="btn btn-warning btn-sm">Edit</a>
                         <form action="/customer/{{ $s->id }}" method="POST" class="d-inline">

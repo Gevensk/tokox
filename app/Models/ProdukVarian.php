@@ -8,7 +8,7 @@ class ProdukVarian extends Model
 {
     //
     protected $table = 'produk_varian';
-    protected $fillable = ['produk_id','warna','ukuran','stok_tersedia','harga_avg_produk','is_defect'];
+    protected $fillable = ['produk_id','warna','ukuran','stok_tersedia','stok_defect','harga_avg_produk'];
 
     public function produk(){
         return $this->belongsTo(Produk::class,'produk_id');

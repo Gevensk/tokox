@@ -18,15 +18,15 @@
 
                     <div class="mb-3">
                         <label class="form-label">Alamat</label>
-                        <textarea name="alamat" id="alamat" class="form-control" rows="2" placeholder="Alamat lengkap..."></textarea>
+                        <textarea name="alamat" id="alamat" class="form-control" rows="2" placeholder="Alamat lengkap..." required></textarea>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Nomor HP</label>
-                        <input type="text" name="no_hp" id="no_hp" class="form-control" placeholder="0812xxxx">
+                        <input type="text" name="no_hp" id="no_hp" class="form-control" placeholder="0812xxxx" required>
                     </div>
 
-                    <div class="d-inline">
+                    <div class="d-flex gap-2">
                         <a href="/customer" class="btn btn-secondary">Kembali</a>
                         <button type="submit" class="btn btn-success">Simpan Data</button>
                     </div>
@@ -35,29 +35,4 @@
         </div>
     </div>
 </div>
-
-<script>
-function toggleInput(isInternal) {
-    const nama = document.getElementById('nama');
-    const alamat = document.getElementById('alamat');
-    const no_hp = document.getElementById('no_hp');
-
-    if (isInternal) {
-        nama.value = "INTERNAL / STOK TOKO";
-        alamat.value = "-";
-        no_hp.value = "-";
-        // Opsional: buat jadi read-only agar tidak diubah-ubah
-        nama.readOnly = true;
-        alamat.readOnly = true;
-        no_hp.readOnly = true;
-    } else {
-        nama.value = "";
-        alamat.value = "";
-        no_hp.value = "";
-        nama.readOnly = false;
-        alamat.readOnly = false;
-        no_hp.readOnly = false;
-    }
-}
-</script>
 @endsection

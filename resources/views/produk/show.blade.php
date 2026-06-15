@@ -24,13 +24,13 @@
                 @endif
 
                 <div class="card-body">
-                    {{-- Form ini sekarang akan mengirimkan data array ukuran sekaligus --}}
+                    {{-- Form ini mengirimkan data array ukuran sekaligus --}}
                     <form action="{{ route('produk_varian.store') }}" method="POST">
                         @csrf
                         <input type="hidden" name="produk_id" value="{{ $produk->id }}">
                         
                         <div class="row align-items-center">
-                            {{-- Input Warna (Cukup ketik sekali, misal: Hitam) --}}
+                            {{-- Input Warna --}}
                             <div class="col-md-3">
                                 <label class="form-label fw-bold">Warna</label>
                                 <input type="text" name="warna" class="form-control" placeholder="Contoh: Hitam" required>
@@ -55,7 +55,7 @@
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="ukuran[]" value="XL" id="sizeXL" checked>
                                         <label class="form-check-label" for="sizeXL">XL</label>
-                                    </div>                               
+                                    </div>                                 
                                 </div>
                             </div>
                             
@@ -68,7 +68,7 @@
                 </div>
             </div>
 
-            {{-- Bagian Tabel ke Bawah Tetap Sama dengan Kode Aslimu --}}
+            {{-- Bagian Tabel Daftar Varian Produk --}}
             <div class="card">
                 <div class="card-header fw-bold">Daftar Varian Produk</div>
                 <div class="card-body">
@@ -77,9 +77,9 @@
                             <tr>
                                 <th>Warna</th>
                                 <th>Ukuran</th>
-                                <th>Stok</th>
+                                <th>Stok Tersedia (Accepted)</th>
+                                <th>Stok Defect</th>
                                 <th>Harga Modal (Avg)</th>
-                                <th>Status</th>
                                 <th width="100">Aksi</th>
                             </tr>
                         </thead>
@@ -88,15 +88,22 @@
                             <tr>
                                 <td>{{ $v->warna ?? '-' }}</td>
                                 <td class="{{ $v->ukuran == 'Custom Size' ? 'fw-bold text-primary' : '' }}">{{ $v->ukuran ?? '-' }}</td>
-                                <td>{{ $v->stok_tersedia }}</td>
-                                <td>Rp {{ number_format($v->harga_avg_produk, 0, ',', '.') }}</td>
+                                
+                                {{-- Kolom Stok Tersedia / Bagus --}}
                                 <td>
-                                    @if($v->is_defect)
-                                        <span class="badge bg-danger">Defect</span>
+                                    <span class="badge bg-success fs-6">{{ $v->stok_tersedia }} {{ $produk->satuan }}</span>
+                                </td>
+
+                                {{-- Kolom Stok Defect --}}
+                                <td>
+                                    @if($v->stok_defect > 0)
+                                        <span class="badge bg-warning text-dark fs-6">{{ $v->stok_defect }} {{ $produk->satuan }}</span>
                                     @else
-                                        <span class="badge bg-success">Normal</span>
+                                        <span class="text-muted">{{ $v->stok_defect }}</span>
                                     @endif
                                 </td>
+
+                                <td>Rp {{ number_format($v->harga_avg_produk, 0, ',', '.') }}</td>
                                 <td>
                                     <form action="{{ url('/produk_varian/'.$v->id) }}" method="POST" onsubmit="return confirm('Hapus varian ini?')">
                                         @csrf

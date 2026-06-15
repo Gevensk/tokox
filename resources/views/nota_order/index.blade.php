@@ -85,7 +85,6 @@
                             <tr>
                                 <td colspan="10" class="text-center py-5 text-muted">
                                     <div class="my-2">
-                                        <span class="fs-4 d-block">📦</span>
                                         Belum ada data transaksi order yang tersimpan.
                                     </div>
                                 </td>
