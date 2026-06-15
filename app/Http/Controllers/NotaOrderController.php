@@ -25,7 +25,7 @@ class NotaOrderController extends Controller
 
     public function create()
     {
-        $customers = Customer::all();
+        $customers = Customer::orderBy('nama', 'asc')->get();
         $produks = Produk::all();
         
         return view('nota_order.create', compact('customers', 'produks'));
@@ -37,7 +37,7 @@ class NotaOrderController extends Controller
         return response()->json($varians);
     }
 
-    public function store(Request $request)
+public function store(Request $request)
 {
     $request->validate([
         'tipe_order' => 'required|in:Internal,Customer',
@@ -45,11 +45,12 @@ class NotaOrderController extends Controller
         'tgl_deadline' => 'required|date',
         'total_harga' => 'required|numeric|min:0',
         'nominal_dp_masuk' => 'required|numeric|min:0',
-        'harga_satuan_items' => 'required|numeric|min:0', // <--- Wajib divalidasi
         'items' => 'required|array|min:1',
         'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
         'items.*.jumlah' => 'required|numeric|min:1',
         'items.*.harga_satuan_jual' => 'required|numeric|min:0',
+        // VALIDASI BARU: Memastikan file berupa gambar dengan kapasitas maksimal 2MB
+        'items.*.foto_desain' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', 
     ]);
 
     DB::beginTransaction();
@@ -62,6 +63,7 @@ class NotaOrderController extends Controller
         $nomorUrutNext = $hitungOrderBulanIni + 1;
         $noOrderOtomatis = 'ORD-' . $tahunBulan . '-' . str_pad($nomorUrutNext, 4, '0', STR_PAD_LEFT);
 
+        // Simpan Data Parent Nota
         $nota = NotaOrder::create([
             'no_order' => $noOrderOtomatis,
             'tipe_order' => $request->tipe_order,
@@ -72,10 +74,10 @@ class NotaOrderController extends Controller
             'nominal_dp_masuk' => $request->nominal_dp_masuk,
             'status_bayar' => $request->nominal_dp_masuk >= $request->total_harga ? 'Lunas' : 'Belum Lunas',
             'status_order' => 'Valid',
-            'harga_satuan_items' => $request->harga_satuan_items, // <--- Sudah benar mencatat input form
+            'harga_satuan_items' => 0, 
         ]);
 
-        foreach ($request->items as $item) {
+        foreach ($request->items as $index => $item) {
             $varian = ProdukVarian::with('bill_of_materials.bahan_baku')->find($item['produk_varian_id']);
             $estimasiBiayaBahanPerPcs = 0;
             $daftarBahanOtomatis = [];
@@ -83,7 +85,7 @@ class NotaOrderController extends Controller
             if ($varian && $varian->bill_of_materials) {
                 foreach ($varian->bill_of_materials as $bom) {
                     if ($bom->bahan_baku) {
-                        $hargaBahanSaatIni = $bom->bahan_baku->harga_rata_rata;
+                        $hargaBahanSaatIni = $bom->bahan_baku->harga_rata_rata ?? 0;
                         $estimasiBiayaBahanPerPcs += ($bom->jumlah * $hargaBahanSaatIni);
                         
                         $daftarBahanOtomatis[] = [
@@ -98,13 +100,25 @@ class NotaOrderController extends Controller
 
             $totalBiayaBahanJob = $estimasiBiayaBahanPerPcs * $item['jumlah'];
 
+            // PROSES UPLOAD FOTO DESAIN BARU:
+            $namaFileGambar = null;
+            if ($request->hasFile("items.$index.foto_desain")) {
+                $file = $request->file("items.$index.foto_desain");
+                // Membuat nama berkas yang unik (Contoh: desain_1718451234_0.jpg)
+                $namaFileGambar = 'desain_' . time() . '_' . $index . '.' . $file->getClientOriginalExtension();
+                // Menyimpan fisik file ke folder storage/app/public/desain_order
+                $file->storeAs('desain_order', $namaFileGambar, 'public');
+            }
+
+            // Simpan baris item ke Child (JobOrder)
             $jobOrder = JobOrder::create([
                 'nota_order_id' => $nota->id,
                 'produk_varian_id' => $item['produk_varian_id'],
                 'jumlah' => $item['jumlah'],
-                'biaya_jasa_satuan' => 0, // Sesuai kolom di phpMyAdmin Anda
+                'biaya_jasa_satuan' => $item['harga_satuan_jual'],
                 'is_custom' => $item['is_custom'] ?? 0,
                 'catatan_custom' => $item['catatan_custom'] ?? null,
+                'foto_desain' => $namaFileGambar, // Disimpan ke database 'job_order' nomor 13
                 'total_biaya_bahan' => $totalBiayaBahanJob,
                 'total_hpp_job' => $totalBiayaBahanJob,
                 'status_pesanan' => 'Antrean',
