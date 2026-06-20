@@ -22,18 +22,20 @@
                 Cetak / Simpan PDF
             </a>
             
-            {{-- Tombol Edit & Hapus hanya tampil jika belum diproduksi --}}
-            @if($bisaDimodifikasi)
-                <a href="{{ route('nota_order.edit', $notaOrder->id) }}" class="btn btn-warning fw-bold">
-                    Edit Order
-                </a>
-                <form action="{{ route('nota_order.destroy', $notaOrder->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus total nota order ini?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger fw-bold">Hapus Total</button>
-                </form>
-            @else
-                <button class="btn btn-secondary fw-bold" disabled title="Sudah diproduksi"> Locked / Sedang Diproduksi</button>
+            {{-- Tombol Edit & Hapus hanya tampil jika admin dan belum diproduksi --}}
+            @if(Auth::user()->isAdmin())
+                @if($bisaDimodifikasi)
+                    <a href="{{ route('nota_order.edit', $notaOrder->id) }}" class="btn btn-warning fw-bold">
+                        Edit Order
+                    </a>
+                    <form action="{{ route('nota_order.destroy', $notaOrder->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus total nota order ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger fw-bold">Hapus Total</button>
+                    </form>
+                @else
+                    <button class="btn btn-secondary fw-bold" disabled title="Sudah diproduksi"> Locked / Sedang Diproduksi</button>
+                @endif
             @endif
         </div>
     </div>

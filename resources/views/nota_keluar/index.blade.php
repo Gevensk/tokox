@@ -27,6 +27,7 @@
                             <th>Referensi Order</th>
                             <th>Total Uang Masuk</th>
                             <th>Rincian Muatan Item</th>
+                            <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -67,10 +68,15 @@
                                     @endforeach
                                 </ul>
                             </td>
+                            <td class="text-center">
+                                <a href="{{ route('nota_keluar.print', $nota->id) }}" class="btn btn-sm btn-warning text-dark text-nowrap" target="_blank">
+                                    🖨️ Cetak
+                                </a>
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">Belum ada riwayat pengeluaran stok barang keluar.</td>
+                            <td colspan="8" class="text-center py-4 text-muted">Belum ada riwayat pengeluaran stok barang keluar.</td>
                         </tr>
                         @endforelse
                     </tbody>

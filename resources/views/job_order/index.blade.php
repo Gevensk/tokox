@@ -41,12 +41,12 @@
                             
                             <td>
                                 @if(!empty($job->foto_desain))
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($job->foto_desain) }}" 
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::url('desain_order/' . $job->foto_desain) }}" 
                                          class="img-thumbnail rounded" 
                                          style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" 
                                          data-bs-toggle="modal" 
                                          data-bs-target="#imgModal{{ $job->id }}"
-                                         onerror="this.onerror=null; this.src='{{ asset('storage/' . $job->foto_desain) }}';">
+                                         onerror="this.onerror=null; this.src='{{ asset('storage/desain_order/' . $job->foto_desain) }}';">
                                 @else
                                     <div class="bg-light rounded text-center text-muted d-flex align-items-center justify-content-center border" style="width: 50px; height: 50px; font-size: 0.75rem;">No Img</div>
                                 @endif
@@ -72,16 +72,20 @@
                             </td>
                             <td class="text-center">
                                 <div class="btn-group gap-1" role="group">
-                                    <a href="{{ route('job_order.show', $job->id) }}" class="btn btn-sm btn-outline-info fw-bold" title="Lihat Evaluasi Perhitungan HPP">
+                                    @if(Auth::user()->isAdmin())
+                                    <a href="{{ route('job_order.show', $job->id) }}" class="btn btn-sm btn-outline-info fw-bold text-nowrap" style="width: 110px;" title="Lihat Evaluasi Perhitungan HPP">
                                         <i class="fas fa-calculator"></i> Audit HPP
                                     </a>
+                                    @endif
 
                                     @if($job->status_pesanan != 'Selesai')
-                                    <a href="{{ route('nota_produksi.terima_hasil', ['job_id' => $job->id]) }}" class="btn btn-sm btn-success fw-bold">
+                                    <a href="{{ route('nota_produksi.terima_hasil', ['job_id' => $job->id]) }}" class="btn btn-sm btn-success fw-bold text-nowrap" style="width: 110px;">
                                         <i class="fas fa-check-circle"></i> Input QC
                                     </a>
                                     @else
-                                    <button class="btn btn-sm btn-light text-muted border" disabled><i class="fas fa-lock"></i> Lock</button>
+                                    <button class="btn btn-sm btn-light text-muted border fw-bold text-nowrap" style="width: 110px;" disabled>
+                                        <i class="fas fa-lock"></i> Lock
+                                    </button>
                                     @endif
                                 </div>
                             </td>

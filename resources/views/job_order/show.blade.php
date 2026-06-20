@@ -65,7 +65,7 @@
                     </table>
 
                     <div class="p-3 bg-success bg-opacity-10 rounded border border-success border-opacity-25 text-center">
-                        <small class="text-success fw-bold d-block mb-1">REAL MOVING AVERAGE HPP</small>
+                        <small class="text-success fw-bold d-block mb-1">TOTAL AVERAGE HPP</small>
                         <h3 class="fw-bold text-success mb-0">Rp {{ number_format($hppAktualSatuan, 0, ',', '.') }} <span class="fs-6 text-muted">/ Pcs</span></h3>
                         <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">
                             *Sudah membebankan biaya baju rusak total ({{ $totalRusak }} pcs) dan semua ongkir balik ke baju layak jual ({{ $totalLayakJual }} pcs).

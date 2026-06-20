@@ -12,7 +12,8 @@ return new class extends Migration
 public function up(): void
 {
     Schema::table('job_order', function (Blueprint $table) {
-        $table->foreignId('nota_order_id')->nullable()->after('id')->constrained('nota_order')->onDelete('cascade');
+        $table->unsignedInteger('nota_order_id')->nullable()->after('id');
+        $table->foreign('nota_order_id')->references('id')->on('nota_order')->onDelete('cascade');
     });
 }
 

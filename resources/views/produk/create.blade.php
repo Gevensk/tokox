@@ -22,16 +22,7 @@
                         <small class="text-muted">Contoh: Pcs, Set, Lusin</small>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Kepemilikan Produk (Khusus Custom)</label>
-                        <select name="customer_id" class="form-select">
-                            <option value="">-- Umum / Reguler (Bukan Produk Custom) --</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->nama }}</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Pilih nama customer jika produk ini merupakan desain eksklusif/custom milik instansi atau perorangan tertentu.</small>
-                    </div>
+
 
                     <div class="d-flex justify-content-start gap-2 mt-4">
                         <a href="/produk" class="btn btn-secondary px-4">Kembali</a>

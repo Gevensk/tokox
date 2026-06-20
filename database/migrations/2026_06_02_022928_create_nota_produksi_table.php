@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('nota_produksi', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('penjahit_id')->constrained('penjahit');
+            $table->increments('id');
+            $table->unsignedInteger('penjahit_id');
+            $table->foreign('penjahit_id')->references('id')->on('penjahit');
 
             $table->string('no_surat_jalan', 50)->unique();
             $table->dateTime('tgl_order');

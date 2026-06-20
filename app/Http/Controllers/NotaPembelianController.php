@@ -106,7 +106,7 @@ public function store(Request $request)
     {
         // Mengambil nota beserta detail dan nama bahan bakunya
         $nota = NotaPembelian::with(['supplier', 'details.bahanBaku'])->findOrFail($id);
-        return response()->json($nota);
+        return view('nota_pembelian.show', compact('nota'));
     }
 }
 

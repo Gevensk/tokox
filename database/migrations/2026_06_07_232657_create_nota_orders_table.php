@@ -12,10 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('nota_order', function (Blueprint $table) {
-            $table->id(); 
+            $table->increments('id'); 
             $table->string('no_order', 45);
             $table->enum('tipe_order', ['Internal', 'Customer']);
-            $table->foreignId('customer_id')->nullable()->constrained('customer');
+            $table->integer('customer_id')->nullable();
+            $table->foreign('customer_id')->references('id')->on('customer');
             $table->dateTime('tgl_order');
             $table->dateTime('tgl_deadline');
             $table->decimal('harga_deal', 15, 2);

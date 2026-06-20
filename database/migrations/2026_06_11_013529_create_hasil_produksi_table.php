@@ -12,11 +12,13 @@ return new class extends Migration
     public function up()
     {
         Schema::create('hasil_produksi', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             // Relasi foreign key ke tabel job_orders
-            $table->foreignId('job_order_id')->constrained('job_order')->onDelete('cascade');
+            $table->unsignedInteger('job_order_id');
+            $table->foreign('job_order_id')->references('id')->on('job_order')->onDelete('cascade');
             // Relasi foreign key ke tabel produk_varian
-            $table->foreignId('produk_varian_id')->constrained('produk_varian')->onDelete('cascade');
+            $table->unsignedInteger('produk_varian_id');
+            $table->foreign('produk_varian_id')->references('id')->on('produk_varian')->onDelete('cascade');
             
             $table->dateTime('tgl_terima');
             $table->decimal('ongkir', 15, 2)->default(0);

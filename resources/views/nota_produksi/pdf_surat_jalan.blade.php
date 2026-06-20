@@ -95,7 +95,8 @@
             <tr>
                 <th style="width: 8%; text-align: center;">No</th>
                 <th>Model Pakaian & Varian Produk</th>
-                <th style="width: 20%; text-align: center;">Target Qty</th>
+                <th style="width: 15%; text-align: center;">Target Qty</th>
+                <th style="width: 20%; text-align: center;">Estimasi Selesai</th>
                 <th>Kustomisasi Ukuran / Catatan</th>
             </tr>
         </thead>
@@ -107,13 +108,20 @@
                     <td>
                         <strong>{{ $job->produk_varian->produk->nama ?? 'Produk' }}</strong><br>
                         <span style="color: #666; font-size: 11px;">
-                            Waran: {{ $job->produk_varian->warna }} | Ukuran: {{ $job->produk_varian->ukuran }}
+                            Warna: {{ $job->produk_varian->warna }} | Ukuran: {{ $job->produk_varian->ukuran }}
                         </span>
                     </td>
                     <td style="text-align: center; font-weight: bold; font-size: 13px;">{{ $job->jumlah }} Pcs</td>
+                    <td style="text-align: center;">
+                        @if($job->estimasi_selesai)
+                            {{ date('d-m-Y H:i', strtotime($job->estimasi_selesai)) }}
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td>
                         @if($job->is_custom)
-                            <span style="font-weight: 500;">Custom (LD: {{ $job->ld_req ?? '-' }}, PB: {{ $job->pb_req ?? '-' }})</span><br>
+                            <span style="font-weight: 500;">Custom Spec</span><br>
                             <small style="color: #c0392b; font-style: italic;">* Ket: {{ $job->catatan_custom ?? '-' }}</small>
                         @else
                             <span class="text-muted small">Standard Pola Toko</span>

@@ -17,7 +17,9 @@
                     <th>Nama</th>
                     <th>Alamat</th>
                     <th>No HP</th>
+                    @if(Auth::user()->isAdmin())
                     <th>Aksi</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -26,6 +28,7 @@
                     <td>{{ $s->nama }}</td>
                     <td>{{ $s->alamat }}</td>
                     <td>{{ $s->no_hp }}</td>
+                    @if(Auth::user()->isAdmin())
                     <td>
                         <a href="/customer/{{ $s->id }}/edit" class="btn btn-warning btn-sm">Edit</a>
                         <form action="/customer/{{ $s->id }}" method="POST" class="d-inline">
@@ -33,6 +36,7 @@
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hapus?')">Hapus</button>
                         </form>
                     </td>
+                    @endif
                 </tr>
                 @endforeach
             </tbody>

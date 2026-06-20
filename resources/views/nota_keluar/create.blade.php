@@ -1,91 +1,120 @@
-@extends('layouts.app')
+@extends('layouts.app') 
 
 @section('content')
-<div class="container-fluid p-0">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="mb-0">Tambah Nota Stok Keluar</h3>
-        <a href="{{ route('nota_keluar.index') }}" class="btn btn-outline-secondary">Kembali</a>
-    </div>
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="container-fluid px-4 py-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0 fw-bold">🧾 Buat Nota Stok Keluar Baru</h5>
         </div>
-    @endif
+        <div class="card-body">
+            
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body p-4">
             <form action="{{ route('nota_keluar.store') }}" method="POST">
                 @csrf
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="tipe_keluar" class="form-label fw-bold">Tipe Pengeluaran Stok</label>
-                        <select name="tipe_keluar" id="tipe_keluar" class="form-control form-select" required>
+                {{-- Hidden Input untuk Customer ID (Diisi otomatis lewat JS) --}}
+                <input type="hidden" name="customer_id" id="customer_id" value="">
+
+                <h5 class="text-secondary border-bottom pb-2 mb-3">Informasi Utama Nota</h5>
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3">
+                        <label for="tipe_keluar" class="form-label fw-semibold">Tipe Pengeluaran Stok</label>
+                        <select name="tipe_keluar" id="tipe_keluar" class="form-select" required>
                             <option value="penjualan_langsung">Penjualan Langsung (Cash & Carry)</option>
                             <option value="penjualan_order">Pelunasan Nota Order (Inden/PO)</option>
                         </select>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label for="customer_id" class="form-label fw-bold">Customer</label>
-                        <select name="customer_id" id="customer_id" class="form-control form-select" required>
-                            <option value="">-- Pilih Customer --</option>
-                            @foreach($customers as $c)
-                                <option value="{{ $c->id }}">{{ $c->nama ?? $c->nama_customer }}</option>
+                    <div class="col-md-4 mb-3 d-none" id="wrapper_nota_order">
+                        <label for="nota_order_id" class="form-label fw-semibold">Pilih Nota Order Terkait</label>
+                        <select name="nota_order_id" id="nota_order_id" class="form-select">
+                            <option value="">-- Pilih Nota Order --</option>
+                            @foreach($notaOrders as $order)
+                                <option value="{{ $order->id }}" 
+                                        data-customer="{{ $order->customer_id }}"
+                                        data-customer-name="{{ $order->customer->nama ?? $order->customer->nama_customer ?? 'N/A' }}"
+                                        data-total-harga="{{ $order->total_harga }}"
+                                        data-dp="{{ $order->nominal_dp_masuk }}"
+                                        data-harga-satuan="{{ $order->harga_satuan_items }}"
+                                        data-items='[
+                                            @foreach($order->job_orders as $job)
+                                                {
+                                                    "produk_varian_id": {{ $job->produk_varian_id }},
+                                                    "qty": {{ $job->jumlah }},
+                                                    "warna": "{{ $job->produk_varian->warna ?? "" }}",
+                                                    "ukuran": "{{ $job->produk_varian->ukuran ?? "" }}",
+                                                    "produk_nama": "{{ $job->produk_varian->produk->nama ?? "" }}"
+                                                }
+                                                @if(!$loop->last),@endif
+                                            @endforeach
+                                        ]'>
+                                    Nota #{{ $order->no_order }} - {{ $order->customer->nama ?? $order->customer->nama_customer ?? 'N/A' }} (Sisa: Rp {{ number_format($order->total_harga - $order->nominal_dp_masuk, 0, ',', '.') }})
+                                </option>
                             @endforeach
                         </select>
                     </div>
-                </div>
 
-                <div class="mb-3 d-none" id="wrapper_nota_order">
-                    <label for="nota_order_id" class="form-label fw-bold">Pilih Nota Order Terkait</label>
-                    <select name="nota_order_id" id="nota_order_id" class="form-control form-select">
-                        <option value="">-- Pilih Nota Order --</option>
-                        @foreach($notaOrders as $order)
-                            <option value="{{ $order->id }}" 
-                                    data-customer="{{ $order->customer_id }}"
-                                    data-harga-deal="{{ $order->harga_deal }}"
-                                    data-dp="{{ $order->nominal_dp_masuk }}">
-                                Nota #{{ $order->id }} - {{ $order->customer->nama ?? $order->customer->nama_customer ?? 'N/A' }} (Sisa: Rp {{ number_format($order->harga_deal - $order->nominal_dp_masuk, 0, ',', '.') }})
-                            </option>
-                        @endforeach
-                    </select>
-                    <div class="alert alert-info mt-2 mb-0 d-none" id="info_keuangan_box">
-                        <span id="info_keuangan"></span>
+                    <div class="col-md-4 mb-3 d-none" id="wrapper_customer_display">
+                        <label class="form-label fw-semibold">Customer Pemesan</label>
+                        <input type="text" id="customer_name_display" class="form-control bg-light" readonly placeholder="Nama Customer">
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <label for="total_bayar" class="form-label fw-bold">Jumlah Uang Yang Dibayarkan (Rp)</label>
-                    <input type="number" name="total_bayar" id="total_bayar" class="form-control" value="0" min="0" required>
+                {{-- Alert Info Keuangan PO Khusus Penjualan Order --}}
+                <div class="alert alert-info border-info mb-4 d-none" id="info_keuangan_box">
+                    <i class="me-1">ℹ️</i> <span id="info_keuangan" class="fw-semibold text-dark"></span>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mb-3 pt-3 border-top">
-                    <h5 class="mb-0 fw-bold">Daftar Item Barang Keluar</h5>
-                    <button type="button" class="btn btn-success btn-sm" id="btn-tambah-item">+ Tambah Produk</button>
+                {{-- Kotak Kasir Ringkas Bergaya Grey Box --}}
+                <div class="row mb-4 bg-light p-3 rounded border">
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label fw-bold text-dark">Total Nilai Tagihan (Rp)</label>
+                        <input type="number" name="total_harga" id="total_harga_hidden" value="0" hidden>
+                        <input type="text" id="grand_total_display" class="form-control bg-white fw-bold text-primary fs-5" value="Rp 0" readonly>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="form-label fw-bold text-dark">Nominal Uang Dibayar (Rp)</label>
+                        <input type="number" name="total_bayar" id="total_bayar" class="form-control text-success fw-bold fs-5" value="0" min="0" required>
+                    </div>
+                    <div class="col-md-4 mb-2" id="wrapper_kembalian">
+                        <label class="form-label fw-bold text-dark">Uang Kembalian (Rp)</label>
+                        <input type="text" id="kembalian_display" class="form-control bg-white fw-bold fs-5 text-secondary" value="Rp 0" readonly>
+                    </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped align-middle mb-0" id="tabel-items">
-                        <thead class="table-dark">
+                <h5 class="text-secondary border-bottom pb-2 mb-3 d-flex justify-content-between align-items-center">
+                    <span>📦 Detail Baris Barang Keluar</span>
+                    <button type="button" id="btn-tambah-item" class="btn btn-sm btn-success px-3">+ Tambah Produk</button>
+                </h5>
+
+                <div class="table-responsive shadow-sm rounded border mb-4">
+                    <table class="table table-hover table-bordered align-middle mb-0 text-secondary" id="tabel-items" style="min-width: 1000px; font-size: 0.85rem;">
+                        <thead class="table-dark text-nowrap">
                             <tr>
-                                <th style="width: 45%">Produk Varian</th>
-                                <th style="width: 15%">Qty</th>
-                                <th style="width: 25%">Harga Satuan (Rp)</th>
-                                <th style="width: 15%" class="text-center">Aksi</th>
+                                <th style="width: 45%" class="py-3">Produk Varian</th>
+                                <th style="width: 15%" class="text-center py-3">Qty</th>
+                                <th style="width: 25%" class="py-3">Harga Satuan (Rp)</th>
+                                <th style="width: 15%" class="text-center py-3">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="wrapper-item-rows">
-                            </tbody>
+                            {{-- Diisi dinamis via JavaScript --}}
+                        </tbody>
                     </table>
                 </div>
 
-                <div class="mt-4 pt-3 border-top text-end">
-                    <button type="submit" class="btn btn-primary px-4">Proses Pengeluaran Barang</button>
+                <div class="text-end mt-4 border-top pt-3">
+                    <a href="{{ route('nota_keluar.index') }}" class="btn btn-secondary px-4 me-2">Batal</a>
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm fw-bold">Simpan Transaksi Keluar</button>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
@@ -93,81 +122,212 @@
 <script>
     let itemIdx = 0;
 
+    // Format mata uang Rupiah
+    function formatRupiah(angka) {
+        return 'Rp ' + parseFloat(angka).toLocaleString('id-ID');
+    }
+
+    // Fungsi utama kalkulasi kasir
+    function hitungKasir() {
+        const tipeKeluar = document.getElementById('tipe_keluar').value;
+        const inputTotalBayar = document.getElementById('total_bayar');
+        const grandTotalDisplay = document.getElementById('grand_total_display');
+        const kembalianDisplay = document.getElementById('kembalian_display');
+        const wrapperKembalian = document.getElementById('wrapper_kembalian');
+        const totalHargaHidden = document.getElementById('total_harga_hidden');
+        
+        let grandTotal = 0;
+
+        if (tipeKeluar === 'penjualan_langsung') {
+            const rows = document.querySelectorAll('#wrapper-item-rows tr');
+            rows.forEach(function(row) {
+                const qtyInput = row.querySelector('input[name$="[qty]"]');
+                const hargaInput = row.querySelector('input[name$="[harga_satuan]"]');
+                
+                const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+                const harga = parseFloat(hargaInput ? hargaInput.value : 0) || 0;
+                grandTotal += qty * harga;
+            });
+
+            totalHargaHidden.value = grandTotal;
+            grandTotalDisplay.value = formatRupiah(grandTotal);
+            wrapperKembalian.classList.remove('d-none');
+            
+            const bayar = parseFloat(inputTotalBayar.value) || 0;
+            const kembalian = bayar - grandTotal;
+            
+            kembalianDisplay.value = formatRupiah(kembalian);
+            if (kembalian >= 0) {
+                kembalianDisplay.className = 'form-control bg-white fw-bold fs-5 text-success';
+            } else {
+                kembalianDisplay.className = 'form-control bg-white fw-bold fs-5 text-danger';
+            }
+        } else {
+            const selectOrder = document.getElementById('nota_order_id');
+            const selectedOption = selectOrder.options[selectOrder.selectedIndex];
+            
+            if (selectedOption && selectedOption.value) {
+                const totalHarga = parseFloat(selectedOption.getAttribute('data-total-harga')) || 0;
+                const dp = parseFloat(selectedOption.getAttribute('data-dp')) || 0;
+                const sisaPelunasan = totalHarga - dp;
+                
+                grandTotal = sisaPelunasan;
+                totalHargaHidden.value = grandTotal;
+                grandTotalDisplay.value = formatRupiah(grandTotal);
+                inputTotalBayar.value = sisaPelunasan;
+                
+                wrapperKembalian.classList.add('d-none');
+            } else {
+                totalHargaHidden.value = 0;
+                grandTotalDisplay.value = formatRupiah(0);
+                inputTotalBayar.value = 0;
+                wrapperKembalian.classList.add('d-none');
+            }
+        }
+    }
+
+    // Tombol tambah produk manual (hanya untuk penjualan langsung)
     document.getElementById('btn-tambah-item').addEventListener('click', function() {
         const tbody = document.getElementById('wrapper-item-rows');
         const rowHtml = `
             <tr id="row-${itemIdx}">
-                <td>
-                    <select name="items[${itemIdx}][produk_varian_id]" class="form-control form-select" required>
+                <td class="py-2">
+                    <select name="items[${itemIdx}][produk_varian_id]" class="form-select" required>
                         <option value="">-- Pilih Varian --</option>
                         @foreach($produkVarians as $pv)
                             <option value="{{ $pv->id }}">
-                                {{ $pv->produk->nama_product ?? '' }} [Warna: {{ $pv->warna }}, Ukuran: {{ $pv->ukuran }}] (Stok: {{ $pv->stok_tersedia }})
+                                {{ $pv->produk->nama ?? '' }} [Warna: {{ $pv->warna }}, Ukuran: {{ $pv->ukuran }}] (Stok: {{ $pv->stok_tersedia }})
                             </option>
                         @endforeach
                     </select>
                 </td>
-                <td>
-                    <input type="number" name="items[${itemIdx}][qty]" class="form-control text-center" min="1" value="1" required>
+                <td class="py-2">
+                    <input type="number" name="items[${itemIdx}][qty]" class="form-control text-center input-qty" min="1" value="1" required>
                 </td>
-                <td>
-                    <input type="number" name="items[${itemIdx}][harga_satuan]" class="form-control" min="0" value="0" required>
+                <td class="py-2">
+                    <input type="number" name="items[${itemIdx}][harga_satuan]" class="form-control input-harga" min="0" value="0" required>
                 </td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="hapusBaris(${itemIdx})">Hapus</button>
+                <td class="text-center py-2">
+                    <button type="button" class="btn btn-sm btn-danger px-3" onclick="hapusBaris(${itemIdx})">×</button>
                 </td>
             </tr>
         `;
         tbody.insertAdjacentHTML('beforeend', rowHtml);
         itemIdx++;
+        hitungKasir();
     });
 
     function hapusBaris(index) {
         const row = document.getElementById(`row-${index}`);
-        if (row) row.remove();
+        if (row) {
+            row.remove();
+            hitungKasir();
+        }
     }
 
+    // Perubahan Tipe Pengeluaran
     document.getElementById('tipe_keluar').addEventListener('change', function() {
         const wrapperOrder = document.getElementById('wrapper_nota_order');
+        const wrapperCustomer = document.getElementById('wrapper_customer_display');
         const inputTotalBayar = document.getElementById('total_bayar');
         const selectOrder = document.getElementById('nota_order_id');
         const infoBox = document.getElementById('info_keuangan_box');
+        const inputCustomerId = document.getElementById('customer_id');
+        const inputCustomerName = document.getElementById('customer_name_display');
+        const btnTambahItem = document.getElementById('btn-tambah-item');
+        const tbody = document.getElementById('wrapper-item-rows');
+
+        tbody.innerHTML = '';
+        itemIdx = 0;
         
         if (this.value === 'penjualan_order') {
             wrapperOrder.classList.remove('d-none');
+            wrapperCustomer.classList.remove('d-none');
             inputTotalBayar.setAttribute('readonly', true);
             inputTotalBayar.value = 0;
+            btnTambahItem.classList.add('d-none');
         } else {
             wrapperOrder.classList.add('d-none');
+            wrapperCustomer.classList.add('d-none');
             infoBox.classList.add('d-none');
             selectOrder.value = "";
             inputTotalBayar.removeAttribute('readonly');
             inputTotalBayar.value = 0;
+            btnTambahItem.classList.remove('d-none');
+            inputCustomerId.value = "";
+            inputCustomerName.value = "";
         }
+        hitungKasir();
     });
 
+    // Ketika Nota Order Dipilih
     document.getElementById('nota_order_id').addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const infoBox = document.getElementById('info_keuangan_box');
         const inputTotalBayar = document.getElementById('total_bayar');
+        const inputCustomerId = document.getElementById('customer_id');
+        const inputCustomerName = document.getElementById('customer_name_display');
+        const tbody = document.getElementById('wrapper-item-rows');
+
+        tbody.innerHTML = '';
+        itemIdx = 0;
 
         if (!selectedOption.value) {
             infoBox.classList.add('d-none');
             inputTotalBayar.value = 0;
+            inputCustomerId.value = "";
+            inputCustomerName.value = "";
+            hitungKasir();
             return;
         }
 
         const customerId = selectedOption.getAttribute('data-customer');
-        const hargaDeal = parseFloat(selectedOption.getAttribute('data-harga-deal'));
+        const customerName = selectedOption.getAttribute('data-customer-name');
+        const totalHarga = parseFloat(selectedOption.getAttribute('data-total-harga'));
         const dp = parseFloat(selectedOption.getAttribute('data-dp'));
-        const sisaPelunasan = hargaDeal - dp;
+        const sisaPelunasan = totalHarga - dp;
+        const hargaSatuanItems = parseFloat(selectedOption.getAttribute('data-harga-satuan')) || 0;
+        const items = JSON.parse(selectedOption.getAttribute('data-items') || '[]');
 
-        document.getElementById('customer_id').value = customerId;
+        inputCustomerId.value = customerId;
+        inputCustomerName.value = customerName;
         inputTotalBayar.value = sisaPelunasan;
         
         infoBox.classList.remove('d-none');
         document.getElementById('info_keuangan').innerText = 
-            `Harga Deal PO: Rp ${hargaDeal.toLocaleString('id-ID')} | Sudah Masuk DP: Rp ${dp.toLocaleString('id-ID')} | Sisa Kekurangan: Rp ${sisaPelunasan.toLocaleString('id-ID')}`;
+            `Harga Deal PO: Rp ${totalHarga.toLocaleString('id-ID')} | Sudah Masuk DP: Rp ${dp.toLocaleString('id-ID')} | Sisa Kekurangan (Pelunasan): Rp ${sisaPelunasan.toLocaleString('id-ID')}`;
+
+        items.forEach(function(item) {
+            const rowHtml = `
+                <tr id="row-${itemIdx}">
+                    <td class="py-2.5">
+                        <input type="hidden" name="items[${itemIdx}][produk_varian_id]" value="${item.produk_varian_id}">
+                        <span class="fw-bold text-dark d-block mb-0.5" style="font-size: 0.88rem;">${item.produk_nama}</span>
+                        <div class="small text-muted" style="font-size: 0.78rem;">Warna: ${item.warna} | Ukuran: ${item.ukuran}</div>
+                    </td>
+                    <td class="py-2">
+                        <input type="number" name="items[${itemIdx}][qty]" class="form-control text-center bg-white" min="1" value="${item.qty}" required readonly>
+                    </td>
+                    <td class="py-2">
+                        <input type="number" name="items[${itemIdx}][harga_satuan]" class="form-control text-end bg-white" value="${hargaSatuanItems}" required readonly>
+                    </td>
+                    <td class="text-center py-2">
+                        <span class="badge bg-light text-secondary border py-2 px-3">Terkunci PO</span>
+                    </td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', rowHtml);
+            itemIdx++;
+        });
+
+        hitungKasir();
+    });
+
+    document.getElementById('total_bayar').addEventListener('input', hitungKasir);
+    document.getElementById('wrapper-item-rows').addEventListener('input', function(e) {
+        if (e.target.name && (e.target.name.includes('[qty]') || e.target.name.includes('[harga_satuan]'))) {
+            hitungKasir();
+        }
     });
 </script>
 @endsection

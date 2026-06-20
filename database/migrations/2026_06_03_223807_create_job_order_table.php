@@ -12,11 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('job_order', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             // Relasi FK (Pastikan nama tabel induknya sudah sesuai dengan di DB kamu)
-            $table->foreignId('nota_produksi_id')->constrained('nota_produksi')->onDelete('cascade');
-            $table->foreignId('produk_varian_id')->constrained('produk_varian');
-            $table->foreignId('customer_id')->constrained('customer');
+            $table->unsignedInteger('nota_produksi_id');
+            $table->foreign('nota_produksi_id')->references('id')->on('nota_produksi')->onDelete('cascade');
+            $table->unsignedInteger('produk_varian_id');
+            $table->foreign('produk_varian_id')->references('id')->on('produk_varian');
+            $table->unsignedInteger('customer_id');
+            $table->foreign('customer_id')->references('id')->on('customer');
             
             $table->integer('jumlah');
             
@@ -29,13 +32,12 @@ return new class extends Migration
             
             // Fitur Custom Specs
             $table->tinyInteger('is_custom')->default(0); // 0 = standar, 1 = kustom
-            $table->string('id_req', 45)->nullable();
             $table->string('pb_req', 45)->nullable();
             $table->string('catatan_custom', 255)->nullable();
             $table->string('foto_desain', 255)->nullable(); // Diperpanjang ke 255 agar muat nama file panjang
             
             // Status Produksi & Waktu
-            $table->string('status_pesanan')->default('Pending'); // Pending, In Progress, Partial, Completed
+            $table->enum('status_pesanan', ['Antrean', 'Diproduksi', 'Selesai Parsial', 'Selesai'])->default('Antrean');
             $table->dateTime('estimasi_selesai')->nullable();
             $table->dateTime('tgl_selesai')->nullable();
             

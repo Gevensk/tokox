@@ -12,9 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('penyesuaian_stok_bahan', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             // Sesuaikan nama 'bahan_baku' dengan nama tabel master bahan bakumu yang sebenarnya
-            $table->foreignId('bahan_baku_id')->constrained('bahan_baku')->onDelete('cascade');
+            $table->unsignedInteger('bahan_baku_id');
+            $table->foreign('bahan_baku_id')->references('id')->on('bahan_baku')->onDelete('cascade');
             $table->decimal('jumlah', 10, 2);
             $table->enum('tipe', ['in', 'out']);
             $table->string('keterangan');

@@ -1,29 +1,37 @@
 @extends('layouts.app')
 
 @section('content')
-    {{-- SEMUA KODE BOOTSTRAP HARUS DI SINI --}}
-    <div class="container">
-        <div class="card shadow">
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow border-0">
             <div class="card-header bg-primary text-white">
-                <h4>Edit Produk</h4>
+                <h5 class="mb-0">Edit Produk</h5>
             </div>
             <div class="card-body">
                 <form action="/produk/{{ $produk->id }}" method="POST">
                     @csrf
-                    @method('PUT') 
+                    @method('PUT')
                     
-                    <label>Nama:</label><br>
-                    <input type="text" name="nama" value="{{ $produk->nama }}" required><br><br>
+                    <div class="mb-3">
+                        <label class="form-label">Nama Produk</label>
+                        <input type="text" name="nama" class="form-control" value="{{ $produk->nama }}" required>
+                    </div>
 
-                    <label>Satuan:</label><br>
-                    <input type="text" name="satuan" value="{{ $produk->satuan }}" required><br><br>
+                    <div class="mb-3">
+                        <label class="form-label">Satuan</label>
+                        <input type="text" name="satuan" class="form-control" value="{{ $produk->satuan }}" required>
+                        <small class="text-muted">Contoh: Pcs, Set, Lusin</small>
+                    </div>
 
-                    <div class="d-inline btn-sm">
-                        <a href="/produk" class="btn btn-secondary">Kembali</a>
-                        <button type="submit" class="btn btn-success ">Update Data</button>
+
+
+                    <div class="d-flex justify-content-start gap-2 mt-4">
+                        <a href="/produk" class="btn btn-secondary px-4">Kembali</a>
+                        <button type="submit" class="btn btn-primary px-4">Update Data</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+</div>
 @endsection

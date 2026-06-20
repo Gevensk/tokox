@@ -28,7 +28,7 @@
                 @php
                     // Hitung total biaya untuk varian ini
                     $totalEstimasi = $items->sum(function($bom) {
-                        return $bom->jumlah * ($bom->bahan_baku->harga_estimasi ?? 0);
+                        return $bom->jumlah * ($bom->bahan_baku->harga_rata_rata ?? 0);
                     });
                 @endphp
                 
@@ -79,7 +79,7 @@
                                 <tbody>
                                     @foreach($items as $bom)
                                     @php
-                                        $subtotalItem = $bom->jumlah * ($bom->bahan_baku->harga_estimasi ?? 0);
+                                        $subtotalItem = $bom->jumlah * ($bom->bahan_baku->harga_rata_rata ?? 0);
                                     @endphp
                                     <tr>
                                         <td>{{ $bom->bahan_baku->nama ?? 'Bahan N/A' }}</td>
@@ -87,7 +87,7 @@
                                             {{ (float)$bom->jumlah }} {{ $bom->bahan_baku->satuan ?? '' }}
                                         </td>
                                         <td class="text-end text-muted">
-                                            Rp {{ number_format($bom->bahan_baku->harga_estimasi ?? 0, 0, ',', '.') }}
+                                            Rp {{ number_format($bom->bahan_baku->harga_rata_rata ?? 0, 0, ',', '.') }}
                                         </td>
                                         <td class="text-end fw-bold text-secondary">
                                             Rp {{ number_format($subtotalItem, 0, ',', '.') }}

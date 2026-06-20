@@ -28,7 +28,7 @@ public function down()
 {
     Schema::table('job_order', function (Blueprint $table) {
         // 1. Buat kembali kolomnya
-        $table->unsignedBigInteger('customer_id')->nullable(); 
+        $table->unsignedInteger('customer_id')->nullable(); 
 
         // 2. Pasang kembali foreign key relasinya
         $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');

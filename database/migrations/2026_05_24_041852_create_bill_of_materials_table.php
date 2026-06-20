@@ -12,9 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bill_of_materials', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('produk_varian_id')->constrained('produk_varian')->onDelete('cascade');
-            $table->foreignId('bahan_baku_id')->constrained('bahan_baku')->onDelete('cascade');
+            $table->increments('id');
+            $table->unsignedInteger('produk_varian_id');
+            $table->foreign('produk_varian_id')->references('id')->on('produk_varian')->onDelete('cascade');
+            $table->unsignedInteger('bahan_baku_id');
+            $table->foreign('bahan_baku_id')->references('id')->on('bahan_baku')->onDelete('cascade');
             $table->double('jumlah');
             $table->timestamps();
         });

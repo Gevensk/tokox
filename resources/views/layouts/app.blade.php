@@ -105,11 +105,13 @@
             </li>
 
             <div class="menu-header">Master Data</div>
+            @if(Auth::check() && Auth::user()->isAdmin())
             <li>
                 <a href="/supplier" class="nav-link {{ Request::is('supplier*') ? 'active' : '' }}">
                     <i class="fa-solid fa-truck-field"></i> Supplier
                 </a>
             </li>
+            @endif
             <li>
                 <a href="/bahan_baku" class="nav-link {{ Request::is('bahan_baku*') ? 'active' : '' }}">
                     <i class="fa-solid fa-box-open"></i> Bahan Baku
@@ -130,13 +132,16 @@
                     <i class="fa-solid fa-users"></i> Pelanggan / Cust
                 </a>
             </li>
+            @if(Auth::check() && Auth::user()->isAdmin())
             <li>
                 <a href="/users" class="nav-link {{ Request::is('users*') ? 'active' : '' }}">
                     <i class="fa-solid fa-user-gear"></i> Manajemen User
                 </a>
             </li>
+            @endif
 
             <div class="menu-header">Manajemen Produksi</div>
+            @if(Auth::check() && Auth::user()->isAdmin())
             <li>
                 <a href="{{ route('bill_of_material.index') }}" class="nav-link {{ Request::is('*bill_of_material*') ? 'active' : '' }}">
                     <i class="fa-solid fa-receipt"></i> Bill of Materials
@@ -147,6 +152,7 @@
                     <i class="fa-solid fa-boxes-packing"></i> Penyesuaian Stok
                 </a>
             </li>
+            @endif
             <li>
                 <a href="{{ route('job_order.index') }}" class="nav-link {{ Request::is('job_order*') ? 'active' : '' }}">
                     <i class="fa-solid fa-boxes-packing me-2"></i> Daftar Job Order
@@ -154,11 +160,13 @@
             </li>   
 
             <div class="menu-header">Transaksi Nota</div>
+            @if(Auth::check() && Auth::user()->isAdmin())
             <li>
                 <a href="{{ route('nota_pembelian.index') }}" class="nav-link {{ Request::is('*nota_pembelian*') ? 'active' : '' }}">
                     <i class="fa-solid fa-file-invoice-dollar"></i> Pembelian Bahan
                 </a>
             </li>
+            @endif
             <li>
                 <a href="{{ route('nota_order.index') }}" class="nav-link {{ Request::is('*nota_order*') ? 'active' : '' }}">
                     <i class="fa-solid fa-cart-shopping"></i> Nota Order Pesanan
@@ -183,10 +191,30 @@
 
     <div id="content">
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4 py-3 px-4">
-            <div class="container-fluid p-0">
+            <div class="container-fluid p-0 d-flex align-items-center justify-content-between">
                 <span class="navbar-brand mb-0 h5 fw-bold text-dark">
                     <i class="fa-solid fa-laptop-code text-muted me-2"></i> Sistem Informasi Produksi
                 </span>
+                
+                @if(Auth::check())
+                <div class="dropdown">
+                    <button class="btn btn-link text-decoration-none text-dark dropdown-toggle fw-semibold p-0 d-flex align-items-center gap-1" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-circle-user fs-4 text-secondary"></i>
+                        <span>{{ Auth::user()->name }}</span>
+                        <span class="badge bg-secondary-subtle text-secondary border ms-1 small text-uppercase" style="font-size: 0.7rem;">{{ Auth::user()->role }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="userDropdown">
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST" class="px-2">
+                                @csrf
+                                <button type="submit" class="dropdown-item text-danger fw-semibold rounded">
+                                    <i class="fa-solid fa-right-from-bracket me-2"></i> Keluar Sistem
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                @endif
             </div>
         </nav>
 

@@ -12,15 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('nota_stok_keluar_has_produk_varian', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             
             // Relasi ke tabel induk nota_stok_keluar
-            $table->foreignId('nota_stok_keluar_id')
-                  ->constrained('nota_stok_keluar')
-                  ->cascadeOnDelete(); // Jika nota induk dihapus, detailnya otomatis ikut terhapus
+            $table->unsignedInteger('nota_stok_keluar_id');
+            $table->foreign('nota_stok_keluar_id')->references('id')->on('nota_stok_keluar')->onDelete('cascade'); // Jika nota induk dihapus, detailnya otomatis ikut terhapus
             
             // Relasi ke tabel produk_varian untuk tahu warna/ukuran apa yang keluar
-            $table->foreignId('produk_varian_id')->constrained('produk_varian');
+            $table->integer('produk_varian_id');
+            $table->foreign('produk_varian_id')->references('id')->on('produk_varian');
             
             // Kuantitas dan pencatatan harga riil saat barang keluar
             $table->integer('qty');

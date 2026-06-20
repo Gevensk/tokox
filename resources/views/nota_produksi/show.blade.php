@@ -34,10 +34,12 @@
                             <td class="text-muted">Tanggal Kirim</td>
                             <td>: {{ $nota->tgl_kirim ? date('d-m-Y H:i', strtotime($nota->tgl_kirim)) : '-' }}</td>
                         </tr>
+                        @if(Auth::user()->isAdmin())
                         <tr>
                             <td class="text-muted">Ongkir Bahan</td>
                             <td>: <span class="text-danger fw-bold">Rp {{ number_format($nota->ongkir_kirim_bahan, 0, ',', '.') }}</span></td>
                         </tr>
+                        @endif
                         <tr>
                             <td class="text-muted">Status Nota</td>
                             <td>: 
@@ -76,8 +78,9 @@
                                     <th>Job ID</th>
                                     <th>Produk & Varian</th>
                                     <th class="text-center">Qty (Pcs)</th>
-                                    <th>Kustomisasi</th>
-                                    <th>Aksi</th>
+                                    <th class="text-center">Estimasi Selesai</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -86,7 +89,14 @@
                                         <td>JOB-{{ $job->id }}</td>
                                         <td>{{ $job->produk_varian->produk->nama ?? 'Produk' }}</td>
                                         <td class="text-center fw-bold">{{ $job->jumlah }} Pcs</td>
-                                        <td>
+                                        <td class="text-center">
+                                            @if($job->estimasi_selesai)
+                                                <span class="fw-semibold text-dark">{{ date('d-m-Y H:i', strtotime($job->estimasi_selesai)) }}</span>
+                                            @else
+                                                <span class="text-muted small italic">-</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
                                             @if($job->status_pesanan == 'Antrean')
                                                 <span class="badge bg-secondary">Antrean</span>
                                             @elseif($job->status_pesanan == 'Diproduksi')
@@ -130,8 +140,10 @@
                             <th>Nama Bahan Baku</th>
                             <th>Untuk Kebutuhan Job Order</th>
                             <th>Jumlah Keluar Gudang</th>
+                            @if(Auth::user()->isAdmin())
                             <th>Harga Rata-Rata Saat Keluar</th>
                             <th>Total Estimasi Biaya Bahan</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -146,8 +158,10 @@
                                     <td><strong>{{ $pakai->bahan_baku->nama ?? 'Bahan' }}</strong></td>
                                     <td><small class="text-muted">Job Order ID: #{{ $job->id }} ({{ $job->produk_varian->produk->nama ?? '' }})</small></td>
                                     <td>{{ number_format($pakai->jumlah, 2) }} {{ $pakai->bahan_baku->satuan ?? '' }}</td>
+                                    @if(Auth::user()->isAdmin())
                                     <td>Rp {{ number_format($pakai->harga_rata_saat_ini, 0, ',', '.') }}</td>
                                     <td class="fw-bold text-end">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
+                                    @endif
                                 </tr>
                             @endforeach
                         @empty
@@ -155,10 +169,12 @@
                                 <td colspan="5" class="text-center py-3 text-muted">Belum ada history pengeluaran bahan.</td>
                             </tr>
                         @endforelse
+                        @if(Auth::user()->isAdmin())
                         <tr class="table-dark fw-bold">
                             <td colspan="4" class="text-end">TOTAL BIAYA PRODUKSI BAHAN BAKU :</td>
                             <td class="text-end">Rp {{ number_format($grandTotalBahan, 0, ',', '.') }}</td>
                         </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

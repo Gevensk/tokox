@@ -23,7 +23,9 @@
                             <th>No. Nota Produksi</th>
                             <th>Nama Penjahit (PIC)</th>
                             <th>Tanggal Mulai</th>
+                            @if(Auth::user()->isAdmin())
                             <th>Ongkos Kirim Bahan</th>
+                            @endif
                             <th>Status Nota</th>
                             <th>Status Kirim Bahan</th>
                             <th class="text-center">Aksi</th>
@@ -38,7 +40,9 @@
                                     {{ $prod->penjahit->nama ?? 'Tidak Ada Penjahit' }}
                                 </td>
                                 <td>{{ date('d M Y H:i', strtotime($prod->tgl_order)) }}</td>
+                                @if(Auth::user()->isAdmin())
                                 <td><strong class="text-secondary">Rp {{ number_format($prod->ongkir_kirim_bahan ?? 0, 0, ',', '.') }}</strong></td>
+                                @endif
                                 <td>
                                     @if(($prod->status_nota ?? 'Proses') == 'Proses')
                                         <span class="badge bg-warning text-dark">Proses</span>

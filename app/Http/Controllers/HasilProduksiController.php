@@ -73,6 +73,13 @@ class HasilProduksiController extends Controller
                     ->with('error', "Gagal! Jumlah setoran tidak boleh 0 Pcs.");
             }
 
+            // === AUTOMATION ALOKASI BERDASARKAN STATUS CUSTOM ===
+            if ($job->is_custom == 1 && $job->nota_order && !is_null($job->nota_order->customer_id)) {
+                $alokasiOtomatis = 'Pesanan Customer';
+            } else {
+                $alokasiOtomatis = 'Stok Toko';
+            }
+
             // 2. Pemetaan data ke Model HasilProduksi (Log Riwayat QC)
             $hasil = new HasilProduksi();
             $hasil->job_order_id        = $job->id;
@@ -83,6 +90,7 @@ class HasilProduksiController extends Controller
             $hasil->qty_rejected_defect = $request->qty_rejected_defect;
             $hasil->qty_rejected        = $request->qty_rejected;
             $hasil->catatan_qc          = $request->catatan_qc;
+            $hasil->status_alokasi      = $alokasiOtomatis;
             $hasil->save();
 
             // Total fisik yang selamat dan bernilai ekonomis (bisa dijual) pada batch ini
@@ -162,19 +170,19 @@ class HasilProduksiController extends Controller
             }
 
             // 6. OTOMATISASI UPDATE STATUS PADA NOTA PRODUKSI (Halaman Surat Jalan Monitoring)
-            if ($job->nota_production_id) { 
-                $semuaJobDiNotaProduksi = JobOrder::where('nota_production_id', $job->nota_production_id)->get();
+            if ($job->nota_produksi_id) { 
+                $semuaJobDiNotaProduksi = JobOrder::where('nota_produksi_id', $job->nota_produksi_id)->get();
                 
                 $jumlahJobSelesaiQC = $semuaJobDiNotaProduksi->where('status_pesanan', 'Selesai')->count();
                 $totalJobDiNotaProduksi = $semuaJobDiNotaProduksi->count();
 
                 if ($jumlahJobSelesaiQC === $totalJobDiNotaProduksi) {
-                    DB::table('nota_production')
-                        ->where('id', $job->nota_production_id)
+                    DB::table('nota_produksi')
+                        ->where('id', $job->nota_produksi_id)
                         ->update(['status_nota' => 'Selesai']);
                 } else {
-                    DB::table('nota_production')
-                        ->where('id', $job->nota_production_id)
+                    DB::table('nota_produksi')
+                        ->where('id', $job->nota_produksi_id)
                         ->update(['status_nota' => 'Proses']);
                 }
             }

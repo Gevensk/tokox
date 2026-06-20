@@ -12,10 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pemakaian_bahan', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             // Sesuaikan foreign key dengan tipe id tabel bahan_baku & job_order (biasanya bigInteger bawaan laravel)
-            $table->foreignId('bahan_baku_id')->constrained('bahan_baku')->onDelete('cascade');
-            $table->foreignId('job_order_id')->constrained('job_order')->onDelete('cascade');
+            $table->unsignedInteger('bahan_baku_id');
+            $table->foreign('bahan_baku_id')->references('id')->on('bahan_baku')->onDelete('cascade');
+            $table->unsignedInteger('job_order_id');
+            $table->foreign('job_order_id')->references('id')->on('job_order')->onDelete('cascade');
             $table->dateTime('tgl_keluar');
             $table->decimal('jumlah', 15, 4);
             $table->decimal('harga_rata_saat_ini', 15, 4);

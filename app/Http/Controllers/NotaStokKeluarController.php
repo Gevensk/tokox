@@ -30,7 +30,7 @@ class NotaStokKeluarController extends Controller
         $produkVarians = ProdukVarian::where('stok_tersedia', '>', 0)->get();
 
         // PENYESUAIAN: Status diganti dari 'belum lunas' menjadi selain 'Lunas' agar sinkron dengan data nota_order kamu
-        $notaOrders = NotaOrder::with('customer')
+        $notaOrders = NotaOrder::with(['customer', 'job_orders.produk_varian.produk'])
             ->where('status_bayar', '!=', 'Lunas')
             ->latest()
             ->get();
@@ -39,19 +39,19 @@ class NotaStokKeluarController extends Controller
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'customer_id'   => 'required|exists:customer,id',
-        'tipe_keluar'   => 'required|in:penjualan_order,penjualan_langsung',
-        'nota_order_id' => 'nullable|required_if:tipe_keluar,penjualan_order|exists:nota_order,id',
-        'total_bayar'   => 'required|numeric|min:0',
-        'items'         => 'required|array|min:1',
-        'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
-        'items.*.qty'              => 'required|integer|min:1',
-        'items.*.harga_satuan'     => 'required|numeric|min:0',
-    ]);
+    {
+        $request->validate([
+            'customer_id'   => 'required_if:tipe_keluar,penjualan_order|nullable|exists:customer,id',
+            'tipe_keluar'   => 'required|in:penjualan_order,penjualan_langsung',
+            'nota_order_id' => 'nullable|required_if:tipe_keluar,penjualan_order|exists:nota_order,id',
+            'total_bayar'   => 'required|numeric|min:0',
+            'items'         => 'required|array|min:1',
+            'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
+            'items.*.qty'              => 'required|integer|min:1',
+            'items.*.harga_satuan'     => 'required|numeric|min:0',
+        ]);
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
     try {
         $notaOrderId = $request->nota_order_id;
@@ -62,7 +62,7 @@ class NotaStokKeluarController extends Controller
             $notaOrder = NotaOrder::findOrFail($notaOrderId);
             
             // Hitung sisa yang harus dilunasi
-            $sisaPelunasan = $notaOrder->harga_deal - $notaOrder->nominal_dp_masuk;
+            $sisaPelunasan = $notaOrder->total_harga - $notaOrder->nominal_dp_masuk;
 
             // Aturan: Barang TIDAK BISA KELUAR jika pembayaran kurang dari sisa pelunasan
             if ($totalBayarInput < $sisaPelunasan) {
@@ -74,9 +74,22 @@ class NotaStokKeluarController extends Controller
             $notaOrder->update(['status_bayar' => 'Lunas']);
         }
 
+        if ($request->tipe_keluar === 'penjualan_langsung') {
+            $customer = Customer::firstOrCreate(
+                ['nama' => 'Customer Umum'],
+                [
+                    'no_hp' => '-',
+                    'alamat' => '-'
+                ]
+            );
+            $customerId = $customer->id;
+        } else {
+            $customerId = $request->customer_id;
+        }
+
         // 1. Simpan data induk (Header)
         $notaKeluar = NotaStokKeluar::create([
-            'customer_id'   => $request->customer_id,
+            'customer_id'   => $customerId,
             'nota_order_id' => $request->tipe_keluar === 'penjualan_order' ? $notaOrderId : null,
             'tipe_keluar'   => $request->tipe_keluar,
             'total_bayar'   => $totalBayarInput, 
@@ -88,22 +101,24 @@ class NotaStokKeluarController extends Controller
             $subtotal = $item['qty'] * $item['harga_satuan'];
 
             // =========================================================================
-            // PERUBAHAN LOGIKA POTONG STOK
+            // PERUBAHAN LOGIKA POTONG STOK (MENGAKOMODASI STOK TOKO & CUSTOM)
             // =========================================================================
-            if ($request->tipe_keluar === 'penjualan_langsung') {
-                
-                // SKENARIO A: Pembelian Langsung Toko -> Validasi & Potong Stok Toko Ready
-                if ($produkVarian->stok_tersedia < $item['qty']) {
-                    throw new \Exception("Stok toko tidak mencukupi untuk varian produk: {$produkVarian->warna} - {$produkVarian->ukuran}");
-                }
-                
-                $produkVarian->stok_tersedia -= $item['qty'];
-                $produkVarian->save();
+            $isCustomOrder = false;
 
-            } else {
+            if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
+                // Cari apakah ada JobOrder terkait yang bertipe custom
+                $jobOrder = \App\Models\JobOrder::where('nota_order_id', $notaOrderId)
+                    ->where('produk_varian_id', $item['produk_varian_id'])
+                    ->first();
                 
-                // SKENARIO B: Pengambilan Pesanan Order (Budi / Siti)
-                // Kita validasi apakah jumlah baju custom mereka yang sudah selesai di tabel hasil_produksi mencukupi
+                if ($jobOrder && $jobOrder->is_custom == 1) {
+                    $isCustomOrder = true;
+                }
+            }
+
+            if ($isCustomOrder) {
+                // SKENARIO A: Pengambilan Pesanan Custom (Milik Budi / Siti)
+                // 1. Hitung total baju custom yang selesai diproduksi
                 $stokCustomReady = \App\Models\HasilProduksi::where('produk_varian_id', $item['produk_varian_id'])
                     ->whereHas('job_order', function($query) use ($notaOrderId) {
                         $query->where('nota_order_id', $notaOrderId);
@@ -111,12 +126,30 @@ class NotaStokKeluarController extends Controller
                     ->where('status_alokasi', 'Pesanan Customer')
                     ->sum('qty_accepted');
 
-                if ($stokCustomReady < $item['qty']) {
-                    throw new \Exception("Gagal Keluar! Jumlah baju custom yang selesai diproduksi ({$stokCustomReady} Pcs) kurang dari jumlah yang mau diambil ({$item['qty']} Pcs).");
+                // 2. Hitung total baju custom yang SUDAH diambil sebelumnya lewat Nota Stok Keluar
+                $qtySudahDiambil = \App\Models\NotaStokKeluarHasProdukVarian::where('produk_varian_id', $item['produk_varian_id'])
+                    ->whereHas('nota_keluar', function($query) use ($notaOrderId) {
+                        $query->where('nota_order_id', $notaOrderId);
+                    })
+                    ->sum('qty');
+
+                $sisaStokCustom = $stokCustomReady - $qtySudahDiambil;
+
+                if ($sisaStokCustom < $item['qty']) {
+                    throw new \Exception("Gagal Keluar! Sisa baju custom yang selesai diproduksi & belum diambil ({$sisaStokCustom} Pcs) kurang dari jumlah yang mau diambil ({$item['qty']} Pcs).");
                 }
 
-                // Catatan: Untuk pesanan customer, kita TIDAK memotong $produkVarian->stok_tersedia 
-                // karena dari awal sewaktu QC (Langkah 2) kodingan kita memang sengaja tidak menambahkannya ke stok_tersedia toko.
+                // Untuk pesanan custom, kita TIDAK memotong $produkVarian->stok_tersedia 
+                // karena stoknya dicatat dinamis melalui hasil_produksi & detail pengeluarannya.
+            } else {
+                // SKENARIO B: Penjualan Langsung Toko ATAU Pesanan Order Standar (Ready Stock)
+                // Validasi & Potong Stok Toko Ready
+                if ($produkVarian->stok_tersedia < $item['qty']) {
+                    throw new \Exception("Stok toko tidak mencukupi untuk varian produk: {$produkVarian->warna} - {$produkVarian->ukuran}");
+                }
+                
+                $produkVarian->stok_tersedia -= $item['qty'];
+                $produkVarian->save();
             }
             // =========================================================================
 
@@ -137,4 +170,10 @@ class NotaStokKeluarController extends Controller
         return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
     }
 }
+
+    public function cetakPdf($id)
+    {
+        $nota = NotaStokKeluar::with(['customer', 'nota_order', 'nota_keluar.produk_varian.produk'])->findOrFail($id);
+        return view('nota_keluar.pdf_print', compact('nota'));
+    }
 }

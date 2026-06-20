@@ -4,7 +4,9 @@
 <div class="card shadow">
     <div class="card-header bg-primary text-white d-flex justify-content-between">
         <h5 class="mb-0">Daftar Produk</h5>
+        @if(Auth::user()->isAdmin())
         <a href="/produk/create" class="btn btn-light btn-sm">+ Tambah</a>
+        @endif
     </div>
     <div class="card-body">
         @if(session('success'))
@@ -38,11 +40,13 @@
                     <td><a href="/produk/{{ $d->id }}" class="btn btn-info btn-sm text-white">Detail Varian</a></td>
                     <td>
                         
+                        @if(Auth::user()->isAdmin())
                         <a href="/produk/{{ $d->id }}/edit" class="btn btn-warning btn-sm">Edit</a>
                         <form action="/produk/{{ $d->id }}" method="POST" class="d-inline">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hapus?')">Hapus</button>
                         </form>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

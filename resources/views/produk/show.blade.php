@@ -30,6 +30,7 @@
             @endif
 
             {{-- Form Tambah Varian Masal --}}
+            @if(Auth::user()->isAdmin())
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-light fw-bold">
                     <i class="bi bi-plus-circle-fill text-primary"></i> Tambah Varian Baru Sekaligus
@@ -79,6 +80,7 @@
                     </form>
                 </div>
             </div>
+            @endif
 
             {{-- Bagian Tabel Daftar Varian Produk --}}
             <div class="card shadow-sm">
@@ -96,8 +98,10 @@
                                     <th class="py-3 text-success" width="200">Stok Toko (Ready Stock)</th>
                                     <th class="py-3 text-primary" width="200">Stok Custom (Pesanan)</th>
                                     <th class="py-3 text-warning" width="150">Stok Defect</th>
+                                    @if(Auth::user()->isAdmin())
                                     <th class="py-3" width="180">Harga Modal (Avg)</th>
                                     <th class="py-3" width="100">Aksi</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -143,6 +147,7 @@
                                         @endif
                                     </td>
 
+                                    @if(Auth::user()->isAdmin())
                                     <td class="text-end pe-3 fw-bold text-secondary">
                                         Rp {{ number_format($v->harga_avg_produk, 0, ',', '.') }}
                                     </td>
@@ -156,6 +161,7 @@
                                             </button>
                                         </form>
                                     </td>
+                                    @endif
                                 </tr>
                                 @empty
                                 <tr>
@@ -169,6 +175,52 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Detail Rincian Kepemilikan Stok Custom --}}
+            @if(count($detailStokCustom) > 0)
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-people-fill"></i> Detail Kepemilikan Stok Custom (Belum Diambil Pelanggan)</span>
+                    <span class="badge bg-light text-primary">Antrean Pengambilan</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle mb-0">
+                            <thead class="table-light text-center small uppercase fw-bold">
+                                <tr>
+                                    <th class="py-3">Varian</th>
+                                    <th class="py-3">Nama Customer</th>
+                                    <th class="py-3">Referensi PO</th>
+                                    <th class="py-3 text-center">Total Produksi</th>
+                                    <th class="py-3 text-center">Sudah Diambil</th>
+                                    <th class="py-3 text-success text-center">Belum Diambil (Stok Custom)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($detailStokCustom as $detail)
+                                <tr>
+                                    <td class="ps-3 fw-semibold text-secondary">{{ $detail['varian'] }}</td>
+                                    <td class="ps-3 fw-bold text-dark">{{ $detail['customer_nama'] }}</td>
+                                    <td class="text-center">
+                                        <a href="{{ route('nota_order.show', $detail['nota_order_id']) }}" class="fw-bold text-primary decoration-none">
+                                            #{{ $detail['no_order'] }}
+                                        </a>
+                                    </td>
+                                    <td class="text-center text-muted">{{ $detail['total_produksi'] }} {{ $produk->satuan }}</td>
+                                    <td class="text-center text-muted">{{ $detail['sudah_diambil'] }} {{ $produk->satuan }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 px-3 py-1.5 fw-bold">
+                                            {{ $detail['sisa'] }} {{ $produk->satuan }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>

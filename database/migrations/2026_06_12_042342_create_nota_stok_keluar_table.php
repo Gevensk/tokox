@@ -12,13 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('nota_stok_keluar', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             
             // Relasi ke tabel customer (Wajib ada)
-            $table->foreignId('customer_id')->constrained('customer')->onDelete('cascade');
+            $table->integer('customer_id');
+            $table->foreign('customer_id')->references('id')->on('customer')->onDelete('cascade');
             
             // Relasi ke tabel nota_order (NULLABLE: Kosong jika pelanggan beli langsung produk ready)
-            $table->foreignId('nota_order_id')->nullable()->constrained('nota_order')->onDelete('set null');
+            $table->unsignedInteger('nota_order_id')->nullable();
+            $table->foreign('nota_order_id')->references('id')->on('nota_order')->onDelete('set null');
             
             // Menggunakan ENUM sesuai dengan kamus mutasi barang yang kita sepakati
             $table->enum('tipe_keluar', ['penjualan_order', 'penjualan_langsung', 'sampel_promosi', 'barang_hilang_rusak']);

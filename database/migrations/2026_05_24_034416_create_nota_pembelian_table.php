@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('nota_pembelian', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('supplier_id')->constrained('supplier')->onDelete('cascade');
+            $table->increments('id');
+            $table->unsignedInteger('supplier_id');
+            $table->foreign('supplier_id')->references('id')->on('supplier')->onDelete('cascade');
             $table->dateTime('tgl_beli');
             $table->double('total_harga_bahan');
             $table->double('ongkir')->default(0);
