@@ -96,7 +96,7 @@
 
                         <div class="row">
                             {{-- Ongkir Pengiriman Hasil Jadi --}}
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="ongkir_hasil_produksi" class="form-label fw-bold">Ongkos Kirim Balik Setoran (Rp)</label>
                                 <div class="input-group">
                                     <span class="input-group-text">Rp</span>
@@ -105,8 +105,18 @@
                                 <small class="text-muted">Biaya logistik pengiriman baju dari penjahit ke gudang Anda.</small>
                             </div>
 
+                            {{-- Biaya Rework Tambahan --}}
+                            <div class="col-md-4 mb-3">
+                                <label for="biaya_rework_tambahan" class="form-label fw-bold">Biaya Rework Tambahan (Rp)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp</span>
+                                    <input type="number" name="biaya_rework_tambahan" id="biaya_rework_tambahan" class="form-control" value="{{ old('biaya_rework_tambahan', 0) }}" min="0" required>
+                                </div>
+                                <small class="text-muted">Biaya tambahan untuk penjahit jahit ulang baju cacat.</small>
+                            </div>
+
                             {{-- Catatan QC --}}
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="catatan_qc" class="form-label fw-bold">Catatan Tim QC</label>
                                 <input type="text" name="catatan_qc" id="catatan_qc" class="form-control" placeholder="Contoh: Jahitan lengan kiri agak renggang" value="{{ old('catatan_qc') }}" maxlength="45">
                             </div>

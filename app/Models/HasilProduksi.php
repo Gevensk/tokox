@@ -22,6 +22,7 @@ class HasilProduksi extends Model
         'qty_rejected_defect',
         'qty_rejected',
         'catatan_qc',
+        'biaya_rework_tambahan',
     ];
 
     // Relasi balik ke Job Order (Opsional tapi sangat berguna untuk panggil data)

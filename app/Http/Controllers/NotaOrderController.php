@@ -129,6 +129,7 @@ class NotaOrderController extends Controller
                         'jumlah' => $bahan['jumlah'],
                         'harga_rata_saat_ini' => $bahan['harga_rata_saat_ini'],
                         'tgl_keluar' => $bahan['tgl_keluar'],
+                        'tipe' => 'bom',
                     ]);
                 }
             }
@@ -273,6 +274,7 @@ public function update(Request $request, $id)
                         'jumlah' => $bahan['jumlah'],
                         'harga_rata_saat_ini' => $bahan['harga_rata_saat_ini'],
                         'tgl_keluar' => $bahan['tgl_keluar'],
+                        'tipe' => 'bom',
                     ]);
                 }
             }

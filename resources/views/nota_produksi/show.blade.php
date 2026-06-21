@@ -87,7 +87,36 @@
                                 @foreach($nota->jobOrders as $job)
                                     <tr>
                                         <td>JOB-{{ $job->id }}</td>
-                                        <td>{{ $job->produk_varian->produk->nama ?? 'Produk' }}</td>
+                                        <td>
+                                            <span class="fw-bold text-dark">{{ $job->produk_varian->produk->nama ?? 'Produk' }}</span>
+                                            <div class="small text-muted">
+                                                Warna: {{ $job->produk_varian->warna ?? '-' }} | Ukuran: {{ $job->produk_varian->ukuran ?? '-' }}
+                                            </div>
+                                            @if($job->is_custom)
+                                                <div class="mt-1 small">
+                                                    <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">Custom Spec</span>
+                                                    <span class="text-danger fw-semibold" style="font-size: 0.78rem;">* {{ $job->catatan_custom ?? '-' }}</span>
+                                                </div>
+                                                
+                                                @php
+                                                    $ekstras = $job->pemakaian_bahan->where('tipe', 'ekstra');
+                                                @endphp
+                                                
+                                                @if($ekstras->count() > 0)
+                                                    <div class="mt-2 p-2 bg-light rounded border border-warning" style="font-size: 0.78rem; max-width: 320px;">
+                                                        <strong class="text-secondary d-block mb-1">🛠️ Bahan Baku Ekstra:</strong>
+                                                        <ul class="list-unstyled mb-0 ps-1">
+                                                            @foreach($ekstras as $e)
+                                                                <li class="text-dark mb-1">
+                                                                    • {{ $e->bahan_baku->nama ?? 'Bahan' }} 
+                                                                    <span class="badge bg-secondary ms-1">{{ number_format($e->jumlah, 2) }} {{ $e->bahan_baku->satuan ?? '' }}</span>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        </td>
                                         <td class="text-center fw-bold">{{ $job->jumlah }} Pcs</td>
                                         <td class="text-center">
                                             @if($job->estimasi_selesai)
@@ -100,13 +129,15 @@
                                             @if($job->status_pesanan == 'Antrean')
                                                 <span class="badge bg-secondary">Antrean</span>
                                             @elseif($job->status_pesanan == 'Diproduksi')
-                                                <span class="badge bg-warning text-dark">Sedang Dijahit</span>
+                                                <span class="badge bg-info text-dark">Sedang Dijahit</span>
+                                            @elseif($job->status_pesanan == 'Selesai Parsial')
+                                                <span class="badge bg-warning text-dark">Selesai Parsial</span>
                                             @else
                                                 <span class="badge bg-success">Selesai & Lolos QC</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                        @if($job->status_pesanan == 'Diproduksi')
+                                        @if($job->status_pesanan == 'Diproduksi' || $job->status_pesanan == 'Selesai Parsial')
                                             @if($nota->status_kirim == 'Dikirim')
                                                 <a href="{{ route('nota_produksi.terima_hasil', ['job_id' => $job->id]) }}" class="btn btn-sm btn-success fw-bold">
                                                     <i class="bi bi-shield-check"></i> Terima Hasil & QC
@@ -131,13 +162,14 @@
     </div>
 
     <div class="card shadow-sm mt-2">
-        <div class="card-header bg-dark text-white fw-bold">📋 Kalkulasi Bahan Baku Keluar (Berdasarkan Resep BoM)</div>
+        <div class="card-header bg-dark text-white fw-bold">📋 Rincian Pengeluaran Bahan Baku (Resep BoM & Bahan Ekstra)</div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-striped mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Nama Bahan Baku</th>
+                            <th>Tipe Bahan</th>
                             <th>Untuk Kebutuhan Job Order</th>
                             <th>Jumlah Keluar Gudang</th>
                             @if(Auth::user()->isAdmin())
@@ -153,9 +185,18 @@
                                 @php 
                                     $subtotal = $pakai->jumlah * $pakai->harga_rata_saat_ini;
                                     $grandTotalBahan += $subtotal;
+
+                                    $isBom = ($pakai->tipe ?? 'bom') === 'bom';
                                 @endphp
                                 <tr>
                                     <td><strong>{{ $pakai->bahan_baku->nama ?? 'Bahan' }}</strong></td>
+                                    <td>
+                                        @if($isBom)
+                                            <span class="badge bg-primary text-white" style="font-size: 0.75rem;">Resep BoM</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.75rem;">Bahan Ekstra</span>
+                                        @endif
+                                    </td>
                                     <td><small class="text-muted">Job Order ID: #{{ $job->id }} ({{ $job->produk_varian->produk->nama ?? '' }})</small></td>
                                     <td>{{ number_format($pakai->jumlah, 2) }} {{ $pakai->bahan_baku->satuan ?? '' }}</td>
                                     @if(Auth::user()->isAdmin())
@@ -166,12 +207,34 @@
                             @endforeach
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-3 text-muted">Belum ada history pengeluaran bahan.</td>
+                                <td colspan="6" class="text-center py-3 text-muted">Belum ada history pengeluaran bahan.</td>
                             </tr>
                         @endforelse
                         @if(Auth::user()->isAdmin())
+                        @php
+                            $totalBomCost = 0;
+                            $totalEkstraCost = 0;
+                            foreach($nota->jobOrders as $job) {
+                                foreach($job->pemakaian_bahan as $pakai) {
+                                    $sub = $pakai->jumlah * $pakai->harga_rata_saat_ini;
+                                    if (($pakai->tipe ?? 'bom') === 'bom') {
+                                        $totalBomCost += $sub;
+                                    } else {
+                                        $totalEkstraCost += $sub;
+                                    }
+                                }
+                            }
+                        @endphp
+                        <tr class="table-light fw-bold text-secondary" style="font-size: 0.85rem;">
+                            <td colspan="5" class="text-end">TOTAL BIAYA RESEP BoM :</td>
+                            <td class="text-end text-dark">Rp {{ number_format($totalBomCost, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr class="table-warning fw-bold text-dark" style="font-size: 0.85rem;">
+                            <td colspan="5" class="text-end">TOTAL BIAYA BAHAN EKSTRA :</td>
+                            <td class="text-end text-danger">Rp {{ number_format($totalEkstraCost, 0, ',', '.') }}</td>
+                        </tr>
                         <tr class="table-dark fw-bold">
-                            <td colspan="4" class="text-end">TOTAL BIAYA PRODUKSI BAHAN BAKU :</td>
+                            <td colspan="5" class="text-end">TOTAL BIAYA PRODUKSI BAHAN BAKU :</td>
                             <td class="text-end">Rp {{ number_format($grandTotalBahan, 0, ',', '.') }}</td>
                         </tr>
                         @endif

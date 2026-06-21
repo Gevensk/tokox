@@ -76,27 +76,37 @@ class NotaProduksiController extends Controller
                     // 🔥 PERBAIKAN BINDING: Ambil nilai upah dari array 'biaya_jasa'
                     $biayaJasaSatuanRil = isset($request->biaya_jasa[$jobOrderId]) ? $request->biaya_jasa[$jobOrderId] : 0;
 
-                    $sudahAdaBahan = PemakaianBahan::where('job_order_id', $job->id)->exists();
-
                     if ($job->produk_varian && $job->produk_varian->bill_of_materials) {
                         foreach ($job->produk_varian->bill_of_materials as $bom) {
                             $totalKebutuhanBahan = $bom->jumlah * $job->jumlah;
                             $bahanBaku = $bom->bahan_baku;
 
                             if ($bahanBaku) {
-                                if (!$sudahAdaBahan) {
+                                $existingBOM = PemakaianBahan::where('job_order_id', $job->id)
+                                    ->where('bahan_baku_id', $bahanBaku->id)
+                                    ->where('tipe', 'bom')
+                                    ->whereNotNull('tgl_keluar')
+                                    ->first();
+
+                                if (!$existingBOM) {
                                     if ($bahanBaku->stok_total < $totalKebutuhanBahan) {
                                         throw new \Exception("Stok bahan baku [{$bahanBaku->nama}] tidak mencukupi!");
                                     }
                                     $bahanBaku->decrement('stok_total', $totalKebutuhanBahan);
 
-                                    PemakaianBahan::create([
-                                        'bahan_baku_id' => $bahanBaku->id,
-                                        'job_order_id'  => $job->id,
-                                        'tgl_keluar'    => now(),
-                                        'jumlah'        => $totalKebutuhanBahan,
-                                        'harga_rata_saat_ini' => $bahanBaku->harga_rata_rata 
-                                    ]);
+                                    // Update existing record (with tgl_keluar = null) or create a new one
+                                    PemakaianBahan::updateOrCreate(
+                                        [
+                                            'job_order_id' => $job->id,
+                                            'bahan_baku_id' => $bahanBaku->id,
+                                            'tipe' => 'bom',
+                                        ],
+                                        [
+                                            'tgl_keluar' => now(),
+                                            'jumlah' => $totalKebutuhanBahan,
+                                            'harga_rata_saat_ini' => $bahanBaku->harga_rata_rata 
+                                        ]
+                                    );
                                 }
                                 $accumulatedBiayaBahan += ($totalKebutuhanBahan * $bahanBaku->harga_rata_rata);
                             }
@@ -104,28 +114,45 @@ class NotaProduksiController extends Controller
                     }
 
                     // --- BAGIAN BAHAN TAMBAHAN (CUSTOM) ---
-                    if ($job->is_custom && isset($request->ekstra_bahan_id[$jobOrderId]) && $request->ekstra_jumlah[$jobOrderId] > 0) {
-                        $ekstraBahanId = $request->ekstra_bahan_id[$jobOrderId];
-                        $ekstraJumlah = $request->ekstra_jumlah[$jobOrderId];
-                        $bahanEkstra = BahanBaku::find($ekstraBahanId);
+                    if ($job->is_custom && isset($request->ekstra_bahan_id[$jobOrderId]) && is_array($request->ekstra_bahan_id[$jobOrderId])) {
+                        $ekstraBahanIds = $request->ekstra_bahan_id[$jobOrderId];
+                        $ekstraJumlahs = $request->ekstra_jumlah[$jobOrderId] ?? [];
 
-                        if ($bahanEkstra) {
-                            if (!$sudahAdaBahan) {
-                                if ($bahanEkstra->stok_total < $ekstraJumlah) {
-                                    throw new \Exception("Stok bahan tambahan [{$bahanEkstra->nama}] tidak mencukupi untuk kustomisasi!");
-                                }
-                                $bahanEkstra->decrement('stok_total', $ekstraJumlah);
-
-                                PemakaianBahan::create([
-                                    'bahan_baku_id' => $bahanEkstra->id,
-                                    'job_order_id'  => $job->id,
-                                    'tgl_keluar'    => now(),
-                                    'jumlah'        => $ekstraJumlah,
-                                    'harga_rata_saat_ini' => $bahanEkstra->harga_rata_rata
-                                ]);
+                        foreach ($ekstraBahanIds as $index => $ekstraBahanId) {
+                            if (empty($ekstraBahanId)) {
+                                continue;
                             }
-                            $biayaEkstraBahan = $ekstraJumlah * $bahanEkstra->harga_rata_rata;
-                            $accumulatedBiayaBahan += $biayaEkstraBahan;
+                            $ekstraJumlah = isset($ekstraJumlahs[$index]) ? (float)$ekstraJumlahs[$index] : 0;
+                            if ($ekstraJumlah <= 0) {
+                                continue;
+                            }
+
+                            $bahanEkstra = BahanBaku::find($ekstraBahanId);
+                            if ($bahanEkstra) {
+                                $existingEkstra = PemakaianBahan::where('job_order_id', $job->id)
+                                    ->where('bahan_baku_id', $bahanEkstra->id)
+                                    ->where('tipe', 'ekstra')
+                                    ->whereNotNull('tgl_keluar')
+                                    ->first();
+
+                                if (!$existingEkstra) {
+                                    if ($bahanEkstra->stok_total < $ekstraJumlah) {
+                                        throw new \Exception("Stok bahan tambahan [{$bahanEkstra->nama}] tidak mencukupi untuk kustomisasi!");
+                                    }
+                                    $bahanEkstra->decrement('stok_total', $ekstraJumlah);
+
+                                    PemakaianBahan::create([
+                                        'bahan_baku_id' => $bahanEkstra->id,
+                                        'job_order_id'  => $job->id,
+                                        'tipe'          => 'ekstra',
+                                        'tgl_keluar'    => now(),
+                                        'jumlah'        => $ekstraJumlah,
+                                        'harga_rata_saat_ini' => $bahanEkstra->harga_rata_rata
+                                    ]);
+                                }
+                                $biayaEkstraBahan = $ekstraJumlah * $bahanEkstra->harga_rata_rata;
+                                $accumulatedBiayaBahan += $biayaEkstraBahan;
+                            }
                         }
                     }
 
@@ -251,6 +278,7 @@ class NotaProduksiController extends Controller
         $nota = NotaProduksi::with([
             'penjahit',
             'jobOrders.produk_varian.produk',
+            'jobOrders.produk_varian.bill_of_materials',
             'jobOrders.pemakaian_bahan.bahan_baku'
         ])->findOrFail($id);
 
@@ -262,6 +290,7 @@ class NotaProduksiController extends Controller
         $nota = NotaProduksi::with([
             'penjahit',
             'jobOrders.produk_varian.produk',
+            'jobOrders.produk_varian.bill_of_materials',
             'jobOrders.pemakaian_bahan.bahan_baku'
         ])->findOrFail($id);
 
@@ -275,6 +304,7 @@ class NotaProduksiController extends Controller
                 if (!isset($komponenBahan[$bahanId])) {
                     $komponenBahan[$bahanId] = [
                         'name' => $namaBahan, // Disamakan dengan struktur awal
+                        'nama' => $namaBahan,
                         'jumlah' => 0,
                         'satuan' => $satuan
                     ];
@@ -295,6 +325,7 @@ class NotaProduksiController extends Controller
             'qty_rejected_defect' => 'required|integer|min:0',
             'qty_rejected' => 'required|integer|min:0',
             'ongkir_hasil_produksi' => 'required|numeric|min:0',
+            'biaya_rework_tambahan' => 'required|numeric|min:0',
             'catatan_qc' => 'nullable|string|max:45',
         ]);
 
@@ -336,6 +367,7 @@ class NotaProduksiController extends Controller
             $hasil->produk_varian_id     = $job->produk_varian_id; 
             $hasil->tgl_terima           = now(); 
             $hasil->ongkir               = $request->ongkir_hasil_produksi;
+            $hasil->biaya_rework_tambahan = $request->biaya_rework_tambahan;
             $hasil->qty_accepted         = $request->qty_accepted;
             $hasil->qty_rejected_defect  = $request->qty_rejected_defect;
             $hasil->qty_rejected         = $request->qty_rejected;
@@ -343,31 +375,55 @@ class NotaProduksiController extends Controller
             $hasil->status_alokasi       = $alokasiOtomatis; 
             $hasil->save();
 
-            // Sesuai logika, hanya stok reguler yang masuk ke inventory bebas jual
             // === PROSES UPDATE INVENTORY BERDASARKAN ALOKASI ===
-if ($request->qty_accepted > 0) {
-    $varian = ProdukVarian::find($job->produk_varian_id);
-    
-    if ($varian) {
-        if ($alokasiOtomatis === 'Pesanan Customer') {
-            // JIKA PESANAN CUSTOM: Tambah ke kolom stok custom Anda
-            // (Silakan sesuaikan nama kolom 'stok_custom' dengan nama asli di database Anda, misal: stok_pesanan / stok_custom)
-            $varian->stok_custom = $varian->stok_custom + $request->qty_accepted;
-        } else {
-            // JIKA READY STOCK: Masuk ke stok toko reguler
-            $varian->stok_tersedia = $varian->stok_tersedia + $request->qty_accepted;
-        }
-        $varian->save();
-    }
-}
+            if ($request->qty_accepted > 0 || $request->qty_rejected_defect > 0) {
+                $varian = ProdukVarian::find($job->produk_varian_id);
+                
+                if ($varian) {
+                    if ($request->qty_accepted > 0) {
+                        $varian->stok_tersedia = $varian->stok_tersedia + $request->qty_accepted;
+                    }
+                    if ($request->qty_rejected_defect > 0) {
+                        $varian->stok_defect = $varian->stok_defect + $request->qty_rejected_defect;
+                    }
+                    $varian->save();
+                }
+            }
 
             $totalSetelahInputBaru = $totalSudahDiterima + $totalInputSekarang;
+
+            // Recalculate totals from all hasil_produksi records
+            $totalOngkirTerima = HasilProduksi::where('job_order_id', $job->id)->sum('ongkir') ?? 0;
+            $totalReworkTerima = HasilProduksi::where('job_order_id', $job->id)->sum('biaya_rework_tambahan') ?? 0;
+
             if ($totalSetelahInputBaru >= $job->jumlah) {
                 $job->update([
-                    'status_pesanan' => 'Selesai'
+                    'status_pesanan' => 'Selesai',
+                    'ongkir_terima_barang' => $totalOngkirTerima,
+                    'biaya_rework_tambahan' => $totalReworkTerima,
+                ]);
+            } else {
+                $job->update([
+                    'status_pesanan' => 'Selesai Parsial',
+                    'ongkir_terima_barang' => $totalOngkirTerima,
+                    'biaya_rework_tambahan' => $totalReworkTerima,
                 ]);
             }
 
+            // Update status nota_produksi
+            if ($job->nota_produksi_id) {
+                $semuaJobDiNotaProduksi = JobOrder::where('nota_produksi_id', $job->nota_produksi_id)->get();
+                $jumlahJobSelesaiQC = $semuaJobDiNotaProduksi->where('status_pesanan', 'Selesai')->count();
+                $totalJobDiNotaProduksi = $semuaJobDiNotaProduksi->count();
+
+                if ($jumlahJobSelesaiQC === $totalJobDiNotaProduksi) {
+                    $job->nota_produksi->update(['status_nota' => 'Selesai']);
+                } else {
+                    $job->nota_produksi->update(['status_nota' => 'Proses']);
+                }
+            }
+
+            // Update status nota_order induk
             if ($job->nota_order) {
                 $notaOrderInduk = $job->nota_order;
                 $semuaJobDiNotaIni = JobOrder::where('nota_order_id', $notaOrderInduk->id)->get();
@@ -377,6 +433,10 @@ if ($request->qty_accepted > 0) {
                 if ($jumlahJobSelesai === $totalSemuaJob) {
                     $notaOrderInduk->update([
                         'status_order' => 'Selesai'
+                    ]);
+                } else {
+                    $notaOrderInduk->update([
+                        'status_order' => 'Progress'
                     ]);
                 }
             }

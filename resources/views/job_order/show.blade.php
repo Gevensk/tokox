@@ -27,9 +27,12 @@
         // Total Ongkir Balik dari semua setoran parsial
         $totalOngkirBalik = $job->hasil_produksis->sum('ongkir');
 
+        // Total Biaya Rework dari semua setoran parsial
+        $totalRework = $job->hasil_produksis->sum('biaya_rework_tambahan');
+
         // Rumus Pembebanan Biaya (Sesuai kode awalmu)
         $porsiModalDiserap = $totalLayakJual > 0 ? (($totalLayakJual / $targetPcs) * $job->total_hpp_job) : 0;
-        $totalModalAktual = $porsiModalDiserap + $totalOngkirBalik;
+        $totalModalAktual = $porsiModalDiserap + $totalOngkirBalik + $totalRework;
         $hppAktualSatuan = $totalLayakJual > 0 ? ($totalModalAktual / $totalLayakJual) : 0;
     @endphp
 
@@ -61,14 +64,25 @@
                                 <td class="text-muted">🚚 Total Ongkir Setoran (Balik)</td>
                                 <td class="text-end text-danger fw-semibold">+ Rp {{ number_format($totalOngkirBalik, 0, ',', '.') }}</td>
                             </tr>
+                            <tr class="border-bottom">
+                                <td class="text-muted">🔧 Total Biaya Rework Tambahan</td>
+                                <td class="text-end text-danger fw-semibold">+ Rp {{ number_format($totalRework, 0, ',', '.') }}</td>
+                            </tr>
+                            <tr class="table-light border-top">
+                                <td class="fw-bold text-dark">Total HPP (Modal Aktual)</td>
+                                <td class="text-end fw-bold text-dark">Rp {{ number_format($totalModalAktual, 0, ',', '.') }}</td>
+                            </tr>
                         </tbody>
                     </table>
 
                     <div class="p-3 bg-success bg-opacity-10 rounded border border-success border-opacity-25 text-center">
+                        <small class="text-success fw-bold d-block mb-1">TOTAL HPP</small>
+                        <h4 class="fw-bold text-success mb-3">Rp {{ number_format($totalModalAktual, 0, ',', '.') }}</h4>
+
                         <small class="text-success fw-bold d-block mb-1">TOTAL AVERAGE HPP</small>
                         <h3 class="fw-bold text-success mb-0">Rp {{ number_format($hppAktualSatuan, 0, ',', '.') }} <span class="fs-6 text-muted">/ Pcs</span></h3>
-                        <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">
-                            *Sudah membebankan biaya baju rusak total ({{ $totalRusak }} pcs) dan semua ongkir balik ke baju layak jual ({{ $totalLayakJual }} pcs).
+                        <small class="text-muted mt-2 d-block" style="font-size: 0.75rem;">
+                            *Sudah membebankan biaya baju rusak total ({{ $totalRusak }} pcs), biaya rework tambahan, and semua ongkir balik ke baju layak jual ({{ $totalLayakJual }} pcs).
                         </small>
                     </div>
                 </div>
@@ -87,6 +101,7 @@
                                     <th>Batch / Tgl</th>
                                     <th class="text-center text-success">Layak (A+B)</th>
                                     <th class="text-center text-danger">Gagal</th>
+                                    <th class="text-end">Rework Cost</th>
                                     <th class="text-end">Ongkir Balik</th>
                                 </tr>
                             </thead>
@@ -99,11 +114,12 @@
                                     </td>
                                     <td class="text-center fw-semibold">{{ $history->qty_accepted + $history->qty_rejected_defect }} pcs</td>
                                     <td class="text-center text-danger">{{ $history->qty_rejected }} pcs</td>
+                                    <td class="text-end font-monospace text-muted">Rp {{ number_format($history->biaya_rework_tambahan, 0, ',', '.') }}</td>
                                     <td class="text-end font-monospace text-muted">Rp {{ number_format($history->ongkir, 0, ',', '.') }}</td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">Belum ada riwayat setoran QC.</td>
+                                    <td colspan="5" class="text-center text-muted py-4">Belum ada riwayat setoran QC.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -113,6 +129,7 @@
                                     <td>TOTAL</td>
                                     <td class="text-center text-success">{{ $totalLayakJual }} pcs</td>
                                     <td class="text-center text-danger">{{ $totalRusak }} pcs</td>
+                                    <td class="text-end text-dark">Rp {{ number_format($totalRework, 0, ',', '.') }}</td>
                                     <td class="text-end text-dark">Rp {{ number_format($totalOngkirBalik, 0, ',', '.') }}</td>
                                 </tr>
                             </tfoot>

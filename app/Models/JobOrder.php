@@ -24,6 +24,7 @@ class JobOrder extends Model
         'total_hpp_job',
         'status_pesanan',
         'biaya_rework_tambahan',
+        'ongkir_terima_barang',
         'estimasi_selesai',
         'tgl_selesai',
     ];

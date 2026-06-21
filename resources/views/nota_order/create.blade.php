@@ -1,12 +1,14 @@
 @extends('layouts.app') 
 
 @section('content')
-<div class="container-fluid px-4 py-4">
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white py-3">
-            <h5 class="mb-0 fw-bold">🧾 Buat Nota Order / Pesanan Baru</h5>
-        </div>
-        <div class="card-body">
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Form Buat Nota Order / Pesanan</h5>
+                <a href="{{ route('nota_order.index') }}" class="btn btn-light btn-sm">Kembali</a>
+            </div>
+            <div class="card-body">
             
             @if(session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div>
@@ -120,14 +122,15 @@
                     </table>
                 </div>
 
-                <div class="text-end border-top pt-3 mt-4">
-                    <a href="{{ route('nota_order.index') }}" class="btn btn-secondary px-4 me-2">Batal</a>
-                    <button type="submit" class="btn btn-primary px-4 shadow-sm">Simpan Transaksi Order</button>
+                <div class="d-flex justify-content-start gap-2 mt-4">
+                    <a href="{{ route('nota_order.index') }}" class="btn btn-secondary">Kembali</a>
+                    <button type="submit" class="btn btn-primary">Simpan Transaksi Order</button>
                 </div>
             </form>
 
         </div>
     </div>
+</div>
 </div>
 
 <script>

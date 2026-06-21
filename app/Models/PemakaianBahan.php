@@ -16,7 +16,8 @@ class PemakaianBahan extends Model
         'job_order_id',
         'tgl_keluar',
         'jumlah',
-        'harga_rata_saat_ini'
+        'harga_rata_saat_ini',
+        'tipe'
     ];
 
     public function bahan_baku()

@@ -160,8 +160,7 @@ class HasilProduksiController extends Controller
             
             if ($totalSetelahQCBaru >= $targetJumlah) {
                 $job->update([
-                    'status_pesanan' => 'Selesai',
-                    'tgl_selesai'    => now()
+                    'status_pesanan' => 'Selesai'
                 ]);
             } else {
                 $job->update([
