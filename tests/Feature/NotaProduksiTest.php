@@ -47,7 +47,7 @@ class NotaProduksiTest extends TestCase
         $this->penjahit = Penjahit::create([
             'nama' => 'Penjahit Test',
             'alamat' => 'Alamat Penjahit Test',
-            'telp' => '0812345678',
+            'no_hp' => '0812345678',
         ]);
 
         // 3. Create Customer
@@ -70,6 +70,7 @@ class NotaProduksiTest extends TestCase
             'ukuran' => 'L',
             'stok_tersedia' => 0,
             'stok_defect' => 0,
+            'harga_avg_produk' => 0,
         ]);
 
         // 5. Create Extra Bahan Baku
@@ -362,5 +363,97 @@ class NotaProduksiTest extends TestCase
         ]);
         $this->assertNotNull(PemakaianBahan::where('job_order_id', $this->jobOrder->id)->where('bahan_baku_id', $this->bahanA->id)->first()->tgl_keluar);
         $this->assertEquals(8.0, $this->bahanA->fresh()->stok_total);
+    }
+
+    public function test_partial_stock_release_in_nota_stok_keluar(): void
+    {
+        // 1. Create a Nota Produksi and complete a partial QC setoran (3 pcs out of 10)
+        $this->actingAs($this->admin)->post('/nota_produksi', [
+            'penjahit_id' => $this->penjahit->id,
+            'job_order_ids' => [$this->jobOrder->id],
+            'biaya_jasa' => [
+                $this->jobOrder->id => 12000
+            ],
+            'ongkir_kirim_bahan' => 15000,
+        ]);
+
+        $this->actingAs($this->admin)->post('/nota-produksi/terima/store', [
+            'job_order_id' => $this->jobOrder->id,
+            'qty_accepted' => 3,
+            'qty_rejected_defect' => 0,
+            'qty_rejected' => 0,
+            'ongkir_hasil_produksi' => 2000,
+            'biaya_rework_tambahan' => 0,
+            'catatan_qc' => 'First partial production completed',
+        ]);
+
+        // 2. Try to release more than completed custom stock (e.g. 4 pcs) -> should throw exception/error
+        $response = $this->actingAs($this->admin)->post('/nota-stok-keluar', [
+            'customer_id' => $this->customer->id,
+            'tipe_keluar' => 'penjualan_order',
+            'nota_order_id' => $this->notaOrder->id,
+            'total_bayar' => 100000, // Sisa pelunasan is 100k (150k total - 50k dp)
+            'items' => [
+                [
+                    'produk_varian_id' => $this->varian->id,
+                    'qty' => 4,
+                    'harga_satuan' => 15000,
+                ]
+            ]
+        ]);
+        $response->assertSessionHas('error'); // Error because sisaStokCustom is 3, but trying to take 4.
+
+        // 3. Release valid partial stock (2 pcs) with full payment (100000)
+        $response = $this->actingAs($this->admin)->post('/nota-stok-keluar', [
+            'customer_id' => $this->customer->id,
+            'tipe_keluar' => 'penjualan_order',
+            'nota_order_id' => $this->notaOrder->id,
+            'total_bayar' => 100000,
+            'items' => [
+                [
+                    'produk_varian_id' => $this->varian->id,
+                    'qty' => 2,
+                    'harga_satuan' => 15000,
+                ]
+            ]
+        ]);
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        // Assert payment is now Lunas
+        $this->assertEquals('Lunas', $this->notaOrder->fresh()->status_bayar);
+
+        // 4. Try to release remaining but not yet completed custom stock (e.g. trying to release 2 pcs, but only 3 completed and 2 already taken, so only 1 left ready)
+        $response = $this->actingAs($this->admin)->post('/nota-stok-keluar', [
+            'customer_id' => $this->customer->id,
+            'tipe_keluar' => 'penjualan_order',
+            'nota_order_id' => $this->notaOrder->id,
+            'total_bayar' => 0, // Already lunas, so 0 is valid
+            'items' => [
+                [
+                    'produk_varian_id' => $this->varian->id,
+                    'qty' => 2,
+                    'harga_satuan' => 15000,
+                ]
+            ]
+        ]);
+        $response->assertSessionHas('error'); // Error because only 1 pc is ready in stock (3 completed - 2 taken)
+
+        // 5. Release valid remaining stock (1 pc) with 0 payment
+        $response = $this->actingAs($this->admin)->post('/nota-stok-keluar', [
+            'customer_id' => $this->customer->id,
+            'tipe_keluar' => 'penjualan_order',
+            'nota_order_id' => $this->notaOrder->id,
+            'total_bayar' => 0,
+            'items' => [
+                [
+                    'produk_varian_id' => $this->varian->id,
+                    'qty' => 1,
+                    'harga_satuan' => 15000,
+                ]
+            ]
+        ]);
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
     }
 }

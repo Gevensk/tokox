@@ -15,7 +15,7 @@ return new class extends Migration
             $table->increments('id');
             
             // Relasi ke tabel customer (Wajib ada)
-            $table->integer('customer_id');
+            $table->unsignedInteger('customer_id');
             $table->foreign('customer_id')->references('id')->on('customer')->onDelete('cascade');
             
             // Relasi ke tabel nota_order (NULLABLE: Kosong jika pelanggan beli langsung produk ready)

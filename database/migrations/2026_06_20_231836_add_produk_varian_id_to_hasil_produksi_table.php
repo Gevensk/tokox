@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (!Schema::hasColumn('hasil_produksi', 'produk_varian_id')) {
             Schema::table('hasil_produksi', function (Blueprint $table) {
-                $table->integer('produk_varian_id')->nullable()->after('job_order_id');
+                $table->unsignedInteger('produk_varian_id')->nullable()->after('job_order_id');
                 $table->foreign('produk_varian_id')->references('id')->on('produk_varian')->onDelete('cascade');
             });
         }

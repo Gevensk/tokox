@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreign('nota_stok_keluar_id')->references('id')->on('nota_stok_keluar')->onDelete('cascade'); // Jika nota induk dihapus, detailnya otomatis ikut terhapus
             
             // Relasi ke tabel produk_varian untuk tahu warna/ukuran apa yang keluar
-            $table->integer('produk_varian_id');
+            $table->unsignedInteger('produk_varian_id');
             $table->foreign('produk_varian_id')->references('id')->on('produk_varian');
             
             // Kuantitas dan pencatatan harga riil saat barang keluar

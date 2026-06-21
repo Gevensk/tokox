@@ -13,14 +13,14 @@ public function up(): void
 {
     Schema::table('job_order', function (Blueprint $table) {
         // Mengubah kolom menjadi nullable
-        $table->integer('nota_produksi_id')->nullable()->change();
+        $table->unsignedInteger('nota_produksi_id')->nullable()->change();
     });
 }
 
 public function down(): void
 {
     Schema::table('job_order', function (Blueprint $table) {
-        $table->integer('nota_produksi_id')->unsigned()->nullable(false)->change();
+        $table->unsignedInteger('nota_produksi_id')->nullable(false)->change();
     });
 }
 };

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->increments('id'); 
             $table->string('no_order', 45);
             $table->enum('tipe_order', ['Internal', 'Customer']);
-            $table->integer('customer_id')->nullable();
+            $table->unsignedInteger('customer_id')->nullable();
             $table->foreign('customer_id')->references('id')->on('customer');
             $table->dateTime('tgl_order');
             $table->dateTime('tgl_deadline');

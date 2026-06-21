@@ -28,7 +28,6 @@ return new class extends Migration
             $table->decimal('total_biaya_bahan', 15, 2)->default(0);
             $table->decimal('total_hpp_job', 15, 2);
             $table->decimal('ongkir_terima_barang', 15, 2)->default(0);
-            $table->decimal('biaya_rework_tambahan', 15, 2)->default(0);
             
             // Fitur Custom Specs
             $table->tinyInteger('is_custom')->default(0); // 0 = standar, 1 = kustom

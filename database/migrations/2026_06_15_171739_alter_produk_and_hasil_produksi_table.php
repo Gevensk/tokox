@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::table('produk', function (Blueprint $table) {
             // Kita buat kolom customer_id menjadi NULLABLE dulu agar data lama tidak error,
             // atau jika Anda yakin ingin menghapusnya langsung, gunakan dropColumn.
-            $table->integer('customer_id')->nullable()->change(); 
+            $table->unsignedInteger('customer_id')->nullable()->change(); 
         });
 
         // 2. Memodifikasi Tabel Hasil Produksi (Menambahkan kolom status_alokasi)
@@ -32,7 +32,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('produk', function (Blueprint $table) {
-            $table->integer('customer_id')->nullable(false)->change();
+            $table->unsignedInteger('customer_id')->nullable(false)->change();
         });
 
         Schema::table('hasil_produksi', function (Blueprint $table) {

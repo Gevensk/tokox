@@ -29,11 +29,22 @@ class NotaStokKeluarController extends Controller
         // Ambil produk varian yang stoknya ready untuk skenario beli langsung
         $produkVarians = ProdukVarian::where('stok_tersedia', '>', 0)->get();
 
-        // PENYESUAIAN: Status diganti dari 'belum lunas' menjadi selain 'Lunas' agar sinkron dengan data nota_order kamu
+        // Ambil nota order yang belum lunas ATAU sudah lunas tapi belum semua barang diambil
         $notaOrders = NotaOrder::with(['customer', 'job_orders.produk_varian.produk'])
-            ->where('status_bayar', '!=', 'Lunas')
             ->latest()
-            ->get();
+            ->get()
+            ->filter(function($order) {
+                if ($order->status_bayar !== 'Lunas') {
+                    return true;
+                }
+                
+                $totalOrdered = $order->job_orders->sum('jumlah');
+                $totalReleased = \App\Models\NotaStokKeluarHasProdukVarian::whereHas('nota_keluar', function($q) use ($order) {
+                    $q->where('nota_order_id', $order->id);
+                })->sum('qty');
+                
+                return $totalReleased < $totalOrdered;
+            });
 
         return view('nota_keluar.create', compact('customers', 'notaOrders', 'produkVarians'));
     }
@@ -62,7 +73,7 @@ class NotaStokKeluarController extends Controller
             $notaOrder = NotaOrder::findOrFail($notaOrderId);
             
             // Hitung sisa yang harus dilunasi
-            $sisaPelunasan = $notaOrder->total_harga - $notaOrder->nominal_dp_masuk;
+            $sisaPelunasan = $notaOrder->status_bayar === 'Lunas' ? 0 : max(0, $notaOrder->total_harga - $notaOrder->nominal_dp_masuk);
 
             // Aturan: Barang TIDAK BISA KELUAR jika pembayaran kurang dari sisa pelunasan
             if ($totalBayarInput < $sisaPelunasan) {
@@ -95,10 +106,29 @@ class NotaStokKeluarController extends Controller
             'total_bayar'   => $totalBayarInput, 
         ]);
 
-        // 2. Simpan detail barang & potong stok pintar (Mengakomodasi Custom Order)
+        // 2. Simpan detail barang & potong stok pintar (Mengakomodasi Custom Order & Sisa Qty Pesanan)
         foreach ($request->items as $item) {
             $produkVarian = ProdukVarian::findOrFail($item['produk_varian_id']);
             $subtotal = $item['qty'] * $item['harga_satuan'];
+
+            // VALIDASI SISA PESANAN YANG BELUM DIAMBIL (BAIK CUSTOM MAUPUN STANDAR)
+            if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
+                $jobQtyOrdered = \App\Models\JobOrder::where('nota_order_id', $notaOrderId)
+                    ->where('produk_varian_id', $item['produk_varian_id'])
+                    ->value('jumlah') ?? 0;
+
+                $qtySudahDiambil = \App\Models\NotaStokKeluarHasProdukVarian::where('produk_varian_id', $item['produk_varian_id'])
+                    ->whereHas('nota_keluar', function($query) use ($notaOrderId) {
+                        $query->where('nota_order_id', $notaOrderId);
+                    })
+                    ->sum('qty') ?? 0;
+
+                $maxAllowedToTake = max(0, $jobQtyOrdered - $qtySudahDiambil);
+
+                if ($item['qty'] > $maxAllowedToTake) {
+                    throw new \Exception("Gagal Keluar! Jumlah yang diambil ({$item['qty']} Pcs) melebihi sisa pesanan yang belum diambil ({$maxAllowedToTake} Pcs).");
+                }
+            }
 
             // =========================================================================
             // PERUBAHAN LOGIKA POTONG STOK (MENGAKOMODASI STOK TOKO & CUSTOM)
@@ -133,7 +163,7 @@ class NotaStokKeluarController extends Controller
                     })
                     ->sum('qty');
 
-                $sisaStokCustom = $stokCustomReady - $qtySudahDiambil;
+                $sisaStokCustom = max(0, $stokCustomReady - $qtySudahDiambil);
 
                 if ($sisaStokCustom < $item['qty']) {
                     throw new \Exception("Gagal Keluar! Sisa baju custom yang selesai diproduksi & belum diambil ({$sisaStokCustom} Pcs) kurang dari jumlah yang mau diambil ({$item['qty']} Pcs).");

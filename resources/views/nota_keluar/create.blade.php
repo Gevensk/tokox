@@ -38,17 +38,31 @@
                         <select name="nota_order_id" id="nota_order_id" class="form-select">
                             <option value="">-- Pilih Nota Order --</option>
                             @foreach($notaOrders as $order)
+                                @php
+                                    $sisaTagihan = $order->status_bayar === 'Lunas' ? 0 : max(0, $order->total_harga - $order->nominal_dp_masuk);
+                                @endphp
                                 <option value="{{ $order->id }}" 
                                         data-customer="{{ $order->customer_id }}"
                                         data-customer-name="{{ $order->customer->nama ?? $order->customer->nama_customer ?? 'N/A' }}"
                                         data-total-harga="{{ $order->total_harga }}"
                                         data-dp="{{ $order->nominal_dp_masuk }}"
+                                        data-status-bayar="{{ $order->status_bayar }}"
                                         data-harga-satuan="{{ $order->harga_satuan_items }}"
                                         data-items='[
                                             @foreach($order->job_orders as $job)
+                                                @php
+                                                    $qtyDiambil = \App\Models\NotaStokKeluarHasProdukVarian::where('produk_varian_id', $job->produk_varian_id)
+                                                        ->whereHas('nota_keluar', function($query) use ($order) {
+                                                            $query->where('nota_order_id', $order->id);
+                                                        })
+                                                        ->sum('qty') ?? 0;
+                                                    $qtySisa = max(0, $job->jumlah - $qtyDiambil);
+                                                @endphp
                                                 {
                                                     "produk_varian_id": {{ $job->produk_varian_id }},
-                                                    "qty": {{ $job->jumlah }},
+                                                    "qty_order": {{ $job->jumlah }},
+                                                    "qty_diambil": {{ $qtyDiambil }},
+                                                    "qty_sisa": {{ $qtySisa }},
                                                     "warna": "{{ $job->produk_varian->warna ?? "" }}",
                                                     "ukuran": "{{ $job->produk_varian->ukuran ?? "" }}",
                                                     "produk_nama": "{{ $job->produk_varian->produk->nama ?? "" }}"
@@ -56,7 +70,12 @@
                                                 @if(!$loop->last),@endif
                                             @endforeach
                                         ]'>
-                                    Nota #{{ $order->no_order }} - {{ $order->customer->nama ?? $order->customer->nama_customer ?? 'N/A' }} (Sisa: Rp {{ number_format($order->total_harga - $order->nominal_dp_masuk, 0, ',', '.') }})
+                                    Nota #{{ $order->no_order }} - {{ $order->customer->nama ?? $order->customer->nama_customer ?? 'N/A' }} 
+                                    @if($order->status_bayar === 'Lunas')
+                                        (Lunas)
+                                    @else
+                                        (Sisa: Rp {{ number_format($sisaTagihan, 0, ',', '.') }})
+                                    @endif
                                 </option>
                             @endforeach
                         </select>
@@ -172,7 +191,9 @@
             if (selectedOption && selectedOption.value) {
                 const totalHarga = parseFloat(selectedOption.getAttribute('data-total-harga')) || 0;
                 const dp = parseFloat(selectedOption.getAttribute('data-dp')) || 0;
-                const sisaPelunasan = totalHarga - dp;
+                const statusBayar = selectedOption.getAttribute('data-status-bayar');
+                
+                const sisaPelunasan = statusBayar === 'Lunas' ? 0 : Math.max(0, totalHarga - dp);
                 
                 grandTotal = sisaPelunasan;
                 totalHargaHidden.value = grandTotal;
@@ -301,6 +322,9 @@
             `Harga Deal PO: Rp ${totalHarga.toLocaleString('id-ID')} | Sudah Masuk DP: Rp ${dp.toLocaleString('id-ID')} | Sisa Kekurangan (Pelunasan): Rp ${sisaPelunasan.toLocaleString('id-ID')}`;
 
         items.forEach(function(item) {
+            if (item.qty_sisa <= 0) {
+                return;
+            }
             const rowHtml = `
                 <tr id="row-${itemIdx}">
                     <td class="py-2.5">
@@ -309,7 +333,8 @@
                         <div class="small text-muted" style="font-size: 0.78rem;">Warna: ${item.warna} | Ukuran: ${item.ukuran}</div>
                     </td>
                     <td class="py-2">
-                        <input type="number" name="items[${itemIdx}][qty]" class="form-control text-center bg-white" min="1" value="${item.qty}" required readonly>
+                        <input type="number" name="items[${itemIdx}][qty]" class="form-control text-center bg-white" min="1" max="${item.qty_sisa}" value="${item.qty_sisa}" required>
+                        <small class="text-muted d-block text-center mt-1">Sisa: ${item.qty_sisa} pcs (Order: ${item.qty_order} pcs)</small>
                     </td>
                     <td class="py-2">
                         <input type="number" name="items[${itemIdx}][harga_satuan]" class="form-control text-end bg-white" value="${hargaSatuanItems}" required readonly>

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('produk', function (Blueprint $table) {
             // Menambahkan kolom customer_id bersifat nullable setelah kolom satuan
-            $table->integer('customer_id')->nullable()->after('satuan');
+            $table->unsignedInteger('customer_id')->nullable()->after('satuan');
 
             // Membuat relasi foreign key ke tabel customer
             // Menambahkan onDelete('set null') agar jika data customer dihapus, produk custom-nya tidak ikut terhapus melainkan kolom customer_id berubah jadi NULL (berubah status jadi produk umum).
