@@ -61,9 +61,9 @@
                     <div class="position-absolute" style="right: 20px; top: 20px; opacity: 0.25;">
                         <i class="fa-solid fa-shirt fa-3x"></i>
                     </div>
-                    <span class="small text-uppercase fw-semibold" style="letter-spacing: 0.5px;">Pakaian Layak QC (Pcs)</span>
-                    <h2 class="fw-bold mt-2 mb-1">{{ number_format($completedPcsCount, 0, ',', '.') }} pcs</h2>
-                    <span class="small opacity-75">Telah diterima & masuk stok</span>
+                    <span class="small text-uppercase fw-semibold" style="letter-spacing: 0.5px;">Menunggu Proses QC</span>
+                    <h2 class="fw-bold mt-2 mb-1">{{ number_format($waitingQcCount, 0, ',', '.') }}</h2>
+                    <span class="small opacity-75">Job order belum ditutup</span>
                 </div>
             </div>
         </div>

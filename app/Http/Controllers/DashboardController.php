@@ -17,8 +17,7 @@ class DashboardController extends Controller
         // 1. Core Production counters
         $queueJobsCount = JobOrder::where('status_pesanan', 'Antrean')->count();
         $activeJobsCount = JobOrder::where('status_pesanan', 'Diproduksi')->count();
-        $completedPcsCount = (int)HasilProduksi::sum('qty_accepted') + (int)HasilProduksi::sum('qty_rejected_defect');
-        $defectPcsCount = (int)HasilProduksi::sum('qty_rejected_defect') + (int)HasilProduksi::sum('qty_rejected');
+        $waitingQcCount = JobOrder::whereIn('status_pesanan', ['Diproduksi', 'Selesai Parsial'])->count();
         
         // 2. Job Orders approaching deadline (sorted by tgl_deadline asc)
         $approachingDeadlineJobs = JobOrder::with(['nota_order.customer', 'produk_varian.produk', 'nota_produksi.penjahit'])
@@ -76,8 +75,7 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'queueJobsCount',
             'activeJobsCount',
-            'completedPcsCount',
-            'defectPcsCount',
+            'waitingQcCount',
             'approachingDeadlineJobs',
             'penjahitWorkload',
             'lowStockMaterials',
