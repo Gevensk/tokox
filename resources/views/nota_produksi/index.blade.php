@@ -26,7 +26,7 @@
                         @endif
                         <th>Status Nota</th>
                         <th>Status Kirim Bahan</th>
-                        <th class="text-center" style="width: 1%;">Aksi</th>
+                        <th style="width: 1%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,8 +60,8 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="text-nowrap text-center" style="width: 1%;"> 
-                                <div class="d-flex justify-content-center align-items-center gap-1">
+                            <td class="text-nowrap" style="width: 1%;"> 
+                                <div class="d-flex justify-content-start align-items-center gap-1">
                                     <a href="{{ route('nota_production.show', $prod->id) }}" class="btn btn-secondary btn-sm">Detail</a>
 
                                     <a href="{{ route('nota_production.cetak_pdf', $prod->id) }}" class="btn btn-info btn-sm text-white" target="_blank">Cetak</a>
@@ -69,10 +69,10 @@
                                     @if(($prod->status_nota ?? 'Proses') == 'Proses')
                                         <a href="{{ route('nota_production.edit', $prod->id) }}" class="btn btn-warning btn-sm">Edit</a>
 
-                                        <form action="{{ route('nota_production.destroy', $prod->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan dan menghapus nota produksi ini? Semua bahan baku yang keluar akan dikembalikan ke gudang.')" class="d-inline m-0">
+                                        <form action="{{ route('nota_production.destroy', $prod->id) }}" method="POST" onsubmit="return confirm('Hapus?')" class="d-inline m-0">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm">Batal</button>
+                                            <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
                                         </form>
 
                                         @if(($prod->status_kirim ?? 'Belum Dikirim') == 'Belum Dikirim')

@@ -22,7 +22,7 @@
                     <th>Nama Produk Varian</th>
                     <th class="text-center">Target Qty</th>
                     <th class="text-center">Status Pesanan</th>
-                    <th class="text-center" style="width: 1%;">Aksi / Evaluasi</th>
+                    <th style="width: 1%;">Aksi / Evaluasi</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,8 +61,8 @@
                             <span class="badge bg-info text-dark py-2 px-3">Diproduksi</span>
                         @endif
                     </td>
-                    <td class="text-nowrap text-center" style="width: 1%;">
-                        <div class="d-flex justify-content-center align-items-center gap-1">
+                    <td class="text-nowrap" style="width: 1%;">
+                        <div class="d-flex justify-content-start align-items-center gap-1">
                             @if(Auth::user()->isAdmin())
                             <a href="{{ route('job_order.show', $job->id) }}" class="btn btn-info btn-sm text-white" title="Lihat Evaluasi Perhitungan HPP">
                                 Audit HPP

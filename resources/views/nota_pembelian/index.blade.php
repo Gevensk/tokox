@@ -23,7 +23,7 @@
                         <th>Total Harga Bahan</th>
                         <th>Ongkir</th>
                         <th>Total Bayar</th>
-                        <th class="text-center" style="width: 1%;">Aksi</th>
+                        <th style="width: 1%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -37,8 +37,8 @@
                         <td>Rp {{ number_format($item->total_harga_bahan, 0, ',', '.') }}</td>
                         <td><span class="text-muted">Rp {{ number_format($item->ongkir, 0, ',', '.') }}</span></td>
                         <td><strong class="text-success">Rp {{ number_format($item->total_bayar, 0, ',', '.') }}</strong></td>
-                        <td class="text-nowrap text-center" style="width: 1%;">
-                            <div class="d-flex justify-content-center align-items-center gap-1">
+                        <td class="text-nowrap" style="width: 1%;">
+                            <div class="d-flex justify-content-start align-items-center gap-1">
                                 <a href="{{ route('nota_pembelian.show', $item->id) }}" class="btn btn-secondary btn-sm">Detail</a>
                             </div>
                         </td>

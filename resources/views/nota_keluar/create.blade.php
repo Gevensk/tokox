@@ -309,7 +309,8 @@
         const customerName = selectedOption.getAttribute('data-customer-name');
         const totalHarga = parseFloat(selectedOption.getAttribute('data-total-harga'));
         const dp = parseFloat(selectedOption.getAttribute('data-dp'));
-        const sisaPelunasan = totalHarga - dp;
+        const statusBayar = selectedOption.getAttribute('data-status-bayar');
+        const sisaPelunasan = statusBayar === 'Lunas' ? 0 : Math.max(0, totalHarga - dp);
         const hargaSatuanItems = parseFloat(selectedOption.getAttribute('data-harga-satuan')) || 0;
         const items = JSON.parse(selectedOption.getAttribute('data-items') || '[]');
 
@@ -318,8 +319,13 @@
         inputTotalBayar.value = sisaPelunasan;
         
         infoBox.classList.remove('d-none');
-        document.getElementById('info_keuangan').innerText = 
-            `Harga Deal PO: Rp ${totalHarga.toLocaleString('id-ID')} | Sudah Masuk DP: Rp ${dp.toLocaleString('id-ID')} | Sisa Kekurangan (Pelunasan): Rp ${sisaPelunasan.toLocaleString('id-ID')}`;
+        if (statusBayar === 'Lunas') {
+            document.getElementById('info_keuangan').innerText = 
+                `Harga Deal PO: Rp ${totalHarga.toLocaleString('id-ID')} | Pembayaran PO: Sudah Lunas | Sisa Kekurangan: Rp 0`;
+        } else {
+            document.getElementById('info_keuangan').innerText = 
+                `Harga Deal PO: Rp ${totalHarga.toLocaleString('id-ID')} | Sudah Masuk DP: Rp ${dp.toLocaleString('id-ID')} | Sisa Kekurangan (Pelunasan): Rp ${sisaPelunasan.toLocaleString('id-ID')}`;
+        }
 
         items.forEach(function(item) {
             if (item.qty_sisa <= 0) {

@@ -19,7 +19,7 @@
                     <div class="mb-3">
                         <label class="form-label">Satuan</label>
                         <input type="text" name="satuan" class="form-control" value="Pcs" placeholder="Pcs / Set / Lusin" required>
-                        <small class="text-muted">Contoh: Pcs, Set, Lusin</small>
+                        <small class="text-muted">Contoh: Pcs, Set</small>
                     </div>
 
 

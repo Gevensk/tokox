@@ -60,7 +60,7 @@
 
                     @if($nota->status_kirim == 'Belum Dikirim')
                         <div class="alert alert-warning mt-3 mb-0 py-2 small">
-                            📦 <strong>Skenario Toko:</strong> Kain & aksesoris sedang disiapkan oleh tim logistik toko sebelum diserahkan ke penjahit.
+                            Bahan baku sedang disiapkan dan belum dikirim.
                         </div>
                     @endif
                 </div>
