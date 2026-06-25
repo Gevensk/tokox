@@ -21,7 +21,7 @@
                             <option value="">-- Pilih Kain / Aksesoris --</option>
                             @foreach($bahanBakus as $bahan)
                                 <option value="{{ $bahan->id }}" {{ old('bahan_baku_id') == $bahan->id ? 'selected' : '' }}>
-                                    {{ $bahan->nama }} (Stok Saat Ini: {{ $bahan->stok_total }} {{ $bahan->satuan }})
+                                    {{ $bahan->nama }} (Stok Saat Ini: {{ (float)$bahan->stok_total }} {{ $bahan->satuan }})
                                 </option>
                             @endforeach
                         </select>

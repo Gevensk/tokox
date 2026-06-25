@@ -39,7 +39,7 @@
                             <span class="text-danger fw-bold">Stok Out</span>
                         @endif
                     </td>
-                    <td>{{ $stok->jumlah }} {{ $stok->bahan_baku->satuan ?? '' }}</td>
+                    <td>{{ (float)$stok->jumlah }} {{ $stok->bahan_baku->satuan ?? '' }}</td>
                     <td>{{ $stok->keterangan }}</td>
                 </tr>
                 @empty

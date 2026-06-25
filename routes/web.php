@@ -28,9 +28,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login']);
 });
 
+Route::match(['get', 'post'], '/logout', [LoginController::class, 'logout'])->name('logout');
+
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 

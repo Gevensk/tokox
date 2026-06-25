@@ -57,7 +57,7 @@
                                     </td>
                                     <td>
                                         <input type="number" name="items[{{ $index }}][jumlah]" class="form-control" 
-                                               step="any" placeholder="0.00" value="{{ $bom->jumlah }}" required>
+                                               step="any" placeholder="0.00" value="{{ (float)$bom->jumlah }}" required>
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-danger btn-sm remove-row">Hapus</button>

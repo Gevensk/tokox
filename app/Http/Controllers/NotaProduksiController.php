@@ -129,27 +129,19 @@ class NotaProduksiController extends Controller
 
                             $bahanEkstra = BahanBaku::find($ekstraBahanId);
                             if ($bahanEkstra) {
-                                $existingEkstra = PemakaianBahan::where('job_order_id', $job->id)
-                                    ->where('bahan_baku_id', $bahanEkstra->id)
-                                    ->where('tipe', 'ekstra')
-                                    ->whereNotNull('tgl_keluar')
-                                    ->first();
-
-                                if (!$existingEkstra) {
-                                    if ($bahanEkstra->stok_total < $ekstraJumlah) {
-                                        throw new \Exception("Stok bahan tambahan [{$bahanEkstra->nama}] tidak mencukupi untuk kustomisasi!");
-                                    }
-                                    $bahanEkstra->decrement('stok_total', $ekstraJumlah);
-
-                                    PemakaianBahan::create([
-                                        'bahan_baku_id' => $bahanEkstra->id,
-                                        'job_order_id'  => $job->id,
-                                        'tipe'          => 'ekstra',
-                                        'tgl_keluar'    => now(),
-                                        'jumlah'        => $ekstraJumlah,
-                                        'harga_rata_saat_ini' => $bahanEkstra->harga_rata_rata
-                                    ]);
+                                if ($bahanEkstra->stok_total < $ekstraJumlah) {
+                                    throw new \Exception("Stok bahan tambahan [{$bahanEkstra->nama}] tidak mencukupi untuk kustomisasi!");
                                 }
+                                $bahanEkstra->decrement('stok_total', $ekstraJumlah);
+
+                                PemakaianBahan::create([
+                                    'bahan_baku_id' => $bahanEkstra->id,
+                                    'job_order_id'  => $job->id,
+                                    'tipe'          => 'ekstra',
+                                    'tgl_keluar'    => now(),
+                                    'jumlah'        => $ekstraJumlah,
+                                    'harga_rata_saat_ini' => $bahanEkstra->harga_rata_rata
+                                ]);
                                 $biayaEkstraBahan = $ekstraJumlah * $bahanEkstra->harga_rata_rata;
                                 $accumulatedBiayaBahan += $biayaEkstraBahan;
                             }

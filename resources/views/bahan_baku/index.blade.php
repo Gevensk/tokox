@@ -33,7 +33,7 @@
                 <tr>
                     <td>{{ $d->nama }}</td>
                     <td>{{ $d->satuan }}</td>
-                    <td>{{ $d->stok_total }}</td>   
+                    <td>{{ (float)$d->stok_total }}</td>   
                     @if(Auth::user()->isAdmin())
                     <td>Rp {{ number_format($d->harga_rata_rata ?? 0, 0, ',', '.') }}</td>
                     @endif

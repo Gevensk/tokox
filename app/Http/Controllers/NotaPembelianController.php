@@ -20,80 +20,80 @@ class NotaPembelianController extends Controller
         return view('nota_pembelian.create',compact('suppliers','bahan_baku'));
     }
 
-public function store(Request $request)
-{
-    DB::beginTransaction();
-    try {
-        // 1. Simpan Header Nota
-        $nota = NotaPembelian::create([
-            'supplier_id' => $request->supplier_id,
-            'tgl_beli' => $request->tgl_beli,
-            'total_harga_bahan' => $request->total_harga_bahan,
-            'ongkir' => $request->ongkir ?? 0,
-            'total_bayar' => $request->total_harga_bahan + ($request->ongkir ?? 0),
-        ]);
-
-        $totalHargaBahan = $request->total_harga_bahan;
-        $totalOngkir = $request->ongkir ?? 0;
-
-        // 2. Loop setiap bahan
-        foreach ($request->items as $item) {
-            $bahan = BahanBaku::findOrFail($item['bahan_baku_id']);
-
-            // --- LOGIKA ALOKASI ONGKIR ---
-            // Kita hitung berapa "beban ongkir" untuk setiap 1 Rupiah harga bahan
-            // Contoh: Harga bahan 10.000, Ongkir 5.000, Total Belanja 100.000. 
-            // Rasio ongkir = 5.000 / 100.000 = 0.05
-            // Ongkir per item = 0.05 * 10.000 = 500. Jadi harga beli asli adalah 10.500
-            
-            $hargaSatuanBeli = $item['harga_satuan'];
-            $alokasiOngkir = ($totalHargaBahan > 0) ? ($totalOngkir / $totalHargaBahan) * $hargaSatuanBeli : 0;
-            $hargaBeliNetto = $hargaSatuanBeli + $alokasiOngkir; // Ini harga beli yang sudah kemasukan ongkir
-
-            // --- LOGIKA MOVING AVERAGE DENGAN HARGA NETTO ---
-            $stokLama = $bahan->stok_total;
-            $hargaRataLama = $bahan->harga_rata_rata;
-            $stokBeli = $item['jumlah'];
-
-            $totalStokBaru = $stokLama + $stokBeli;
-
-            if ($totalStokBaru > 0) {
-                // Rumus: ((Stok Lama * Harga Rata Lama) + (Stok Baru * Harga Beli Netto)) / Total Stok
-                $hargaRataBaru = (($stokLama * $hargaRataLama) + ($stokBeli * $hargaBeliNetto)) / $totalStokBaru;
-            } else {
-                $hargaRataBaru = $hargaBeliNetto;
-            }
-
-            // 3. Simpan Detail
-            NotaPembelianDetail::create([
-                'nota_pembelian_id' => $nota->id,
-                'bahan_baku_id' => $item['bahan_baku_id'],
-                'jumlah' => $stokBeli,
-                'harga_satuan' => $hargaSatuanBeli, // Tetap simpan harga asli di detail nota
-                'subtotal' => $stokBeli * $hargaSatuanBeli
+    public function store(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            // 1. Simpan Header Nota
+            $nota = NotaPembelian::create([
+                'supplier_id' => $request->supplier_id,
+                'tgl_beli' => $request->tgl_beli,
+                'total_harga_bahan' => $request->total_harga_bahan,
+                'ongkir' => $request->ongkir ?? 0,
+                'total_bayar' => $request->total_harga_bahan + ($request->ongkir ?? 0),
             ]);
 
-            // 4. Update Master Bahan (Stok & Harga Rata-rata yang baru)
-            $bahan->update([
-                'stok_total' => $totalStokBaru,
-                'harga_rata_rata' => $hargaRataBaru
+            $totalHargaBahan = $request->total_harga_bahan;
+            $totalOngkir = $request->ongkir ?? 0;
+
+            // 2. Loop setiap bahan
+            foreach ($request->items as $item) {
+                $bahan = BahanBaku::findOrFail($item['bahan_baku_id']);
+
+                // --- LOGIKA ALOKASI ONGKIR ---
+                // Kita hitung berapa "beban ongkir" untuk setiap 1 Rupiah harga bahan
+                // Contoh: Harga bahan 10.000, Ongkir 5.000, Total Belanja 100.000. 
+                // Rasio ongkir = 5.000 / 100.000 = 0.05
+                // Ongkir per item = 0.05 * 10.000 = 500. Jadi harga beli asli adalah 10.500
                 
-            ]);
-        }
-//         dd([
-//     'Stok Lama' => $stokLama,
-//     'Stok Baru' => $stokBeli,
-//     'Total Stok' => $totalStokBaru,
-//     'Harga Rata Baru' => $hargaRataBaru
-// ]);
-        DB::commit();
-        return redirect()->route('nota_pembelian.index')->with('success', 'Pembelian berhasil dan harga rata-rata telah diperbarui (termasuk ongkir).');
+                $hargaSatuanBeli = $item['harga_satuan'];
+                $alokasiOngkir = ($totalHargaBahan > 0) ? ($totalOngkir / $totalHargaBahan) * $hargaSatuanBeli : 0;
+                $hargaBeliNetto = $hargaSatuanBeli + $alokasiOngkir; // Ini harga beli yang sudah kemasukan ongkir
 
-    } catch (\Exception $e) {
-        DB::rollback();
-        return back()->with('error', 'Gagal: ' . $e->getMessage());
+                // --- LOGIKA MOVING AVERAGE DENGAN HARGA NETTO ---
+                $stokLama = $bahan->stok_total;
+                $hargaRataLama = $bahan->harga_rata_rata;
+                $stokBeli = $item['jumlah'];
+
+                $totalStokBaru = $stokLama + $stokBeli;
+
+                if ($totalStokBaru > 0) {
+                    // Rumus: ((Stok Lama * Harga Rata Lama) + (Stok Baru * Harga Beli Netto)) / Total Stok
+                    $hargaRataBaru = (($stokLama * $hargaRataLama) + ($stokBeli * $hargaBeliNetto)) / $totalStokBaru;
+                } else {
+                    $hargaRataBaru = $hargaBeliNetto;
+                }
+
+                // 3. Simpan Detail
+                NotaPembelianDetail::create([
+                    'nota_pembelian_id' => $nota->id,
+                    'bahan_baku_id' => $item['bahan_baku_id'],
+                    'jumlah' => $stokBeli,
+                    'harga_satuan' => $hargaSatuanBeli, // Tetap simpan harga asli di detail nota
+                    'subtotal' => $stokBeli * $hargaSatuanBeli
+                ]);
+
+                // 4. Update Master Bahan (Stok & Harga Rata-rata yang baru)
+                $bahan->update([
+                    'stok_total' => $totalStokBaru,
+                    'harga_rata_rata' => $hargaRataBaru
+                    
+                ]);
+            }
+    //         dd([
+    //     'Stok Lama' => $stokLama,
+    //     'Stok Baru' => $stokBeli,
+    //     'Total Stok' => $totalStokBaru,
+    //     'Harga Rata Baru' => $hargaRataBaru
+    // ]);
+            DB::commit();
+            return redirect()->route('nota_pembelian.index')->with('success', 'Pembelian berhasil dan harga rata-rata telah diperbarui (termasuk ongkir).');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
+        }
     }
-}
 
     public function index()
     {

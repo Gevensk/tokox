@@ -4,7 +4,19 @@
     <meta charset="UTF-8">
     <title>Nota Pemesanan - {{ $notaOrder->no_order }}</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 12px; color: #333; line-height: 1.4; margin: 20px; }
+        @page {
+            size: auto;
+            margin: 0mm;
+        }
+
+        body { 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            font-size: 12px; 
+            color: #333; 
+            line-height: 1.4; 
+            margin: 20px; 
+        }
+        
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         .title-store { font-size: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
         .title-document { font-size: 16px; font-weight: bold; text-align: right; color: #2c3e50; }
@@ -20,7 +32,7 @@
         .btn-print-manual { background-color: #198754; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-bottom: 20px; font-size: 12px; }
         @media print {
             .btn-print-manual { display: none !important; }
-            body { margin: 10px; }
+            body { margin: 15mm; } 
         }
     </style>
 </head>
