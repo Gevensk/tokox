@@ -129,6 +129,9 @@ class NotaProduksiTest extends TestCase
                 $this->jobOrder->id => 12000 // Upah per pcs
             ],
             'ongkir_kirim_bahan' => 15000,
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
             'ekstra_bahan_id' => [
                 $this->jobOrder->id => [
                     $this->bahanA->id,
@@ -198,6 +201,9 @@ class NotaProduksiTest extends TestCase
                 $this->jobOrder->id => 12000
             ],
             'ongkir_kirim_bahan' => 15000,
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
         ]);
 
         $this->assertEquals('Diproduksi', $this->jobOrder->fresh()->status_pesanan);
@@ -243,6 +249,9 @@ class NotaProduksiTest extends TestCase
                 $this->jobOrder->id => 12000
             ],
             'ongkir_kirim_bahan' => 15000,
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
         ]);
 
         // 2. Submit partial QC results: 4 accepted + 1 defect = 5 pcs (target is 10)
@@ -332,6 +341,9 @@ class NotaProduksiTest extends TestCase
                 $this->jobOrder->id => 12000
             ],
             'ongkir_kirim_bahan' => 10000,
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
             'ekstra_bahan_id' => [
                 $this->jobOrder->id => [
                     $this->bahanA->id
@@ -375,6 +387,9 @@ class NotaProduksiTest extends TestCase
                 $this->jobOrder->id => 12000
             ],
             'ongkir_kirim_bahan' => 15000,
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
         ]);
 
         $this->actingAs($this->admin)->post('/nota-produksi/terima/store', [

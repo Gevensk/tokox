@@ -45,10 +45,11 @@
                         <thead class="table-dark text-nowrap">
                             <tr>
                                 <th style="width: 5%; text-align: center;">Pilih</th>
-                                <th style="width: 15%;">No. Order Induk</th>
-                                <th style="width: 25%;">Nama Produk & Detail Varian</th>
-                                <th style="width: 10%; text-align: center;">Qty (Pcs)</th>
+                                <th style="width: 10%;">No. Order Induk</th>
+                                <th style="width: 20%;">Nama Produk & Detail Varian</th>
+                                <th style="width: 5%; text-align: center;">Qty (Pcs)</th>
                                 <th style="width: 15%;">Biaya Jasa / Upah Penjahit</th>
+                                <th style="width: 15%;">Estimasi Selesai</th>
                                 <th style="width: 15%; text-align: center;">Tipe Alokasi</th>
                                 <th style="width: 15%;">Spesifikasi / Catatan</th>
                             </tr>
@@ -79,7 +80,12 @@
                                             <span class="input-group-text bg-light text-muted small">Rp</span>
                                             <input type="number" name="biaya_jasa[{{ $job->id }}]" class="form-control input-biaya-jasa" placeholder="Upah per pcs" min="0" required {{ !$isChecked ? 'disabled' : '' }} value="{{ old('biaya_jasa.' . $job->id) }}">
                                         </div>
-                                        <small class="text-muted" style="font-size: 0.75rem;">*Isi tarif ongkos jahit per satuan baju</small>
+                                        <small class="text-muted" style="font-size: 0.75rem;">*Tarif jahit per pcs</small>
+                                    </td>
+
+                                    <td>
+                                        <input type="datetime-local" name="estimasi_selesai[{{ $job->id }}]" class="form-control form-control-sm input-estimasi-selesai" required {{ !$isChecked ? 'disabled' : '' }} value="{{ old('estimasi_selesai.' . $job->id) }}">
+                                        <small class="text-muted" style="font-size: 0.75rem;">*Tanggal perkiraan selesai</small>
                                     </td>
 
                                     <td class="text-center">
@@ -110,7 +116,7 @@
                                 @if($job->is_custom)
                                 <tr class="ekstra-bahan-row" id="ekstra-bahan-row-{{ $job->id }}" style="{{ !$isChecked ? 'display: none;' : '' }}">
                                     <td></td>
-                                    <td colspan="6" class="p-3 bg-light-subtle">
+                                    <td colspan="7" class="p-3 bg-light-subtle">
                                         <div class="border rounded p-3 bg-white shadow-sm">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 class="fw-bold text-secondary mb-0">
@@ -165,7 +171,7 @@
                                 @endif
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
+                                    <td colspan="8" class="text-center py-4 text-muted">
                                         <i class="bi bi-exclamation-circle"></i> Tidak ada antrean job order aktif saat ini.
                                     </td>
                                 </tr>
@@ -200,6 +206,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 biayaInput.setAttribute('required', 'required');
             } else {
                 biayaInput.removeAttribute('required');
+            }
+        }
+
+        // 1b. Toggle estimasi_selesai input
+        const estimasiInput = document.querySelector('input[name="estimasi_selesai[' + jobId + ']"]');
+        if (estimasiInput) {
+            estimasiInput.disabled = !isChecked;
+            if (isChecked) {
+                estimasiInput.setAttribute('required', 'required');
+            } else {
+                estimasiInput.removeAttribute('required');
             }
         }
         

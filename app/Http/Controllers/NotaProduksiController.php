@@ -36,13 +36,14 @@ class NotaProduksiController extends Controller
     // 2. Proses Simpan Nota Produksi & Update Status Job Order
     public function store(Request $request)
     {
-        // 🔥 PERBAIKAN VALIDASI: Disamakan dengan nama input di view (biaya_jasa)
         $request->validate([
             'penjahit_id' => 'required',
             'job_order_ids' => 'required|array|min:1',
             'biaya_jasa' => 'required|array', 
             'biaya_jasa.*' => 'required|numeric|min:0', 
             'ongkir_kirim_bahan' => 'required|numeric|min:0',
+            'estimasi_selesai' => 'required|array',
+            'estimasi_selesai.*' => 'required|date',
         ]);
 
         DB::beginTransaction();
@@ -163,7 +164,8 @@ class NotaProduksiController extends Controller
                         'biaya_jasa_satuan'  => $biayaJasaSatuanRil, 
                         'status_pesanan'     => 'Diproduksi', 
                         'total_biaya_bahan'  => $accumulatedBiayaBahan,
-                        'total_hpp_job'      => $totalHppJobCalculated
+                        'total_hpp_job'      => $totalHppJobCalculated,
+                        'estimasi_selesai'   => isset($request->estimasi_selesai[$jobOrderId]) ? $request->estimasi_selesai[$jobOrderId] : null,
                     ]);
 
                     if ($job->nota_order) {
