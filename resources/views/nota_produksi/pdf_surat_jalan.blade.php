@@ -133,15 +133,12 @@
     </table>
 
     <p style="font-size: 11px; font-style: italic; color: #777; margin-bottom: 30px;">
-        * Harap periksa kembali kecocokan jumlah fisik kain dan aksesoris sebelum menandatangani surat jalan ini.
+        * Harap periksa kembali kecocokan jumlah fisik kain dan aksesoris sesuai dengan surat jalan ini.
     </p>
 
     <table class="ttd-table">
         <tr>
             <td>
-                Penerima (Penjahit)
-                <div class="line-dot"></div>
-                <strong>{{ $nota->penjahit->nama ?? '.......................' }}</strong>
             </td>
             <td>
                 Hormat Kami (Gudang)
