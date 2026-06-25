@@ -26,7 +26,7 @@
                         @endif
                         <th>Status Nota</th>
                         <th>Status Kirim Bahan</th>
-                        <th class="text-center">Aksi</th>
+                        <th class="text-center" style="width: 1%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,27 +60,29 @@
                                     </span>
                                 @endif
                             </td>
-                            <td> 
-                                <div class="d-flex justify-content-center align-items-center gap-2">
-                                    <a href="{{ route('nota_production.show', $prod->id) }}" class="btn btn-sm btn-outline-secondary text-nowrap" style="width: 110px;">
-                                        👁 Detail
-                                    </a>
+                            <td class="text-nowrap text-center" style="width: 1%;"> 
+                                <div class="d-flex justify-content-center align-items-center gap-1">
+                                    <a href="{{ route('nota_production.show', $prod->id) }}" class="btn btn-secondary btn-sm">Detail</a>
 
-                                    <a href="{{ route('nota_production.cetak_pdf', $prod->id) }}" class="btn btn-sm btn-warning text-dark text-nowrap" target="_blank" style="width: 110px;">
-                                        🖨 Cetak
-                                    </a>
+                                    <a href="{{ route('nota_production.cetak_pdf', $prod->id) }}" class="btn btn-info btn-sm text-white" target="_blank">Cetak</a>
 
-                                    @if(($prod->status_kirim ?? 'Belum Dikirim') == 'Belum Dikirim')
-                                        <form action="{{ route('nota_production.kirim_bahan', $prod->id) }}" method="POST" onsubmit="return confirm('Konfirmasi bahwa bahan baku kain & aksesoris sudah diserahkan ke kurir/penjahit?')" class="m-0">
+                                    @if(($prod->status_nota ?? 'Proses') == 'Proses')
+                                        <a href="{{ route('nota_production.edit', $prod->id) }}" class="btn btn-warning btn-sm">Edit</a>
+
+                                        <form action="{{ route('nota_production.destroy', $prod->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan dan menghapus nota produksi ini? Semua bahan baku yang keluar akan dikembalikan ke gudang.')" class="d-inline m-0">
                                             @csrf
-                                            <button type="submit" class="btn btn-sm btn-primary text-nowrap" style="width: 110px;">
-                                                🚚 Kirim Bahan
-                                            </button>
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm">Batal</button>
                                         </form>
-                                    @else
-                                        <button class="btn btn-sm btn-light text-muted text-nowrap" disabled style="width: 110px; border-style: dashed; background: transparent;">
-                                            ✓ Terkirim
-                                        </button>
+
+                                        @if(($prod->status_kirim ?? 'Belum Dikirim') == 'Belum Dikirim')
+                                            <form action="{{ route('nota_production.kirim_bahan', $prod->id) }}" method="POST" onsubmit="return confirm('Konfirmasi bahwa bahan baku kain & aksesoris sudah diserahkan ke kurir/penjahit?')" class="d-inline m-0">
+                                                @csrf
+                                                <button type="submit" class="btn btn-success btn-sm">Kirim Bahan</button>
+                                            </form>
+                                        @else
+                                            <span class="text-success small fw-semibold ms-1">Terkirim</span>
+                                        @endif
                                     @endif
                                 </div>
                             </td>

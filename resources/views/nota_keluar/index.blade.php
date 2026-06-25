@@ -25,7 +25,7 @@
                         <th>Referensi Order</th>
                         <th>Total Uang Masuk</th>
                         <th>Rincian Muatan Item</th>
-                        <th class="text-center">Aksi</th>
+                        <th class="text-center" style="width: 1%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,10 +66,10 @@
                                 @endforeach
                             </ul>
                         </td>
-                        <td class="text-center">
-                            <a href="{{ route('nota_keluar.print', $nota->id) }}" class="btn btn-sm btn-warning text-dark text-nowrap" target="_blank">
-                                🖨️ Cetak
-                            </a>
+                        <td class="text-nowrap text-center" style="width: 1%;">
+                            <div class="d-flex justify-content-center align-items-center gap-1">
+                                <a href="{{ route('nota_keluar.print', $nota->id) }}" class="btn btn-info btn-sm text-white" target="_blank">Cetak</a>
+                            </div>
                         </td>
                     </tr>
                     @empty

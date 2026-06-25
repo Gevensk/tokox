@@ -27,7 +27,7 @@
                         <th>Nominal DP Masuk</th>
                         <th>Status Bayar</th>
                         <th>Status Order</th>
-                        <th class="text-center pe-3">Aksi</th>
+                        <th class="text-center" style="width: 1%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -73,10 +73,10 @@
                                     <span class="badge bg-success px-2 py-1.5">Selesai</span>
                                 @endif
                             </td>
-                            <td class="text-center pe-3">
-                                <a href="{{ route('nota_order.show', $nota->id) }}" class="btn btn-sm btn-outline-secondary px-2 text-nowrap">
-                                    👁 Detail & Spek
-                                </a>
+                            <td class="text-nowrap text-center" style="width: 1%;">
+                                <div class="d-flex justify-content-center align-items-center gap-1">
+                                    <a href="{{ route('nota_order.show', $nota->id) }}" class="btn btn-secondary btn-sm">Detail</a>
+                                </div>
                             </td>
                         </tr>
                     @empty

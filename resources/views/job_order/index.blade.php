@@ -22,7 +22,7 @@
                     <th>Nama Produk Varian</th>
                     <th class="text-center">Target Qty</th>
                     <th class="text-center">Status Pesanan</th>
-                    <th class="text-center" style="width: 220px;">Aksi / Evaluasi</th>
+                    <th class="text-center" style="width: 1%;">Aksi / Evaluasi</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,22 +61,20 @@
                             <span class="badge bg-info text-dark py-2 px-3">Diproduksi</span>
                         @endif
                     </td>
-                    <td class="text-center">
-                        <div class="btn-group gap-1" role="group">
+                    <td class="text-nowrap text-center" style="width: 1%;">
+                        <div class="d-flex justify-content-center align-items-center gap-1">
                             @if(Auth::user()->isAdmin())
-                            <a href="{{ route('job_order.show', $job->id) }}" class="btn btn-sm btn-outline-info fw-bold text-nowrap" style="width: 110px;" title="Lihat Evaluasi Perhitungan HPP">
-                                <i class="fas fa-calculator"></i> Audit HPP
+                            <a href="{{ route('job_order.show', $job->id) }}" class="btn btn-info btn-sm text-white" title="Lihat Evaluasi Perhitungan HPP">
+                                Audit HPP
                             </a>
                             @endif
 
                             @if($job->status_pesanan != 'Selesai')
-                            <a href="{{ route('nota_produksi.terima_hasil', ['job_id' => $job->id]) }}" class="btn btn-sm btn-success fw-bold text-nowrap" style="width: 110px;">
-                                <i class="fas fa-check-circle"></i> Input QC
+                            <a href="{{ route('nota_produksi.terima_hasil', ['job_id' => $job->id]) }}" class="btn btn-success btn-sm">
+                                Input QC
                             </a>
                             @else
-                            <button class="btn btn-sm btn-light text-muted border fw-bold text-nowrap" style="width: 110px;" disabled>
-                                <i class="fas fa-lock"></i> Lock
-                            </button>
+                            <span class="text-success small fw-semibold ms-1">✓ Selesai</span>
                             @endif
                         </div>
                     </td>

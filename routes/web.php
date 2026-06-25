@@ -102,6 +102,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/bahan_baku', [BahanBakuController::class, 'index'])->name('bahan_baku.index');
     Route::get('/bahan_baku/{bahan_baku}', [BahanBakuController::class, 'show'])->name('bahan_baku.show');
+    Route::get('/bahan_baku/{id}/kartu_stok', [BahanBakuController::class, 'kartuStok'])->name('bahan_baku.kartu_stok');
 
     Route::get('/penjahit', [PenjahitController::class, 'index'])->name('penjahit.index');
     Route::get('/penjahit/{penjahit}', [PenjahitController::class, 'show'])->name('penjahit.show');

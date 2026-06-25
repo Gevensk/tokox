@@ -471,4 +471,204 @@ class NotaProduksiTest extends TestCase
         $response->assertSessionHasNoErrors();
         $response->assertRedirect();
     }
+
+    public function test_edit_nota_produksi_recalculates_hpp_and_updates_data(): void
+    {
+        // 1. Create a Nota Produksi first
+        $this->actingAs($this->admin)->post('/nota_produksi', [
+            'penjahit_id' => $this->penjahit->id,
+            'job_order_ids' => [$this->jobOrder->id],
+            'biaya_jasa' => [
+                $this->jobOrder->id => 10000
+            ],
+            'ongkir_kirim_bahan' => 12000,
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
+        ]);
+
+        $nota = \App\Models\NotaProduksi::latest()->first();
+
+        // Verify initial HPP:
+        // total_biaya_bahan = 0
+        // total_jasa = 10000 * 10 = 100000
+        // ongkir = 12000
+        // total_hpp = 112000
+        $this->assertEquals(112000, $this->jobOrder->fresh()->total_hpp_job);
+
+        // 2. Put edit request to update Penjahit, Ongkir, and Jasa Jahit
+        $newPenjahit = Penjahit::create([
+            'nama' => 'Penjahit Baru',
+            'alamat' => 'Alamat Baru',
+            'no_hp' => '08123',
+        ]);
+
+        $response = $this->actingAs($this->admin)->put("/nota_produksi/{$nota->id}", [
+            'penjahit_id' => $newPenjahit->id,
+            'ongkir_kirim_bahan' => 6000, // Reduced ongkir
+            'biaya_jasa' => [
+                $this->jobOrder->id => 15000 // Increased wage
+            ],
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(10)->format('Y-m-d\TH:i')
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        // 3. Verify changes and recalculation:
+        // total_biaya_bahan = 0
+        // new total_jasa = 15000 * 10 = 150000
+        // new ongkir = 6000
+        // new HPP = 156000
+        $job = $this->jobOrder->fresh();
+        $this->assertEquals($newPenjahit->id, $nota->fresh()->penjahit_id);
+        $this->assertEquals(6000, $nota->fresh()->ongkir_kirim_bahan);
+        $this->assertEquals(15000, $job->biaya_jasa_satuan);
+        $this->assertEquals(156000, $job->total_hpp_job);
+    }
+
+    public function test_cancel_nota_produksi_restores_stock_and_resets_job_status(): void
+    {
+        // 1. Assert initial stock
+        $this->assertEquals(10.0, $this->bahanA->fresh()->stok_total);
+
+        // 2. Create Nota Produksi using extra materials
+        $this->actingAs($this->admin)->post('/nota_produksi', [
+            'penjahit_id' => $this->penjahit->id,
+            'job_order_ids' => [$this->jobOrder->id],
+            'biaya_jasa' => [
+                $this->jobOrder->id => 10000
+            ],
+            'ongkir_kirim_bahan' => 12000,
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
+            'ekstra_bahan_id' => [
+                $this->jobOrder->id => [
+                    $this->bahanA->id
+                ]
+            ],
+            'ekstra_jumlah' => [
+                $this->jobOrder->id => [
+                    2.0 // Uses 2.0 Meter
+                ]
+            ]
+        ]);
+
+        // Stock decreased: 10.0 - 2.0 = 8.0
+        $this->assertEquals(8.0, $this->bahanA->fresh()->stok_total);
+        $nota = \App\Models\NotaProduksi::latest()->first();
+
+        // 3. Cancel/Delete the production note
+        $response = $this->actingAs($this->admin)->delete("/nota_produksi/{$nota->id}");
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // 4. Assert stock is restored to 10.0 and job order is back to 'Antrean'
+        $this->assertEquals(10.0, $this->bahanA->fresh()->stok_total);
+        
+        $job = $this->jobOrder->fresh();
+        $this->assertEquals('Antrean', $job->status_pesanan);
+        $this->assertNull($job->nota_produksi_id);
+        $this->assertEquals(0, $job->biaya_jasa_satuan);
+        
+        // Assert the NotaProduksi record is gone
+        $this->assertNull(\App\Models\NotaProduksi::find($nota->id));
+        // Assert extra pemakaian_bahan record is deleted
+        $this->assertEquals(0, \App\Models\PemakaianBahan::where('job_order_id', $job->id)->where('tipe', 'ekstra')->count());
+    }
+
+    public function test_hpp_automatic_update_only_applies_to_non_custom_job_orders(): void
+    {
+        // Varian initial avg price is 0
+        $this->assertEquals(0, $this->varian->fresh()->harga_avg_produk);
+
+        // CASE 1: Custom Job Order (is_custom = 1) -> Varian HPP should remain 0
+        $this->actingAs($this->admin)->post('/nota_produksi', [
+            'penjahit_id' => $this->penjahit->id,
+            'job_order_ids' => [$this->jobOrder->id],
+            'biaya_jasa' => [
+                $this->jobOrder->id => 10000
+            ],
+            'ongkir_kirim_bahan' => 10000,
+            'estimasi_selesai' => [
+                $this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
+        ]);
+
+        $this->actingAs($this->admin)->post('/nota-produksi/terima/store', [
+            'job_order_id' => $this->jobOrder->id,
+            'qty_accepted' => 10,
+            'qty_rejected_defect' => 0,
+            'qty_rejected' => 0,
+            'ongkir_hasil_produksi' => 2000,
+            'biaya_rework_tambahan' => 0,
+            'catatan_qc' => 'Complete custom order',
+        ]);
+
+        // Custom HPP should NOT update the variant average price
+        $this->assertEquals(0, $this->varian->fresh()->harga_avg_produk);
+
+        // CASE 2: Non-Custom Job Order (is_custom = 0) -> Varian HPP should be updated
+        $nonCustomJob = JobOrder::create([
+            'nota_order_id' => $this->notaOrder->id,
+            'produk_varian_id' => $this->varian->id,
+            'jumlah' => 10,
+            'biaya_jasa_satuan' => 0,
+            'total_biaya_bahan' => 50000, // Pre-calculated material cost
+            'total_hpp_job' => 50000,
+            'is_custom' => 0,
+            'status_pesanan' => 'Antrean',
+        ]);
+
+        $this->actingAs($this->admin)->post('/nota_produksi', [
+            'penjahit_id' => $this->penjahit->id,
+            'job_order_ids' => [$nonCustomJob->id],
+            'biaya_jasa' => [
+                $nonCustomJob->id => 8000
+            ],
+            'ongkir_kirim_bahan' => 10000,
+            'estimasi_selesai' => [
+                $nonCustomJob->id => now()->addDays(5)->format('Y-m-d\TH:i')
+            ],
+        ]);
+
+        // Non-Custom initial HPP = material (0) + jasa (8000 * 10 = 80000) + ongkir (10000) = 90000
+        $this->assertEquals(90000, $nonCustomJob->fresh()->total_hpp_job);
+
+        // Complete QC setoran with ongkir balik = 4000, no rework
+        // totalModalAktual = 90000 + 4000 = 94000
+        // totalLayakJual = 10 (all accepted)
+        // hppAktualSatuan = 94000 / 10 = 9400
+        $this->actingAs($this->admin)->post('/nota-produksi/terima/store', [
+            'job_order_id' => $nonCustomJob->id,
+            'qty_accepted' => 10,
+            'qty_rejected_defect' => 0,
+            'qty_rejected' => 0,
+            'ongkir_hasil_produksi' => 4000,
+            'biaya_rework_tambahan' => 0,
+            'catatan_qc' => 'Complete non-custom order',
+        ]);
+
+        // Since stock before this was 10 (from the previous custom order)
+        // Then standard order completed, it added another 10. stok_tersedia became 20.
+        // For the weighted average calculation:
+        // totalLayakJual = 10
+        // currentStock = (stok_tersedia (20) + stok_defect (0)) - totalLayakJual (10) = 10.
+        // currentAvg = 0.
+        // newHpp = 9400.
+        // weightedAvg = ((10 * 0) + (10 * 9400)) / 20 = 4700.
+        $this->assertEquals(4700, $this->varian->fresh()->harga_avg_produk);
+    }
+
+    public function test_raw_material_stock_card_returns_correct_mutations_chronologically(): void
+    {
+        // Access raw material card
+        $response = $this->actingAs($this->admin)->get("/bahan_baku/{$this->bahanA->id}/kartu_stok");
+        $response->assertStatus(200);
+        $response->assertSee('Kartu Stok Bahan Baku');
+        $response->assertSee($this->bahanA->nama);
+    }
 }
