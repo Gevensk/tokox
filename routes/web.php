@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/nota_pembelian/create',[NotaPembelianController::class,'create'])->name('nota_pembelian.create');
         Route::post('/nota_pembelian',[NotaPembelianController::class,'store'])->name('nota_pembelian.store');
         Route::get('/nota_pembelian/{id}', [NotaPembelianController::class, 'show'])->name('nota_pembelian.show');
+        Route::delete('/nota_pembelian/{id}', [NotaPembelianController::class, 'destroy'])->name('nota_pembelian.destroy');
         Route::prefix('penyesuaian_stok')->name('penyesuaian_stok.')->group(function () {
             Route::get('/', [PenyesuaianStokBahanController::class, 'index'])->name('index');
             Route::get('/create', [PenyesuaianStokBahanController::class, 'create'])->name('create');

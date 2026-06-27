@@ -137,10 +137,16 @@ class ProdukController extends Controller
 
     public function destroy(string $id)
     {
-        $produk = Produk::findOrFail($id);
-        $produk->delete();
-
-        return redirect('/produk')->with('success', 'Produk berhasil deleted!');
+        try {
+            $produk = Produk::findOrFail($id);
+            $produk->delete();
+            return redirect('/produk')->with('success', 'Produk berhasil dihapus!');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return redirect()->back()->with('error', 'Produk ini tidak dapat dihapus karena salah satu variannya sudah memiliki riwayat transaksi.');
+            }
+            throw $e;
+        }
     }
 
     // ==========================================
@@ -202,8 +208,15 @@ class ProdukController extends Controller
 
     public function destroyVarian(string $id)
     {
-        $varian = ProdukVarian::findOrFail($id);
-        $varian->delete();
-        return redirect()->back()->with('success','Varian berhasil dihapus!');
+        try {
+            $varian = ProdukVarian::findOrFail($id);
+            $varian->delete();
+            return redirect()->back()->with('success', 'Varian berhasil dihapus!');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return redirect()->back()->with('error', 'Varian produk ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Job Order, Hasil Produksi, atau Nota Stok Keluar).');
+            }
+            throw $e;
+        }
     }
 }

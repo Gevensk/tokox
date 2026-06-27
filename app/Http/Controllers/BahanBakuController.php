@@ -89,10 +89,16 @@ class BahanBakuController extends Controller
      */
     public function destroy(string $id)
     {
-        //
-        $bahan_baku=BahanBaku::find($id);
-        $bahan_baku->delete();
-        return redirect('/bahan_baku')->with('success','Data berhasil dihapus!');
+        try {
+            $bahan_baku = BahanBaku::findOrFail($id);
+            $bahan_baku->delete();
+            return redirect('/bahan_baku')->with('success', 'Data berhasil dihapus!');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return redirect()->back()->with('error', 'Bahan baku ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Pembelian / Pemakaian / Penyesuaian Stok).');
+            }
+            throw $e;
+        }
     }
 
     public function kartuStok($id)

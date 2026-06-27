@@ -40,6 +40,11 @@
                         <td class="text-nowrap" style="width: 1%;">
                             <div class="d-flex justify-content-start align-items-center gap-1">
                                 <a href="{{ route('nota_pembelian.show', $item->id) }}" class="btn btn-secondary btn-sm">Detail</a>
+                                <form action="{{ route('nota_pembelian.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan/menghapus nota pembelian ini? Stok akan dikurangi dan harga rata-rata bahan baku akan dihitung ulang.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                                </form>
                             </div>
                         </td>
                     </tr>

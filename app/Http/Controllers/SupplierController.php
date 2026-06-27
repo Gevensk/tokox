@@ -56,9 +56,15 @@ class SupplierController extends Controller
 
     public function destroy($id)
     {
-        $supplier = Supplier::find($id);
-        $supplier->delete();
-        
-        return redirect('/supplier')->with('success', 'Data berhasil dihapus!');
+        try {
+            $supplier = Supplier::findOrFail($id);
+            $supplier->delete();
+            return redirect('/supplier')->with('success', 'Data berhasil dihapus!');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return redirect()->back()->with('error', 'Supplier ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Nota Pembelian).');
+            }
+            throw $e;
+        }
     }
 }

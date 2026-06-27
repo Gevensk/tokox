@@ -61,9 +61,15 @@ class CustomerController extends Controller
 
     public function destroy(string $id)
     {
-        $customer = Customer::find($id);
-        $customer->delete();
-        
-        return redirect('/customer')->with('success', 'Data berhasil dihapus!');
+        try {
+            $customer = Customer::findOrFail($id);
+            $customer->delete();
+            return redirect('/customer')->with('success', 'Data berhasil dihapus!');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return redirect()->back()->with('error', 'Customer ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Nota Order / Produk Custom).');
+            }
+            throw $e;
+        }
     }
 }

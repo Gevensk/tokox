@@ -85,10 +85,15 @@ class PenjahitController extends Controller
      */
     public function destroy(string $id)
     {
-        //
-        $penjahit = Penjahit::find($id);
-        $penjahit->delete();
-
-        return redirect('/penjahit')->with('success','Data berhasil dihapus!');
+        try {
+            $penjahit = Penjahit::findOrFail($id);
+            $penjahit->delete();
+            return redirect('/penjahit')->with('success', 'Data berhasil dihapus!');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return redirect()->back()->with('error', 'Penjahit ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Nota Produksi / Job Order).');
+            }
+            throw $e;
+        }
     }
 }

@@ -35,7 +35,7 @@
                 </div>
 
                 <div class="table-responsive shadow-sm rounded border">
-                    <table class="table table-striped table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                    <table class="table table-striped table-hover align-middle mb-0">
                         <thead class="table-dark">
                             <tr>
                                 <th style="width: 15%;">Tanggal</th>
@@ -63,27 +63,27 @@
                                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 w-100" style="max-width: 120px;">Penyesuaian</span>
                                         @endif
                                     </td>
-                                    <td class="text-end font-monospace text-success fw-semibold">
+                                    <td class="text-end text-success fw-semibold">
                                         @if($m->masuk > 0)
                                             +{{ (float)$m->masuk }}
                                         @else
                                             -
                                         @endif
                                     </td>
-                                    <td class="text-end font-monospace text-danger fw-semibold">
+                                    <td class="text-end text-danger fw-semibold">
                                         @if($m->keluar > 0)
                                             -{{ (float)$m->keluar }}
                                         @else
                                             -
                                         @endif
                                     </td>
-                                    <td class="text-end font-monospace fw-bold text-dark">
+                                    <td class="text-end fw-bold text-dark">
                                         {{ (float)$m->saldo }} <small class="text-muted">{{ $bahan->satuan }}</small>
                                     </td>
                                     <td>
-                                        <span class="text-dark small d-block">{{ $m->keterangan }}</span>
+                                        <span class="text-dark d-block">{{ $m->keterangan }}</span>
                                         @if($m->harga > 0)
-                                            <small class="text-muted" style="font-size: 0.72rem;">*Harga Transaksi: Rp {{ number_format($m->harga, 0, ',', '.') }}</small>
+                                            <small class="text-muted" style="font-size: 0.85rem;">*Harga Transaksi: Rp {{ number_format($m->harga, 0, ',', '.') }}</small>
                                         @endif
                                     </td>
                                 </tr>

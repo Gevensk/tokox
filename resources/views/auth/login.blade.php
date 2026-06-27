@@ -62,6 +62,11 @@
         .password-input {
             border-right: none;
         }
+        /* Hide Microsoft Edge / IE default eye icon */
+        input::-ms-reveal,
+        input::-ms-clear {
+            display: none;
+        }
     </style>
 </head>
 <body>

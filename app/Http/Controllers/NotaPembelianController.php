@@ -108,5 +108,64 @@ class NotaPembelianController extends Controller
         $nota = NotaPembelian::with(['supplier', 'details.bahanBaku'])->findOrFail($id);
         return view('nota_pembelian.show', compact('nota'));
     }
+
+    public function destroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            $nota = NotaPembelian::with('details')->findOrFail($id);
+
+            // 1. Cek kecukupan stok untuk semua item sebelum melakukan delete
+            foreach ($nota->details as $detail) {
+                $bahan = BahanBaku::findOrFail($detail->bahan_baku_id);
+                if ($bahan->stok_total < $detail->jumlah) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Gagal menghapus: Bahan baku "' . $bahan->nama . '" sudah digunakan dalam transaksi produksi lain (stok saat ini tidak mencukupi untuk dikurangi).');
+                }
+            }
+
+            // 2. Jika semua cukup, lakukan update stok dan hitung ulang harga rata-rata
+            $totalHargaBahan = $nota->total_harga_bahan;
+            $totalOngkir = $nota->ongkir;
+
+            foreach ($nota->details as $detail) {
+                $bahan = BahanBaku::findOrFail($detail->bahan_baku_id);
+                
+                $alokasiOngkir = ($totalHargaBahan > 0) ? ($totalOngkir / $totalHargaBahan) * $detail->harga_satuan : 0;
+                $hargaBeliNetto = $detail->harga_satuan + $alokasiOngkir;
+
+                $stokLama = $bahan->stok_total;
+                $stokKurang = $detail->jumlah;
+                $totalStokBaru = $stokLama - $stokKurang;
+
+                if ($totalStokBaru > 0) {
+                    // Rumus membalikkan average:
+                    // (Total Nilai Saat Ini - Total Nilai Pembelian Yang Dihapus) / Total Stok Baru
+                    $hargaRataBaru = (($stokLama * $bahan->harga_rata_rata) - ($stokKurang * $hargaBeliNetto)) / $totalStokBaru;
+                    if ($hargaRataBaru < 0) {
+                        $hargaRataBaru = 0;
+                    }
+                } else {
+                    $hargaRataBaru = 0;
+                }
+
+                $bahan->update([
+                    'stok_total' => $totalStokBaru,
+                    'harga_rata_rata' => $hargaRataBaru
+                ]);
+            }
+
+            // 3. Hapus data detail dan header nota
+            $nota->details()->delete();
+            $nota->delete();
+
+            DB::commit();
+            return redirect()->route('nota_pembelian.index')->with('success', 'Nota pembelian berhasil dihapus dan HPP rata-rata bahan baku berhasil dikoreksi.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Gagal menghapus nota pembelian: ' . $e->getMessage());
+        }
+    }
 }
 
