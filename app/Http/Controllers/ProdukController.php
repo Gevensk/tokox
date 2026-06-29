@@ -214,7 +214,7 @@ class ProdukController extends Controller
             return redirect()->back()->with('success', 'Varian berhasil dihapus!');
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') {
-                return redirect()->back()->with('error', 'Varian produk ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Job Order, Hasil Produksi, atau Nota Stok Keluar).');
+                return redirect()->back()->with('error', 'Varian produk ini tidak dapat dihapus karena sudah memiliki riwayat transaksi.');
             }
             throw $e;
         }

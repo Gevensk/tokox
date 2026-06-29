@@ -64,7 +64,7 @@
                                 <div class="d-flex justify-content-start align-items-center gap-1">
                                     <a href="{{ route('nota_production.show', $prod->id) }}" class="btn btn-secondary btn-sm">Detail</a>
 
-                                    <a href="{{ route('nota_production.cetak_pdf', $prod->id) }}" class="btn btn-info btn-sm text-white" target="_blank">Cetak</a>
+                                    <a href="{{ route('nota_production.cetak_nota', $prod->id) }}" class="btn btn-info btn-sm text-white" target="_blank">Cetak</a>
 
                                     @if(($prod->status_nota ?? 'Proses') == 'Proses')
                                         <a href="{{ route('nota_production.edit', $prod->id) }}" class="btn btn-warning btn-sm">Edit</a>

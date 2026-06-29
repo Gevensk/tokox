@@ -4,8 +4,8 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>Detail Nota Produksi: {{ $nota->no_surat_jalan }}</h3>
-        <<div>
-        <a href="{{ route('nota_production.cetak_pdf', $nota->id) }}" class="btn btn-warning text-dark me-2" target="_blank">
+        <div>
+        <a href="{{ route('nota_production.cetak_surat_jalan', $nota->id) }}" class="btn btn-warning text-dark me-2" target="_blank">
             🖨 Cetak Surat Jalan (PDF)
         </a>
         <a href="{{ route('nota_production.index') }}" class="btn btn-outline-secondary">⬅ Kembali</a>
@@ -27,12 +27,17 @@
                             <td>: {{ $nota->penjahit->alamat ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted">Tanggal Mulai</td>
-                            <td>: {{ date('d-m-Y H:i', strtotime($nota->tgl_order)) }}</td>
+                            <td class="text-muted">Tanggal Kirim Bahan</td>
+                            <td>: {{ $nota->tgl_kirim ? date('d-m-Y H:i', strtotime($nota->tgl_kirim)) : 'Belum Dikirim' }}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted">Tanggal Kirim</td>
-                            <td>: {{ $nota->tgl_kirim ? date('d-m-Y H:i', strtotime($nota->tgl_kirim)) : '-' }}</td>
+                            <td class="text-muted">Estimasi Selesai</td>
+                            <td>: 
+                                @php
+                                    $maxEstimasi = $nota->jobOrders->max('estimasi_selesai');
+                                @endphp
+                                <strong>{{ $maxEstimasi ? date('d-m-Y', strtotime($maxEstimasi)) : '-' }}</strong>
+                            </td>
                         </tr>
                         @if(Auth::user()->isAdmin())
                         <tr>

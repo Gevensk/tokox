@@ -205,7 +205,7 @@ class HasilProduksiController extends Controller
 
             DB::commit();
             return redirect()->route('job_order.index')
-                ->with('success', "Setoran berhasil disimpan! Stok premium & defect diperbarui pada master varian yang sama tanpa menduplikasi data.");
+                ->with('success', "Hasil produksi berhasil disimpan!");
 
         } catch (\Exception $e) {
             DB::rollBack();

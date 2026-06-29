@@ -139,6 +139,8 @@ Route::middleware('auth')->group(function () {
     Route::post('nota_production/{id}/kirim-bahan', [App\Http\Controllers\NotaProduksiController::class, 'kirimBahan'])->name('nota_production.kirim_bahan');
     Route::get('nota_production/{id}', [App\Http\Controllers\NotaProduksiController::class, 'show'])->name('nota_production.show');
     Route::get('nota_production/{id}/cetak-pdf', [App\Http\Controllers\NotaProduksiController::class, 'cetakPdf'])->name('nota_production.cetak_pdf');
+    Route::get('nota_production/{id}/cetak-nota', [App\Http\Controllers\NotaProduksiController::class, 'cetakNota'])->name('nota_production.cetak_nota');
+    Route::get('nota_production/{id}/cetak-surat-jalan', [App\Http\Controllers\NotaProduksiController::class, 'cetakSuratJalan'])->name('nota_production.cetak_surat_jalan');
 
     Route::get('/nota-produksi/terima/{job_id}', [NotaProduksiController::class, 'createHasilProduksi'])->name('nota_produksi.terima_hasil');
     Route::post('/nota-produksi/terima/store', [NotaProduksiController::class, 'storeHasilProduksi'])->name('hasil_produksi.store');

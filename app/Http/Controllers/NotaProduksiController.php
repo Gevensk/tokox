@@ -307,6 +307,68 @@ class NotaProduksiController extends Controller
             }
         }
 
+        return view('nota_produksi.pdf_nota_produksi', compact('nota', 'komponenBahan'));
+    }
+
+    public function cetakNota($id)
+    {
+        $nota = NotaProduksi::with([
+            'penjahit',
+            'jobOrders.produk_varian.produk',
+            'jobOrders.produk_varian.bill_of_materials',
+            'jobOrders.pemakaian_bahan.bahan_baku'
+        ])->findOrFail($id);
+
+        $komponenBahan = [];
+        foreach ($nota->jobOrders as $job) {
+            foreach ($job->pemakaian_bahan as $pakai) {
+                $bahanId = $pakai->bahan_baku_id;
+                $namaBahan = $pakai->bahan_baku->nama ?? 'Bahan';
+                $satuan = $pakai->bahan_baku->satuan ?? '';
+                
+                if (!isset($komponenBahan[$bahanId])) {
+                    $komponenBahan[$bahanId] = [
+                        'name' => $namaBahan,
+                        'nama' => $namaBahan,
+                        'jumlah' => 0,
+                        'satuan' => $satuan
+                    ];
+                }
+                $komponenBahan[$bahanId]['jumlah'] += $pakai->jumlah;
+            }
+        }
+
+        return view('nota_produksi.pdf_nota_produksi', compact('nota', 'komponenBahan'));
+    }
+
+    public function cetakSuratJalan($id)
+    {
+        $nota = NotaProduksi::with([
+            'penjahit',
+            'jobOrders.produk_varian.produk',
+            'jobOrders.produk_varian.bill_of_materials',
+            'jobOrders.pemakaian_bahan.bahan_baku'
+        ])->findOrFail($id);
+
+        $komponenBahan = [];
+        foreach ($nota->jobOrders as $job) {
+            foreach ($job->pemakaian_bahan as $pakai) {
+                $bahanId = $pakai->bahan_baku_id;
+                $namaBahan = $pakai->bahan_baku->nama ?? 'Bahan';
+                $satuan = $pakai->bahan_baku->satuan ?? '';
+                
+                if (!isset($komponenBahan[$bahanId])) {
+                    $komponenBahan[$bahanId] = [
+                        'name' => $namaBahan,
+                        'nama' => $namaBahan,
+                        'jumlah' => 0,
+                        'satuan' => $satuan
+                    ];
+                }
+                $komponenBahan[$bahanId]['jumlah'] += $pakai->jumlah;
+            }
+        }
+
         return view('nota_produksi.pdf_surat_jalan', compact('nota', 'komponenBahan'));
     }
 
