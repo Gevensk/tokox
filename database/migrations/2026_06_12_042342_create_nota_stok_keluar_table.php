@@ -23,7 +23,7 @@ return new class extends Migration
             $table->foreign('nota_order_id')->references('id')->on('nota_order')->onDelete('set null');
             
             // Menggunakan ENUM sesuai dengan kamus mutasi barang yang kita sepakati
-            $table->enum('tipe_keluar', ['penjualan_order', 'penjualan_langsung', 'sampel_promosi', 'barang_hilang_rusak']);
+            $table->enum('tipe_keluar', ['penjualan_order', 'penjualan_langsung']);
             
             // Menggunakan Decimal(15,2) sesuai standar finansial di ERD kamu
             $table->decimal('total_bayar', 15, 2)->default(0);

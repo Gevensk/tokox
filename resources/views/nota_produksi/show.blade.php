@@ -12,68 +12,72 @@
     </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header bg-dark text-white fw-bold">ℹ Informasi Produksi</div>
+    @php
+        $maxEstimasi = $nota->jobOrders->max('estimasi_selesai');
+    @endphp
+
+    <!-- 1. Row Informasi Produksi (Full Width) -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white fw-bold d-flex align-items-center">
+                    <i class="fa-solid fa-circle-info me-2"></i> Informasi Produksi
+                </div>
                 <div class="card-body">
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td class="text-muted" style="width: 40%;">Penjahit / PIC</td>
-                            <td>: <strong>{{ $nota->penjahit->nama ?? '-' }}</strong></td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Alamat Penjahit</td>
-                            <td>: {{ $nota->penjahit->alamat ?? '-' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Tanggal Kirim Bahan</td>
-                            <td>: {{ $nota->tgl_kirim ? date('d-m-Y H:i', strtotime($nota->tgl_kirim)) : 'Belum Dikirim' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Estimasi Selesai</td>
-                            <td>: 
-                                @php
-                                    $maxEstimasi = $nota->jobOrders->max('estimasi_selesai');
-                                @endphp
-                                <strong>{{ $maxEstimasi ? date('d-m-Y', strtotime($maxEstimasi)) : '-' }}</strong>
-                            </td>
-                        </tr>
-                        @if(Auth::user()->isAdmin())
-                        <tr>
-                            <td class="text-muted">Ongkir Bahan</td>
-                            <td>: <span class="text-danger fw-bold">Rp {{ number_format($nota->ongkir_kirim_bahan, 0, ',', '.') }}</span></td>
-                        </tr>
-                        @endif
-                        <tr>
-                            <td class="text-muted">Status Nota</td>
-                            <td>: 
-                                <span class="badge {{ $nota->status_nota == 'Proses' ? 'bg-warning text-dark' : 'bg-success' }}">
-                                    {{ $nota->status_nota }}
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Status Kirim</td>
-                            <td>: 
-                                <span class="badge {{ $nota->status_kirim == 'Belum Dikirim' ? 'bg-danger' : 'bg-info text-dark' }}">
-                                    {{ $nota->status_kirim }}
-                                </span>
-                            </td>
-                        </tr>
-                    </table>
+                    <div class="row align-items-center">
+                        <div class="col-md-3 border-end">
+                            <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Penjahit / PIC</small>
+                            <h5 class="fw-bold mb-1 text-dark">{{ $nota->penjahit->nama ?? '-' }}</h5>
+                            <p class="mb-0 text-muted small"><i class="fa-solid fa-location-dot me-1"></i> {{ $nota->penjahit->alamat ?? '-' }}</p>
+                        </div>
+                        <div class="col-md-3 border-end">
+                            <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Status</small>
+                            <div class="d-flex flex-column gap-1">
+                                <div>
+                                    <span class="badge {{ $nota->status_nota == 'Proses' ? 'bg-warning text-dark' : 'bg-success' }} fw-bold" style="font-size: 0.75rem;">
+                                        Nota: {{ $nota->status_nota }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="badge {{ $nota->status_kirim == 'Belum Dikirim' ? 'bg-danger' : 'bg-info text-dark' }} fw-bold" style="font-size: 0.75rem;">
+                                        Kirim: {{ $nota->status_kirim }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 border-end">
+                            <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Tanggal & Deadline</small>
+                            <div class="small">
+                                <span class="text-muted">Kirim Bahan:</span> {{ $nota->tgl_kirim ? date('d-m-Y H:i', strtotime($nota->tgl_kirim)) : 'Belum Dikirim' }}
+                            </div>
+                            <div class="small mt-1">
+                                <span class="text-muted">Est. Selesai:</span> <strong class="text-danger">{{ $maxEstimasi ? date('d-m-Y', strtotime($maxEstimasi)) : '-' }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Ongkir Kirim Bahan</small>
+                            @if(Auth::user()->isAdmin())
+                                <h4 class="fw-bold text-danger mb-0">Rp {{ number_format($nota->ongkir_kirim_bahan, 0, ',', '.') }}</h4>
+                            @else
+                                <span class="text-muted small">Akses Finansial Terbatas</span>
+                            @endif
+                        </div>
+                    </div>
 
                     @if($nota->status_kirim == 'Belum Dikirim')
-                        <div class="alert alert-warning mt-3 mb-0 py-2 small">
-                            Bahan baku sedang disiapkan dan belum dikirim.
+                        <div class="alert alert-warning mt-3 mb-0 py-2 px-3 small border-0 shadow-sm" style="background-color: #fff3cd; color: #664d03;">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i> Bahan baku sedang disiapkan dan belum dikirim.
                         </div>
                     @endif
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-8 mb-4">
-            <div class="card h-100 shadow-sm">
+    <!-- 2. Row Daftar Pesanan Pakaian (Full Width) -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0">
                 <div class="card-header bg-secondary text-white fw-bold">👕 Daftar Pesanan Pakaian (Job Order)</div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -83,6 +87,8 @@
                                     <th>Job ID</th>
                                     <th>Produk & Varian</th>
                                     <th class="text-center">Qty (Pcs)</th>
+                                    <th class="text-end">Jasa Penjahit</th>
+                                    <th class="text-end">Total Jasa</th>
                                     <th class="text-center">Estimasi Selesai</th>
                                     <th class="text-center">Status</th>
                                     <th class="text-center">Aksi</th>
@@ -123,6 +129,8 @@
                                             @endif
                                         </td>
                                         <td class="text-center fw-bold">{{ $job->jumlah }} Pcs</td>
+                                        <td class="text-end fw-semibold text-success">Rp {{ number_format($job->biaya_jasa_satuan, 0, ',', '.') }}</td>
+                                        <td class="text-end fw-bold text-dark">Rp {{ number_format($job->biaya_jasa_satuan * $job->jumlah, 0, ',', '.') }}</td>
                                         <td class="text-center">
                                             @if($job->estimasi_selesai)
                                                 <span class="fw-semibold text-dark">{{ date('d-m-Y H:i', strtotime($job->estimasi_selesai)) }}</span>
