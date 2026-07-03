@@ -210,9 +210,11 @@
         }
     }
 
-    // Tombol tambah produk manual (hanya untuk penjualan langsung)
-    document.getElementById('btn-tambah-item').addEventListener('click', function() {
+    // Fungsi untuk menambah baris produk secara dinamis
+    function tambahBaris(isFirstRow = false) {
         const tbody = document.getElementById('wrapper-item-rows');
+        const deleteButtonHtml = isFirstRow ? '' : `<button type="button" class="btn btn-sm btn-danger px-3" onclick="hapusBaris(${itemIdx})">×</button>`;
+        
         const rowHtml = `
             <tr id="row-${itemIdx}">
                 <td class="py-2">
@@ -232,13 +234,18 @@
                     <input type="number" name="items[${itemIdx}][harga_satuan]" class="form-control input-harga" min="0" value="0" required>
                 </td>
                 <td class="text-center py-2">
-                    <button type="button" class="btn btn-sm btn-danger px-3" onclick="hapusBaris(${itemIdx})">×</button>
+                    ${deleteButtonHtml}
                 </td>
             </tr>
         `;
         tbody.insertAdjacentHTML('beforeend', rowHtml);
         itemIdx++;
         hitungKasir();
+    }
+
+    // Tombol tambah produk manual (hanya untuk penjualan langsung)
+    document.getElementById('btn-tambah-item').addEventListener('click', function() {
+        tambahBaris(false);
     });
 
     function hapusBaris(index) {
@@ -280,8 +287,17 @@
             btnTambahItem.classList.remove('d-none');
             inputCustomerId.value = "";
             inputCustomerName.value = "";
+            tambahBaris(true); // Load satu baris kosong pertama secara otomatis
         }
         hitungKasir();
+    });
+
+    // Inisialisasi awal saat halaman dimuat
+    window.addEventListener('DOMContentLoaded', function() {
+        const tipeKeluar = document.getElementById('tipe_keluar').value;
+        if (tipeKeluar === 'penjualan_langsung') {
+            tambahBaris(true); // Load satu baris kosong pertama secara default
+        }
     });
 
     // Ketika Nota Order Dipilih
