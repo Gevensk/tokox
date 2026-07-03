@@ -28,8 +28,8 @@
                     <div class="col-md-4 mb-3">
                         <label for="tipe_keluar" class="form-label fw-semibold">Tipe Pengeluaran Stok</label>
                         <select name="tipe_keluar" id="tipe_keluar" class="form-select" required>
-                            <option value="penjualan_langsung">Penjualan Langsung (Cash & Carry)</option>
-                            <option value="penjualan_order">Pelunasan Nota Order (Inden/PO)</option>
+                            <option value="penjualan_langsung">Penjualan Langsung</option>
+                            <option value="penjualan_order">Pelunasan Nota Order</option>
                         </select>
                     </div>
 

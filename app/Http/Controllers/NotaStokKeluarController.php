@@ -29,8 +29,9 @@ class NotaStokKeluarController extends Controller
         // Ambil produk varian yang stoknya ready untuk skenario beli langsung
         $produkVarians = ProdukVarian::where('stok_tersedia', '>', 0)->get();
 
-        // Ambil nota order yang belum lunas ATAU sudah lunas tapi belum semua barang diambil
+        // Ambil nota order yang belum lunas ATAU sudah lunas tapi belum semua barang diambil (Hanya tipe Customer)
         $notaOrders = NotaOrder::with(['customer', 'job_orders.produk_varian.produk'])
+            ->where('tipe_order', 'Customer')
             ->latest()
             ->get()
             ->filter(function($order) {
@@ -71,6 +72,10 @@ class NotaStokKeluarController extends Controller
         // VALIDASI SKENARIO 1: JIKA MELALUI NOTA ORDER (INDEN / CUSTOM BUDI & SITI)
         if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
             $notaOrder = NotaOrder::findOrFail($notaOrderId);
+            
+            if ($notaOrder->tipe_order !== 'Customer') {
+                throw new \Exception("Gagal! Nota order #{$notaOrderId} bukan merupakan pesanan pelanggan.");
+            }
             
             // Hitung sisa yang harus dilunasi
             $sisaPelunasan = $notaOrder->status_bayar === 'Lunas' ? 0 : max(0, $notaOrder->total_harga - $notaOrder->nominal_dp_masuk);
