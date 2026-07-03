@@ -8,7 +8,7 @@
                 <h5 class="mb-0">Edit Produk</h5>
             </div>
             <div class="card-body">
-                <form action="/produk/{{ $produk->id }}" method="POST">
+                <form action="/produk/{{ $produk->id }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     
@@ -21,6 +21,18 @@
                         <label class="form-label">Satuan</label>
                         <input type="text" name="satuan" class="form-control" value="{{ $produk->satuan }}" required>
                         <small class="text-muted">Contoh: Pcs, Set, Lusin</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Foto Katalog Produk</label>
+                        @if($produk->foto)
+                            <div class="mb-2">
+                                <img src="{{ asset('storage/produk_katalog/' . $produk->foto) }}" alt="Foto Katalog" class="img-thumbnail" style="max-height: 120px; width: auto; display: block;">
+                                <small class="text-muted">Foto saat ini</small>
+                            </div>
+                        @endif
+                        <input type="file" name="foto" class="form-control" accept="image/*">
+                        <small class="text-muted">Pilih file jika ingin mengganti foto. Maks: 2MB</small>
                     </div>
 
 

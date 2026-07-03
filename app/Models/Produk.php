@@ -8,7 +8,7 @@ class Produk extends Model
 {
     //
     protected $table='produk';
-    protected $fillable=['nama','satuan','customer_id','harga_jual'];
+    protected $fillable=['nama','satuan','customer_id','harga_jual','foto'];
 
     public function varians(){
         return $this->hasMany(ProdukVarian::class,'produk_id');

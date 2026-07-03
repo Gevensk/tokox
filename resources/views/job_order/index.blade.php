@@ -65,7 +65,7 @@
                         <div class="d-flex justify-content-start align-items-center gap-1">
                             @if(Auth::user()->isAdmin())
                             <a href="{{ route('job_order.show', $job->id) }}" class="btn btn-info btn-sm text-white" title="Lihat Evaluasi Perhitungan HPP">
-                                Audit HPP
+                                Rincian HPP
                             </a>
                             @endif
 

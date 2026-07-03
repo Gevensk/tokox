@@ -8,7 +8,7 @@
                 <h5 class="mb-0">Form Tambah Produk</h5>
             </div>
             <div class="card-body">
-                <form action="/produk" method="POST">
+                <form action="/produk" method="POST" enctype="multipart/form-data">
                     @csrf
                     
                     <div class="mb-3">
@@ -20,6 +20,12 @@
                         <label class="form-label">Satuan</label>
                         <input type="text" name="satuan" class="form-control" value="Pcs" placeholder="Pcs / Set / Lusin" required>
                         <small class="text-muted">Contoh: Pcs, Set</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Foto Katalog Produk</label>
+                        <input type="file" name="foto" class="form-control" accept="image/*">
+                        <small class="text-muted">Format: JPEG, PNG, JPG, WebP (Maks: 2MB)</small>
                     </div>
 
 

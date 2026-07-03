@@ -29,7 +29,15 @@ class ProdukController extends Controller
             'nama' => 'required|string|max:255',
             'satuan' => 'required|string|max:50',
             'customer_id' => 'nullable|exists:customer,id',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
+
+        if ($request->hasFile('foto')) {
+            $file = $request->file('foto');
+            $namaFile = 'prod_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('produk_katalog', $namaFile, 'public');
+            $validatedData['foto'] = $namaFile;
+        }
 
         Produk::create($validatedData);
 
@@ -117,6 +125,7 @@ class ProdukController extends Controller
             'nama'   => 'required|string|max:255',
             'satuan' => 'required|string|max:50',
             'customer_id' => 'nullable|exists:customer,id',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $produk = Produk::findOrFail($id);
@@ -128,6 +137,18 @@ class ProdukController extends Controller
 
         if ($request->has('customer_id')) {
             $data['customer_id'] = $request->customer_id;
+        }
+
+        if ($request->hasFile('foto')) {
+            // Hapus file lama jika ada
+            if ($produk->foto) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete('produk_katalog/' . $produk->foto);
+            }
+            
+            $file = $request->file('foto');
+            $namaFile = 'prod_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('produk_katalog', $namaFile, 'public');
+            $data['foto'] = $namaFile;
         }
 
         $produk->update($data);

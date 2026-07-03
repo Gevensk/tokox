@@ -5,9 +5,18 @@
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h3 class="mb-1">Detail Produk: {{ $produk->nama }}</h3>
-                    <p class="text-muted mb-0">Satuan Hitung: <strong class="text-dark">{{ $produk->satuan }}</strong></p>
+                <div class="d-flex align-items-center gap-3">
+                    @if($produk->foto)
+                        <img src="{{ asset('storage/produk_katalog/' . $produk->foto) }}" alt="Foto Produk" class="img-thumbnail rounded" style="width: 70px; height: 70px; object-fit: cover;">
+                    @else
+                        <div class="bg-light border text-center text-muted rounded d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 0.8rem;">
+                            No Foto
+                        </div>
+                    @endif
+                    <div>
+                        <h3 class="mb-1">Detail Produk: {{ $produk->nama }}</h3>
+                        <p class="text-muted mb-0">Satuan Hitung: <strong class="text-dark">{{ $produk->satuan }}</strong></p>
+                    </div>
                 </div>
                 <a href="{{ url('/produk') }}" class="btn btn-secondary btn-sm">
                     <i class="bi bi-arrow-left"></i> Kembali ke Daftar

@@ -121,8 +121,19 @@
                                     @foreach($notaOrder->job_orders as $job)
                                         <tr>
                                             <td>
-                                                <div class="fw-bold text-dark">{{ $job->produk_varian->produk->nama }}</div>
-                                                <div class="small text-muted">Varian: {{ $job->produk_varian->warna }} - Size: {{ $job->produk_varian->ukuran }}</div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    @if($job->produk_varian->produk->foto)
+                                                        <img src="{{ asset('storage/produk_katalog/' . $job->produk_varian->produk->foto) }}" alt="Foto" class="img-thumbnail" style="width: 45px; height: 45px; object-fit: cover;">
+                                                    @else
+                                                        <div class="bg-light border text-center text-muted rounded d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; font-size: 0.62rem;">
+                                                            No Foto
+                                                        </div>
+                                                    @endif
+                                                    <div>
+                                                        <div class="fw-bold text-dark">{{ $job->produk_varian->produk->nama }}</div>
+                                                        <div class="small text-muted">Varian: {{ $job->produk_varian->warna }} - Size: {{ $job->produk_varian->ukuran }}</div>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td class="text-center fw-bold text-secondary fs-5 print-black">
                                                 {{ $job->jumlah }} <span class="small fs-6 text-muted">pcs</span>
@@ -131,6 +142,13 @@
                                                 @if($job->is_custom)
                                                     <div class="small fw-bold text-wrap">Custom Specs:</div>
                                                     <div class="small italic text-danger print-black">"{{ $job->catatan_custom }}"</div>
+                                                    @if($job->foto_desain)
+                                                        <div class="mt-2">
+                                                            <a href="{{ asset('storage/desain_order/' . $job->foto_desain) }}" target="_blank" title="Klik untuk memperbesar">
+                                                                <img src="{{ asset('storage/desain_order/' . $job->foto_desain) }}" alt="Desain" class="img-thumbnail" style="max-height: 80px; width: auto; object-fit: contain; display: block;">
+                                                            </a>
+                                                        </div>
+                                                    @endif
                                                 @else
                                                     <span class="text-muted small">Standard Pola Konveksi</span>
                                                 @endif

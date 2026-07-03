@@ -99,13 +99,28 @@
                                     <tr>
                                         <td>JOB-{{ $job->id }}</td>
                                         <td>
-                                            <span class="fw-bold text-dark">{{ $job->produk_varian->produk->nama ?? 'Produk' }}</span>
-                                            <div class="small text-muted">
-                                                Warna: {{ $job->produk_varian->warna ?? '-' }} | Ukuran: {{ $job->produk_varian->ukuran ?? '-' }}
-                                            </div>
-                                            <div class="mt-1 small text-secondary">
-                                                <i class="fa-solid fa-user me-1 text-info"></i> Pelanggan: <strong>{{ $job->nota_order->customer->nama ?? $job->nota_order->customer->nama_customer ?? 'N/A' }}</strong> 
-                                                <span class="text-muted ms-1">(Nota #{{ $job->nota_order_id }})</span>
+                                            <div class="d-flex align-items-center gap-2">
+                                                @if($job->is_custom && $job->foto_desain)
+                                                    <a href="{{ asset('storage/desain_order/' . $job->foto_desain) }}" target="_blank" title="Klik untuk memperbesar">
+                                                        <img src="{{ asset('storage/desain_order/' . $job->foto_desain) }}" alt="Foto Desain" class="img-thumbnail rounded border border-warning" style="width: 55px; height: 55px; object-fit: cover;">
+                                                    </a>
+                                                @elseif($job->produk_varian->produk->foto)
+                                                    <img src="{{ asset('storage/produk_katalog/' . $job->produk_varian->produk->foto) }}" alt="Foto Produk" class="img-thumbnail rounded" style="width: 55px; height: 55px; object-fit: cover;">
+                                                @else
+                                                    <div class="bg-light border text-center text-muted rounded d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; font-size: 0.65rem;">
+                                                        No Foto
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <span class="fw-bold text-dark">{{ $job->produk_varian->produk->nama ?? 'Produk' }}</span>
+                                                    <div class="small text-muted">
+                                                        Warna: {{ $job->produk_varian->warna ?? '-' }} | Ukuran: {{ $job->produk_varian->ukuran ?? '-' }}
+                                                    </div>
+                                                    <div class="mt-1 small text-secondary" style="font-size: 0.76rem;">
+                                                        <i class="fa-solid fa-user me-1 text-info"></i> Pelanggan: <strong>{{ $job->nota_order->customer->nama ?? $job->nota_order->customer->nama_customer ?? 'N/A' }}</strong> 
+                                                        <span class="text-muted ms-1">(Nota #{{ $job->nota_order_id }})</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                             @if($job->is_custom)
                                                 <div class="mt-1 small">

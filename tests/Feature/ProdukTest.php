@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\Customer;
 use App\Models\Produk;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProdukTest extends TestCase
@@ -154,5 +156,28 @@ class ProdukTest extends TestCase
             'satuan' => 'Set',
             'customer_id' => $this->customer->id,
         ]);
+    }
+
+    public function test_admin_can_create_product_with_photo(): void
+    {
+        Storage::fake('public');
+
+        $file = UploadedFile::fake()->create('catalog_photo.jpg', 100, 'image/jpeg');
+
+        $response = $this->actingAs($this->admin)->post('/produk', [
+            'nama' => 'Product with Photo',
+            'satuan' => 'Pcs',
+            'customer_id' => '',
+            'foto' => $file,
+        ]);
+
+        $response->assertRedirect('/produk');
+        $response->assertSessionHas('success');
+
+        $produk = Produk::where('nama', 'Product with Photo')->first();
+        $this->assertNotNull($produk);
+        $this->assertNotNull($produk->foto);
+
+        Storage::disk('public')->assertExists('produk_katalog/' . $produk->foto);
     }
 }

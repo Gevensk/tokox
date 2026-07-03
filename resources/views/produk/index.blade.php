@@ -19,6 +19,7 @@
         <table class="table table-hover">
             <thead>
                 <tr>
+                    <th style="width: 80px;">Foto</th>
                     <th>Nama</th>
                     <th>Satuan</th>
                     <th>Tipe Produk</th>
@@ -30,6 +31,15 @@
             <tbody>
                 @foreach ($produk as $d)
                 <tr>
+                    <td>
+                        @if($d->foto)
+                            <img src="{{ asset('storage/produk_katalog/' . $d->foto) }}" alt="Foto" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                        @else
+                            <div class="bg-light border text-center text-muted rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 0.72rem;">
+                                No Foto
+                            </div>
+                        @endif
+                    </td>
                     <td>{{ $d->nama }}</td>
                     <td>{{ $d->satuan }}</td>
                     <td>
