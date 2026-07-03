@@ -201,6 +201,56 @@ class NotaStokKeluarController extends Controller
     }
 }
 
+    public function destroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            $nota = NotaStokKeluar::with(['nota_keluar', 'nota_order'])->findOrFail($id);
+            $notaOrderId = $nota->nota_order_id;
+
+            // Revert pembayaran nota order ke Belum Lunas jika sebelumnya baru bayar DP
+            if ($notaOrderId) {
+                $notaOrder = $nota->nota_order;
+                if ($notaOrder && $notaOrder->nominal_dp_masuk < $notaOrder->total_harga) {
+                    $notaOrder->update(['status_bayar' => 'Belum Lunas']);
+                }
+            }
+
+            foreach ($nota->nota_keluar as $detail) {
+                $produkVarian = ProdukVarian::find($detail->produk_varian_id);
+                if (!$produkVarian) {
+                    continue;
+                }
+
+                $isCustomOrder = false;
+                if ($nota->tipe_keluar === 'penjualan_order' && $notaOrderId) {
+                    $jobOrder = \App\Models\JobOrder::where('nota_order_id', $notaOrderId)
+                        ->where('produk_varian_id', $detail->produk_varian_id)
+                        ->first();
+                    
+                    if ($jobOrder && $jobOrder->is_custom == 1) {
+                        $isCustomOrder = true;
+                    }
+                }
+
+                // Hanya kembalikan stok jika bukan pesanan kustom (Skenario B / stok toko ready)
+                if (!$isCustomOrder) {
+                    $produkVarian->stok_tersedia += $detail->qty;
+                    $produkVarian->save();
+                }
+            }
+
+            // Hapus induk nota (cascade delete akan menghapus rincian detailnya)
+            $nota->delete();
+
+            DB::commit();
+            return redirect()->route('nota_keluar.index')->with('success', 'Nota stok keluar berhasil dibatalkan dan persediaan toko dipulihkan!');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Gagal membatalkan nota stok keluar: ' . $e->getMessage());
+        }
+    }
+
     public function cetakPdf($id)
     {
         $nota = NotaStokKeluar::with(['customer', 'nota_order', 'nota_keluar.produk_varian.produk'])->findOrFail($id);

@@ -472,6 +472,95 @@ class NotaProduksiTest extends TestCase
         $response->assertRedirect();
     }
 
+    public function test_cancel_nota_stok_keluar_restores_stock(): void
+    {
+        // === SKENARIO 1: PENJUALAN LANGSUNG (READY STOCK TOKO) ===
+        // Set stok awal tersedia
+        $this->varian->update(['stok_tersedia' => 20]);
+        $this->assertEquals(20, $this->varian->fresh()->stok_tersedia);
+
+        // Buat nota keluar untuk penjualan langsung (qty = 5)
+        $response = $this->actingAs($this->admin)->post('/nota-stok-keluar', [
+            'tipe_keluar' => 'penjualan_langsung',
+            'total_bayar' => 75000,
+            'items' => [
+                [
+                    'produk_varian_id' => $this->varian->id,
+                    'qty' => 5,
+                    'harga_satuan' => 15000,
+                ]
+            ]
+        ]);
+        $response->assertSessionHasNoErrors();
+        $this->assertEquals(15, $this->varian->fresh()->stok_tersedia);
+
+        // Cari nota yang baru saja terbuat
+        $nota = \App\Models\NotaStokKeluar::latest()->first();
+        $this->assertNotNull($nota);
+
+        // Hapus (Batalkan) nota keluar tersebut
+        $response = $this->actingAs($this->admin)->delete("/nota-stok-keluar/{$nota->id}");
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // Pastikan stok dikembalikan ke 20
+        $this->assertEquals(20, $this->varian->fresh()->stok_tersedia);
+        $this->assertNull(\App\Models\NotaStokKeluar::find($nota->id));
+
+        // === SKENARIO 2: PENJUALAN ORDER CUSTOM (REVERSI STATUS BAYAR) ===
+        // Setup Nota Order Custom dengan DP kurang dari total harga (Belum Lunas)
+        $this->notaOrder->update([
+            'total_harga' => 150000,
+            'nominal_dp_masuk' => 50000,
+            'status_bayar' => 'Belum Lunas'
+        ]);
+        $this->jobOrder->update(['is_custom' => 1]); // Set job order ini sebagai custom
+
+        // Buat data penerimaan produksi (agar ada stok custom)
+        $this->actingAs($this->admin)->post('/nota_produksi', [
+            'penjahit_id' => $this->penjahit->id,
+            'job_order_ids' => [$this->jobOrder->id],
+            'biaya_jasa' => [$this->jobOrder->id => 10000],
+            'ongkir_kirim_bahan' => 0,
+            'estimasi_selesai' => [$this->jobOrder->id => now()->addDays(5)->format('Y-m-d\TH:i')],
+        ]);
+        $this->actingAs($this->admin)->post('/nota-produksi/terima/store', [
+            'job_order_id' => $this->jobOrder->id,
+            'qty_accepted' => 5,
+            'qty_rejected_defect' => 0,
+            'qty_rejected' => 0,
+            'ongkir_hasil_produksi' => 0,
+            'biaya_rework_tambahan' => 0,
+            'catatan_qc' => 'Completed custom goods',
+        ]);
+
+        // Lakukan pengeluaran stok pelunasan PO (total bayar 100.000)
+        $response = $this->actingAs($this->admin)->post('/nota-stok-keluar', [
+            'customer_id' => $this->customer->id,
+            'tipe_keluar' => 'penjualan_order',
+            'nota_order_id' => $this->notaOrder->id,
+            'total_bayar' => 100000,
+            'items' => [
+                [
+                    'produk_varian_id' => $this->varian->id,
+                    'qty' => 5,
+                    'harga_satuan' => 30000,
+                ]
+            ]
+        ]);
+        $response->assertSessionHasNoErrors();
+        $this->assertEquals('Lunas', $this->notaOrder->fresh()->status_bayar);
+
+        $notaOrderCustom = \App\Models\NotaStokKeluar::latest()->first();
+        
+        // Batalkan nota pengeluaran pesanan custom tersebut
+        $response = $this->actingAs($this->admin)->delete("/nota-stok-keluar/{$notaOrderCustom->id}");
+        $response->assertRedirect();
+        
+        // Pastikan status bayar nota order kembali ke Belum Lunas
+        $this->assertEquals('Belum Lunas', $this->notaOrder->fresh()->status_bayar);
+    }
+
     public function test_edit_nota_produksi_recalculates_hpp_and_updates_data(): void
     {
         // 1. Create a Nota Produksi first

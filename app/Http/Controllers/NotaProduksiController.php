@@ -273,7 +273,8 @@ class NotaProduksiController extends Controller
             'penjahit',
             'jobOrders.produk_varian.produk',
             'jobOrders.produk_varian.bill_of_materials',
-            'jobOrders.pemakaian_bahan.bahan_baku'
+            'jobOrders.pemakaian_bahan.bahan_baku',
+            'jobOrders.nota_order.customer'
         ])->findOrFail($id);
 
         return view('nota_produksi.show', compact('nota'));
@@ -285,7 +286,8 @@ class NotaProduksiController extends Controller
             'penjahit',
             'jobOrders.produk_varian.produk',
             'jobOrders.produk_varian.bill_of_materials',
-            'jobOrders.pemakaian_bahan.bahan_baku'
+            'jobOrders.pemakaian_bahan.bahan_baku',
+            'jobOrders.nota_order.customer'
         ])->findOrFail($id);
 
         $komponenBahan = [];
@@ -316,7 +318,8 @@ class NotaProduksiController extends Controller
             'penjahit',
             'jobOrders.produk_varian.produk',
             'jobOrders.produk_varian.bill_of_materials',
-            'jobOrders.pemakaian_bahan.bahan_baku'
+            'jobOrders.pemakaian_bahan.bahan_baku',
+            'jobOrders.nota_order.customer'
         ])->findOrFail($id);
 
         $komponenBahan = [];
@@ -347,7 +350,8 @@ class NotaProduksiController extends Controller
             'penjahit',
             'jobOrders.produk_varian.produk',
             'jobOrders.produk_varian.bill_of_materials',
-            'jobOrders.pemakaian_bahan.bahan_baku'
+            'jobOrders.pemakaian_bahan.bahan_baku',
+            'jobOrders.nota_order.customer'
         ])->findOrFail($id);
 
         $komponenBahan = [];

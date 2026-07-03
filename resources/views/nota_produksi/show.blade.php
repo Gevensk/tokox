@@ -103,6 +103,10 @@
                                             <div class="small text-muted">
                                                 Warna: {{ $job->produk_varian->warna ?? '-' }} | Ukuran: {{ $job->produk_varian->ukuran ?? '-' }}
                                             </div>
+                                            <div class="mt-1 small text-secondary">
+                                                <i class="fa-solid fa-user me-1 text-info"></i> Pelanggan: <strong>{{ $job->nota_order->customer->nama ?? $job->nota_order->customer->nama_customer ?? 'N/A' }}</strong> 
+                                                <span class="text-muted ms-1">(Nota #{{ $job->nota_order_id }})</span>
+                                            </div>
                                             @if($job->is_custom)
                                                 <div class="mt-1 small">
                                                     <span class="badge bg-warning text-dark" style="font-size: 0.7rem;">Custom Spec</span>
