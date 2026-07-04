@@ -238,7 +238,7 @@
                                     <td><small class="text-muted">Job Order ID: #{{ $job->id }} ({{ $job->produk_varian->produk->nama ?? '' }})</small></td>
                                     <td>{{ number_format($pakai->jumlah, 2) }} {{ $pakai->bahan_baku->satuan ?? '' }}</td>
                                     @if(Auth::user()->isAdmin())
-                                    <td>Rp {{ number_format($pakai->harga_rata_saat_ini, 0, ',', '.') }}</td>
+                                    <td>Rp {{ number_format($pakai->harga_rata_saat_ini, 2, ',', '.') }}</td>
                                     <td class="fw-bold text-end">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
                                     @endif
                                 </tr>
@@ -272,7 +272,7 @@
                             <td class="text-end text-danger">Rp {{ number_format($totalEkstraCost, 0, ',', '.') }}</td>
                         </tr>
                         <tr class="table-dark fw-bold">
-                            <td colspan="5" class="text-end">TOTAL BIAYA PRODUKSI BAHAN BAKU :</td>
+                            <td colspan="5" class="text-end">TOTAL BIAYA BAHAN BAKU :</td>
                             <td class="text-end">Rp {{ number_format($grandTotalBahan, 0, ',', '.') }}</td>
                         </tr>
                         @endif

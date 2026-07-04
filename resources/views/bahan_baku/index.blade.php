@@ -36,7 +36,7 @@
                     <td>{{ $d->satuan }}</td>
                     <td>{{ (float)$d->stok_total }}</td>   
                     @if(Auth::user()->isAdmin())
-                    <td>Rp {{ number_format($d->harga_rata_rata ?? 0, 0, ',', '.') }}</td>
+                    <td>Rp {{ number_format($d->harga_rata_rata ?? 0, 2, ',', '.') }}</td>
                     @endif
                     <td>{{$d->updated_at}}</td>
                     <td>

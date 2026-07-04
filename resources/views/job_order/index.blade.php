@@ -31,15 +31,52 @@
                     <td class="text-center font-weight-bold text-secondary">#{{ $job->id }}</td>
                     
                     <td>
-                        @if(!empty($job->foto_desain))
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url('desain_order/' . $job->foto_desain) }}" 
+                        @if($job->is_custom == 1 && !empty($job->foto_desain))
+                            <img src="{{ asset('storage/desain_order/' . $job->foto_desain) }}" 
+                                 class="img-thumbnail rounded border border-warning" 
+                                 style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" 
+                                 data-bs-toggle="modal" 
+                                 data-bs-target="#imgModal{{ $job->id }}"
+                                 title="Desain Custom (Klik untuk memperbesar)">
+                            
+                            <!-- Modal preview custom -->
+                            <div class="modal fade" id="imgModal{{ $job->id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header bg-warning text-dark py-2">
+                                            <h6 class="modal-title fw-bold mb-0">Desain Custom - Job #{{ $job->id }}</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body text-center p-2 bg-light">
+                                            <img src="{{ asset('storage/desain_order/' . $job->foto_desain) }}" class="img-fluid rounded" style="max-height: 75vh; object-fit: contain;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @elseif(!empty($job->produk_varian->produk->foto))
+                            <img src="{{ asset('storage/produk_katalog/' . $job->produk_varian->produk->foto) }}" 
                                  class="img-thumbnail rounded" 
                                  style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" 
                                  data-bs-toggle="modal" 
                                  data-bs-target="#imgModal{{ $job->id }}"
-                                 onerror="this.onerror=null; this.src='{{ asset('storage/desain_order/' . $job->foto_desain) }}';">
+                                 title="Katalog Produk (Klik untuk memperbesar)">
+
+                            <!-- Modal preview katalog -->
+                            <div class="modal fade" id="imgModal{{ $job->id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header bg-dark text-white py-2">
+                                            <h6 class="modal-title fw-bold mb-0">Foto Produk Katalog - {{ $job->produk_varian->produk->nama }}</h6>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body text-center p-2 bg-light">
+                                            <img src="{{ asset('storage/produk_katalog/' . $job->produk_varian->produk->foto) }}" class="img-fluid rounded" style="max-height: 75vh; object-fit: contain;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         @else
-                            <div class="bg-light rounded text-center text-muted d-flex align-items-center justify-content-center border" style="width: 50px; height: 50px; font-size: 0.75rem;">No Img</div>
+                            <div class="bg-light rounded text-center text-muted d-flex align-items-center justify-content-center border" style="width: 50px; height: 50px; font-size: 0.72rem;" title="Tidak ada gambar">No Img</div>
                         @endif
                     </td>
 
