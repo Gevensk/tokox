@@ -19,8 +19,8 @@
             <h2 class="fw-bold text-dark mb-1">Dashboard Monitoring Produksi</h2>
             <p class="text-muted mb-0">Sistem monitoring antrean, proses jahit mitra, kualitas QC hasil produksi, dan ketersediaan bahan.</p>
         </div>
-        <div class="bg-white px-3 py-2 rounded shadow-sm border small text-muted font-monospace">
-            <i class="fa-regular fa-calendar-check me-2"></i>{{ date('d F Y') }}
+        <div class="bg-white px-3 py-2 rounded shadow-sm border fw-semibold text-muted" style="font-size: 0.92rem;">
+            <i class="fa-regular fa-calendar-check me-2 text-primary"></i>{{ date('d F Y') }}
         </div>
     </div>
 
@@ -94,8 +94,8 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
-                            <thead class="table-light">
+                        <table class="table table-hover align-middle mb-0" style="min-width: 600px; font-size: 0.95rem;">
+                            <thead class="table-light" style="font-size: 0.95rem;">
                                 <tr>
                                     <th class="ps-3">Job ID & Varian</th>
                                     <th>No. Order</th>
@@ -114,23 +114,23 @@
                                     @endphp
                                     <tr>
                                         <td class="ps-3">
-                                            <div class="fw-bold text-dark">JOB-{{ $job->id }}</div>
-                                            <small class="text-secondary">{{ $job->produk_varian->produk->nama ?? 'Produk' }} ({{ $job->produk_varian->warna ?? '' }} - {{ $job->produk_varian->ukuran ?? '' }})</small>
+                                            <div class="fw-bold text-dark" style="font-size: 1.05rem;">JOB-{{ $job->id }}</div>
+                                            <span class="text-secondary d-block" style="font-size: 0.88rem;">{{ $job->produk_varian->produk->nama ?? 'Produk' }} ({{ $job->produk_varian->warna ?? '' }} - {{ $job->produk_varian->ukuran ?? '' }})</span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-light text-dark border font-monospace">{{ $job->nota_order->no_order }}</span>
+                                            <span class="fw-bold text-dark" style="font-size: 0.95rem;">{{ $job->nota_order->no_order }}</span>
                                         </td>
-                                        <td class="text-center fw-semibold text-secondary">{{ $job->jumlah }} pcs</td>
+                                        <td class="text-center fw-bold text-secondary" style="font-size: 1rem;">{{ $job->jumlah }} pcs</td>
                                         <td>
                                             @if($job->nota_produksi && $job->nota_produksi->penjahit)
-                                                <span class="text-dark fw-semibold small">{{ $job->nota_produksi->penjahit->nama }}</span>
-                                                <small class="text-muted d-block" style="font-size: 0.75rem;">SJ: {{ $job->nota_produksi->no_surat_jalan }}</small>
+                                                <span class="text-dark fw-bold" style="font-size: 1rem;">{{ $job->nota_produksi->penjahit->nama }}</span>
+                                                <span class="text-muted d-block" style="font-size: 0.82rem;">SJ: {{ $job->nota_produksi->no_surat_jalan }}</span>
                                             @else
-                                                <span class="text-muted small italic">Belum dialokasikan</span>
+                                                <span class="text-muted italic" style="font-size: 0.92rem;">Belum dialokasikan</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="small fw-semibold">{{ date('d-m-Y', strtotime($job->nota_order->tgl_deadline)) }}</span>
+                                            <span class="fw-bold" style="font-size: 0.95rem;">{{ date('d-m-Y', strtotime($job->nota_order->tgl_deadline)) }}</span>
                                         </td>
                                         <td class="text-end pe-3">
                                             @if($diffDays < 0)
@@ -159,7 +159,7 @@
                     </div>
                 </div>
             </div>
-
+ 
             <!-- Tailor Workload Overview -->
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 py-3">
@@ -167,8 +167,8 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
+                            <thead class="table-light" style="font-size: 0.95rem;">
                                 <tr>
                                     <th class="ps-3">Nama Penjahit</th>
                                     <th>Kontak HP</th>
@@ -180,17 +180,17 @@
                                 @forelse($penjahitWorkload as $load)
                                 <tr>
                                     <td class="ps-3">
-                                        <div class="fw-bold text-dark">{{ $load['nama'] }}</div>
+                                        <div class="fw-bold text-dark" style="font-size: 1.05rem;">{{ $load['nama'] }}</div>
                                     </td>
                                     <td>{{ $load['no_hp'] ?? '-' }}</td>
                                     <td class="text-center">
-                                        <span class="badge bg-light text-dark border">{{ $load['active_jobs_count'] }} Jobs</span>
+                                        <span class="badge bg-light text-dark border fw-bold py-1.5 px-2.5" style="font-size: 0.92rem;">{{ $load['active_jobs_count'] }} Jobs</span>
                                     </td>
                                     <td class="text-end pe-3">
                                         @if($load['total_qty'] > 0)
-                                            <strong class="text-primary">{{ number_format($load['total_qty'], 0, ',', '.') }} Pcs</strong>
+                                            <strong class="text-primary" style="font-size: 1.05rem;">{{ number_format($load['total_qty'], 0, ',', '.') }} Pcs</strong>
                                         @else
-                                            <span class="text-muted small italic">Tidak ada antrean</span>
+                                            <span class="text-muted italic" style="font-size: 0.92rem;">Tidak ada antrean</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -261,14 +261,14 @@
                         @forelse($recentQcSetoran as $qc)
                         <div class="list-group-item p-3 border-0 border-bottom">
                             <div class="d-flex justify-content-between mb-1">
-                                <span class="fw-bold text-dark" style="font-size: 0.85rem;">JOB-{{ $qc->job_order_id }}</span>
-                                <small class="text-muted font-monospace" style="font-size: 0.75rem;">{{ date('d-m-Y', strtotime($qc->tgl_terima)) }}</small>
+                                <span class="fw-bold text-dark" style="font-size: 0.95rem;">JOB-{{ $qc->job_order_id }}</span>
+                                <small class="text-muted" style="font-size: 0.85rem;">{{ date('d-m-Y', strtotime($qc->tgl_terima)) }}</small>
                             </div>
-                            <div class="text-secondary small mb-2">{{ $qc->job_order->produk_varian->produk->nama ?? 'Produk' }}</div>
+                            <div class="text-secondary mb-2" style="font-size: 0.92rem;">{{ $qc->job_order->produk_varian->produk->nama ?? 'Produk' }}</div>
                             <div class="d-flex gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 small">Layak: {{ $qc->qty_accepted + $qc->qty_rejected_defect }} pcs</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle py-1.5 px-2.5" style="font-size: 0.88rem;">Layak: {{ $qc->qty_accepted + $qc->qty_rejected_defect }} pcs</span>
                                 @if($qc->qty_rejected > 0)
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2 small">Reject: {{ $qc->qty_rejected }} pcs</span>
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1.5 px-2.5" style="font-size: 0.88rem;">Reject: {{ $qc->qty_rejected }} pcs</span>
                                 @endif
                             </div>
                         </div>

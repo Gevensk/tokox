@@ -148,6 +148,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/hasil-produksi/create', [HasilProduksiController::class, 'create'])->name('hasil_produksi.create');
     Route::post('/hasil-produksi/store', [HasilProduksiController::class, 'store'])->name('hasil_produksi.store');
+    Route::post('/hasil-produksi/batal/{id}', [HasilProduksiController::class, 'cancelQC'])->name('hasil_produksi.batal');
 });
 
 

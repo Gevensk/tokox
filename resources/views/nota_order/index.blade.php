@@ -15,8 +15,8 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table table-hover align-middle" style="font-size: 0.95rem;">
+                <thead class="table-light" style="font-size: 0.95rem;">
                     <tr>
                         <th class="ps-3">No. Order</th>
                         <th>Customer / Tipe</th>
@@ -51,7 +51,7 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark border px-2 py-1.5">
+                                <span class="fw-bold text-dark">
                                     {{ $nota->job_orders->count() }} Baris Pesanan
                                 </span>
                             </td>

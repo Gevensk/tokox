@@ -51,7 +51,7 @@
                         <tbody>
                             <tr>
                                 <td class="text-muted">Biaya Bahan Baku</td>
-                                <td class="text-end fw-semibold">Rp {{ number_format($job->total_biaya_bahan, 0, ',', '.') }}</td>
+                                <td class="text-end fw-semibold">Rp {{ number_format($job->total_biaya_bahan, 2, ',', '.') }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Jasa Jahit Vendor <small>({{ $targetPcs }} pcs)</small></td>
@@ -109,7 +109,8 @@
                                     <th class="text-center text-success">Layak (A+B)</th>
                                     <th class="text-center text-danger">Gagal</th>
                                     <th class="text-end">Rework Cost</th>
-                                    <th class="text-end pe-3">Ongkir Balik</th>
+                                    <th class="text-end">Ongkir Balik</th>
+                                    <th class="text-center pe-3" style="width: 1%;">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -121,12 +122,18 @@
                                     </td>
                                     <td class="text-center fw-semibold">{{ $history->qty_accepted + $history->qty_rejected_defect }} pcs</td>
                                     <td class="text-center text-danger">{{ $history->qty_rejected }} pcs</td>
-                                    <td class="text-end font-monospace text-muted">Rp {{ number_format($history->biaya_rework_tambahan, 0, ',', '.') }}</td>
-                                    <td class="text-end font-monospace text-muted pe-3">Rp {{ number_format($history->ongkir, 0, ',', '.') }}</td>
+                                    <td class="text-end text-dark">Rp {{ number_format($history->biaya_rework_tambahan, 0, ',', '.') }}</td>
+                                    <td class="text-end text-dark">Rp {{ number_format($history->ongkir, 0, ',', '.') }}</td>
+                                    <td class="text-center pe-3">
+                                        <form action="{{ route('hasil_produksi.batal', $history->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan setoran hasil jahit Batch ini? Stok produk dan harga rata-rata akan disesuaikan kembali.');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-danger btn-sm fw-bold">Batal</button>
+                                        </form>
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">Belum ada riwayat setoran QC.</td>
+                                    <td colspan="6" class="text-center text-muted py-4">Belum ada riwayat setoran QC.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -137,7 +144,8 @@
                                     <td class="text-center text-success">{{ $totalLayakJual }} pcs</td>
                                     <td class="text-center text-danger">{{ $totalRusak }} pcs</td>
                                     <td class="text-end text-dark">Rp {{ number_format($totalRework, 0, ',', '.') }}</td>
-                                    <td class="text-end text-dark pe-3">Rp {{ number_format($totalOngkirBalik, 0, ',', '.') }}</td>
+                                    <td class="text-end text-dark">Rp {{ number_format($totalOngkirBalik, 0, ',', '.') }}</td>
+                                    <td></td>
                                 </tr>
                             </tfoot>
                             @endif

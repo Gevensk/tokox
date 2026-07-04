@@ -65,7 +65,7 @@
     @endphp
     <table class="info-table">
         <tr>
-            <td style="width: 15%;"><strong>Mitra Penjahit</strong></td>
+            <td style="width: 15%;"><strong>Penjahit</strong></td>
             <td style="width: 25%;">: {{ $nota->penjahit->nama ?? '-' }}</td>
             <td style="width: 15%;"><strong>Tanggal Kirim Bahan</strong></td>
             <td style="width: 25%;">: {{ $nota->tgl_kirim ? date('d-m-Y', strtotime($nota->tgl_kirim)) : 'Belum Dikirim' }}</td>
@@ -172,7 +172,7 @@
             <td>
                 Penerima 
                 <div class="line-dot"></div>
-                <span style="color: #666; font-size: 11px;">{{ $nota->penjahit->nama ?? 'Mitra Penjahit' }}</span>
+                <span style="color: #666; font-size: 11px;">{{ $nota->penjahit->nama ?? 'Penjahit' }}</span>
             </td>
             <td>
                 Hormat Kami

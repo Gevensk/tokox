@@ -40,7 +40,7 @@
                             Warna: {{ $items->first()->varian->warna ?? '-' }} | Ukuran: {{ $items->first()->varian->ukuran ?? '-' }}
                         </small>
                     </td>
-                    <td><span class="badge bg-info text-dark">{{ $items->count() }} Jenis Bahan</span></td>
+                    <td><span class="fw-bold text-dark">{{ $items->count() }} Jenis Bahan</span></td>
                     <td class="fw-bold text-success">
                         Rp {{ number_format($totalEstimasi, 0, ',', '.') }}
                     </td>

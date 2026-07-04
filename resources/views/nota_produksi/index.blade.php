@@ -15,8 +15,8 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table table-hover align-middle" style="font-size: 0.95rem;">
+                <thead class="table-light" style="font-size: 0.95rem;">
                     <tr>
                         <th>No. Nota Produksi</th>
                         <th>Nama Penjahit (PIC)</th>
@@ -34,8 +34,7 @@
                         <tr>
                             <td><strong>{{ $prod->no_surat_jalan ?? 'PROD-'.str_pad($prod->id, 4, '0', STR_PAD_LEFT) }}</strong></td>
                             <td>
-                                <span class="badge bg-info text-dark me-1">Mitra</span> 
-                                {{ $prod->penjahit->nama ?? 'Tidak Ada Penjahit' }}
+                                <span class="fw-bold text-dark">{{ $prod->penjahit->nama ?? 'Tidak Ada Penjahit' }}</span>
                             </td>
                             <td>{{ date('d M Y H:i', strtotime($prod->tgl_order)) }}</td>
                             @if(Auth::user()->isAdmin())

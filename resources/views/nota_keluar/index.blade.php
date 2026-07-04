@@ -15,8 +15,8 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table table-hover align-middle" style="font-size: 0.95rem;">
+                <thead class="table-light" style="font-size: 0.95rem;">
                     <tr>
                         <th>No. Nota</th>
                         <th>Customer / Pelanggan</th>
@@ -41,16 +41,14 @@
                         <td>{{ $nota->created_at->format('d M Y') }}</td>
                         <td>
                             @if($nota->tipe_keluar === 'penjualan_order')
-                                <span class="badge bg-success">Pelunasan PO</span>
+                                <span class="text-success fw-bold">Pelunasan PO</span>
                             @else
-                                <span class="badge bg-secondary">Beli Langsung</span>
+                                <span class="text-secondary fw-bold">Beli Langsung</span>
                             @endif
                         </td>
                         <td>
-                            @if($nota->nota_order_id)
-                                <span class="badge bg-light text-dark border">
-                                    Order #{{ $nota->nota_order_id }}
-                                </span>
+                            @if($nota->nota_order_id && $nota->nota_order)
+                                <span class="fw-bold text-dark">{{ $nota->nota_order->no_order }}</span>
                             @else
                                 <span class="text-muted">-</span>
                             @endif
@@ -61,7 +59,7 @@
                                 @foreach($nota->nota_keluar as $detail)
                                     <li>
                                         {{ $detail->produk_varian->produk->nama_product ?? $detail->produk_varian->warna ?? 'Varian ID: '.$detail->produk_varian_id }} 
-                                        <span class="badge bg-light text-dark border badge-sm">x{{ $detail->qty }} pcs</span>
+                                        <span class="fw-bold text-dark">x{{ $detail->qty }} pcs</span>
                                     </li>
                                 @endforeach
                             </ul>

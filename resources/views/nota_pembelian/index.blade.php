@@ -15,8 +15,8 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table table-hover align-middle" style="font-size: 0.95rem;">
+                <thead class="table-light" style="font-size: 0.95rem;">
                     <tr>
                         <th class="ps-3">Tanggal Beli</th>
                         <th>Supplier</th>
@@ -31,8 +31,7 @@
                     <tr>
                         <td class="ps-3">{{ date('d M Y H:i', strtotime($item->tgl_beli)) }}</td>
                         <td>
-                            <span class="badge bg-info text-dark me-1">Vendor</span> 
-                            <span class="fw-semibold">{{ $item->supplier->nama }}</span>
+                            <span class="fw-semibold text-dark">{{ $item->supplier->nama }}</span>
                         </td>
                         <td>Rp {{ number_format($item->total_harga_bahan, 0, ',', '.') }}</td>
                         <td><span class="text-muted">Rp {{ number_format($item->ongkir, 0, ',', '.') }}</span></td>

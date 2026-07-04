@@ -29,18 +29,18 @@
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-dark text-white fw-bold">👤 Informasi Pelanggan</div>
                         <div class="card-body">
-                            <table class="table table-sm table-borderless mb-0">
+                            <table class="table table-sm table-borderless mb-0" style="font-size: 0.95rem;">
                                 <tr>
-                                    <td class="fw-semibold text-secondary" style="width: 35%;">Nama Pelanggan</td>
-                                    <td>: {{ $nota->customer->nama ?? $nota->customer->nama_customer ?? 'Customer Umum' }}</td>
+                                    <td class="fw-bold text-dark" style="width: 35%;">Nama Pelanggan</td>
+                                    <td class="text-dark">: {{ $nota->customer->nama ?? $nota->customer->nama_customer ?? 'Customer Umum' }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-semibold text-secondary">No. HP</td>
-                                    <td>: {{ $nota->customer->no_hp ?? '-' }}</td>
+                                    <td class="fw-bold text-dark">No. HP</td>
+                                    <td class="text-dark">: {{ $nota->customer->no_hp ?? '-' }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-semibold text-secondary">Alamat</td>
-                                    <td>: {{ $nota->customer->alamat ?? '-' }}</td>
+                                    <td class="fw-bold text-dark">Alamat</td>
+                                    <td class="text-dark">: {{ $nota->customer->alamat ?? '-' }}</td>
                                 </tr>
                             </table>
                         </div>
@@ -52,23 +52,23 @@
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-dark text-white fw-bold">💰 Informasi Keuangan & Tipe</div>
                         <div class="card-body">
-                            <table class="table table-sm table-borderless mb-0">
+                            <table class="table table-sm table-borderless mb-0" style="font-size: 0.95rem;">
                                 <tr>
-                                    <td class="fw-semibold text-secondary" style="width: 35%;">Tipe Pengeluaran</td>
-                                    <td>: 
+                                    <td class="fw-bold text-dark" style="width: 35%;">Tipe Pengeluaran</td>
+                                    <td class="text-dark">: 
                                         @if($nota->tipe_keluar === 'penjualan_order')
-                                            <span class="badge bg-success">Pelunasan Nota Order (PO)</span>
+                                            <span class="text-success fw-bold">Pelunasan Nota Order (PO)</span>
                                         @else
-                                            <span class="badge bg-secondary">Penjualan Langsung (Cash & Carry)</span>
+                                            <span class="text-secondary fw-bold">Penjualan Langsung (Cash & Carry)</span>
                                         @endif
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-semibold text-secondary">Referensi Order</td>
-                                    <td>: 
-                                        @if($nota->nota_order_id)
-                                            <a href="{{ route('nota_order.show', $nota->nota_order_id) }}" class="badge bg-light text-primary border text-decoration-none">
-                                                Order #{{ $nota->nota_order_id }}
+                                    <td class="fw-bold text-dark">Referensi Order</td>
+                                    <td class="text-dark">: 
+                                        @if($nota->nota_order_id && $nota->nota_order)
+                                            <a href="{{ route('nota_order.show', $nota->nota_order_id) }}" class="fw-bold text-primary text-decoration-none">
+                                                {{ $nota->nota_order->no_order }}
                                             </a>
                                         @else
                                             <span class="text-muted">-</span>
@@ -76,8 +76,8 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-semibold text-secondary">Total Uang Masuk</td>
-                                    <td>: <strong class="text-success fs-5">Rp {{ number_format($nota->total_bayar, 0, ',', '.') }}</strong></td>
+                                    <td class="fw-bold text-dark">Total Uang Masuk</td>
+                                    <td class="text-dark">: <strong class="text-success fs-5">Rp {{ number_format($nota->total_bayar, 0, ',', '.') }}</strong></td>
                                 </tr>
                             </table>
                         </div>
@@ -90,8 +90,8 @@
                 <div class="card-header bg-secondary text-white fw-bold">📦 Rincian Muatan Barang Keluar</div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.95rem;">
+                            <thead class="table-light" style="font-size: 0.95rem;">
                                 <tr>
                                     <th class="ps-3" style="width: 5%;">No</th>
                                     <th style="width: 80px;">Foto</th>
@@ -134,21 +134,21 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="fw-bold text-dark">{{ $detail->produk_varian->produk->nama ?? 'Produk' }}</span>
-                                            <div class="small text-muted">
+                                            <span class="fw-bold text-dark" style="font-size: 1rem;">{{ $detail->produk_varian->produk->nama ?? 'Produk' }}</span>
+                                            <div class="text-muted" style="font-size: 0.85rem;">
                                                 Warna: {{ $detail->produk_varian->warna ?? '-' }} | Ukuran: {{ $detail->produk_varian->ukuran ?? '-' }}
                                             </div>
                                             @if($isCustom)
                                                 <span class="badge bg-warning text-dark mt-1" style="font-size: 0.68rem;">Custom Spec</span>
                                             @endif
                                         </td>
-                                        <td class="text-center fw-bold text-secondary">
-                                            {{ $detail->qty }} <span class="small fw-normal text-muted">pcs</span>
+                                        <td class="text-center fw-bold text-dark" style="font-size: 1rem;">
+                                            {{ $detail->qty }} <span class="fw-normal text-secondary" style="font-size: 0.85rem;">pcs</span>
                                         </td>
-                                        <td class="text-end">
+                                        <td class="text-end text-dark">
                                             Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}
                                         </td>
-                                        <td class="text-end fw-semibold text-dark">
+                                        <td class="text-end fw-bold text-dark" style="font-size: 1rem;">
                                             Rp {{ number_format($detail->subtotal, 0, ',', '.') }}
                                         </td>
                                     </tr>

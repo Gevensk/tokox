@@ -24,7 +24,7 @@
                 </div>
                 <div class="card-body">
                     <!-- Informasi Pemasok -->
-                    <h6 class="fw-bold text-secondary mb-3 text-uppercase small" style="letter-spacing: 0.5px;">Pemasok / Vendor</h6>
+                    <h6 class="fw-bold text-secondary mb-3 text-uppercase small" style="letter-spacing: 0.5px;">Pemasok / Supplier</h6>
                     <div class="d-flex align-items-start mb-3">
                         <div class="bg-light p-2 rounded me-3 text-primary">
                             <i class="fa-solid fa-truck-field fa-lg"></i>
@@ -97,9 +97,9 @@
                                             <small class="text-muted">ID: #{{ $detail->bahanBaku->id ?? '-' }}</small>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge bg-info text-dark border px-2 py-1.5 fw-semibold fs-7">
-                                                {{ number_format($detail->jumlah, 0, ',', '.') }} {{ $detail->bahanBaku->satuan ?? '' }}
-                                            </span>
+                                             <span class="fw-bold text-dark">
+                                                 {{ (float)$detail->jumlah }} {{ $detail->bahanBaku->satuan ?? '' }}
+                                             </span>
                                         </td>
                                         <td>Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}</td>
                                         <td class="pe-3 fw-bold text-dark">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>

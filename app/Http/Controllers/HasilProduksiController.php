@@ -214,4 +214,124 @@ class HasilProduksiController extends Controller
                 ->with('error', "Terjadi kesalahan sistem: " . $e->getMessage());
         }
     }
+
+    /**
+     * Membatalkan setoran QC (Hasil Produksi) secara aman
+     */
+    public function cancelQC($id)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return redirect()->back()->with('error', 'Akses ditolak! Hanya Admin yang dapat membatalkan setoran QC.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // 1. Ambil data HasilProduksi yang ingin dihapus
+            $hasil = HasilProduksi::findOrFail($id);
+            $job = JobOrder::with(['nota_order', 'produk_varian'])->lockForUpdate()->findOrFail($hasil->job_order_id);
+
+            // 2. CHECK RULE 1: Jika produk custom dan sudah ada Nota Stok Keluar, pembatalan ditolak
+            if ($job->is_custom == 1 && $job->nota_order_id) {
+                $hasStokKeluar = \App\Models\NotaStokKeluar::where('nota_order_id', $job->nota_order_id)->exists();
+                if ($hasStokKeluar) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Gagal membatalkan setoran QC! Produk custom untuk order ini sudah dibuatkan Nota Stok Keluar (barang sudah diambil oleh pelanggan).');
+                }
+            }
+
+            // 3. CHECK RULE 2: Validasi kecukupan stok di toko jika stok perlu direstorasi (dikurangi)
+            $qtyAcceptedToSubtract = $hasil->qty_accepted;
+            $qtyDefectToSubtract = $hasil->qty_rejected_defect;
+            $totalBarangLayakJual = $qtyAcceptedToSubtract + $qtyDefectToSubtract;
+
+            $varianNormal = $job->produk_varian;
+
+            if ($varianNormal) {
+                // Di store, penambahan stok dan moving average hanya berlaku jika:
+                // ($job->is_custom == 0 || is_null($job->nota_order->customer_id))
+                $shouldRevertStock = ($job->is_custom == 0 || is_null($job->nota_order->customer_id ?? null));
+
+                if ($shouldRevertStock) {
+                    // Validasi kecukupan stok agar tidak minus
+                    if ($varianNormal->stok_tersedia < $qtyAcceptedToSubtract) {
+                        DB::rollBack();
+                        return redirect()->back()->with('error', "Gagal membatalkan! Stok barang bagus di toko tidak mencukupi (Stok saat ini: {$varianNormal->stok_tersedia} pcs, stok yang dibutuhkan untuk pembatalan: {$qtyAcceptedToSubtract} pcs).");
+                    }
+
+                    if ($varianNormal->stok_defect < $qtyDefectToSubtract) {
+                        DB::rollBack();
+                        return redirect()->back()->with('error', "Gagal membatalkan! Stok barang cacat (defect) di toko tidak mencukupi (Stok saat ini: {$varianNormal->stok_defect} pcs, stok yang dibutuhkan untuk pembatalan: {$qtyDefectToSubtract} pcs).");
+                    }
+
+                    // Rekalkulasi (Reversi) Moving Average Produk
+                    if ($qtyAcceptedToSubtract > 0 && $totalBarangLayakJual > 0) {
+                        $porsiModalIndukBatchIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
+                        $totalModalAktualBatchIni = $porsiModalIndukBatchIni + $hasil->ongkir;
+                        $hppSatuanAktual = $totalModalAktualBatchIni / $totalBarangLayakJual;
+
+                        $stokLamaA = $varianNormal->stok_tersedia;
+                        $hargaAvgLamaA = $varianNormal->harga_avg_produk;
+                        $stokKurang = $qtyAcceptedToSubtract;
+                        $totalStokBaru = $stokLamaA - $stokKurang;
+
+                        if ($totalStokBaru > 0) {
+                            $hargaAvgBaruA = (($stokLamaA * $hargaAvgLamaA) - ($stokKurang * $hppSatuanAktual)) / $totalStokBaru;
+                        } else {
+                            $hargaAvgBaruA = 0;
+                        }
+
+                        $varianNormal->harga_avg_produk = max(0, $hargaAvgBaruA);
+                    }
+
+                    // Kurangi stok toko kembali
+                    $varianNormal->stok_tersedia -= $qtyAcceptedToSubtract;
+                    $varianNormal->stok_defect -= $qtyDefectToSubtract;
+                    $varianNormal->save();
+                }
+            }
+
+            // 4. Hapus data HasilProduksi
+            $hasil->delete();
+
+            // 5. Update Status Job Order
+            $totalTerQCAfterCancel = HasilProduksi::where('job_order_id', $job->id)
+                ->selectRaw('SUM(qty_accepted + qty_rejected_defect + qty_rejected) as total')
+                ->value('total') ?? 0;
+
+            if ($totalTerQCAfterCancel == 0) {
+                $job->update([
+                    'status_pesanan' => 'Diproduksi'
+                ]);
+            } elseif ($totalTerQCAfterCancel < $job->jumlah) {
+                $job->update([
+                    'status_pesanan' => 'Selesai Parsial'
+                ]);
+            } else {
+                $job->update([
+                    'status_pesanan' => 'Selesai'
+                ]);
+            }
+
+            // 6. Update Status Nota Produksi
+            if ($job->nota_produksi_id) {
+                DB::table('nota_produksi')
+                    ->where('id', $job->nota_produksi_id)
+                    ->update(['status_nota' => 'Proses']);
+            }
+
+            // 7. Update Status Nota Order
+            if ($job->nota_order_id) {
+                DB::table('nota_order')
+                    ->where('id', $job->nota_order_id)
+                    ->update(['status_order' => 'Progress']);
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Setoran QC hasil produksi berhasil dibatalkan! Stok produk dan harga rata-rata telah disesuaikan kembali.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Terjadi kesalahan sistem saat membatalkan QC: ' . $e->getMessage());
+        }
+    }
 }

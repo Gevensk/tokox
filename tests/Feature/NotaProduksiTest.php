@@ -774,4 +774,75 @@ class NotaProduksiTest extends TestCase
         $response->assertSee('Kartu Stok Bahan Baku');
         $response->assertSee($this->bahanA->nama);
     }
+
+    public function test_cancel_qc_reverts_stock_and_average(): void
+    {
+        // Create standard Nota Order
+        $notaOrder = NotaOrder::create([
+            'no_order' => 'ORD-TEST-STOCK-001',
+            'tipe_order' => 'Customer',
+            'customer_id' => null,
+            'tgl_order' => now(),
+            'tgl_deadline' => now()->addDays(7),
+            'total_harga' => 100000,
+            'nominal_dp_masuk' => 0,
+            'status_bayar' => 'Lunas',
+            'status_order' => 'Valid',
+        ]);
+
+        // 1. Create standard Job Order in a production note
+        $notaProduksi = \App\Models\NotaProduksi::create([
+            'penjahit_id' => $this->penjahit->id,
+            'no_surat_jalan' => 'PROD-TEST-CANCEL-QC',
+            'tgl_kirim' => now(),
+            'tgl_order' => now(),
+            'ongkir_kirim_bahan' => 10000,
+            'status_nota' => 'Proses'
+        ]);
+
+        $job = JobOrder::create([
+            'nota_order_id' => $notaOrder->id,
+            'produk_varian_id' => $this->varian->id,
+            'nota_produksi_id' => $notaProduksi->id,
+            'jumlah' => 10,
+            'biaya_jasa_satuan' => 5000,
+            'status_pesanan' => 'Diproduksi',
+            'is_custom' => 0,
+            'total_biaya_bahan' => 20000,
+            'total_hpp_job' => 70000 
+        ]);
+        $job->update(['total_hpp_job' => 80000]);
+
+        $this->varian->update([
+            'stok_tersedia' => 0,
+            'harga_avg_produk' => 0
+        ]);
+
+        // 2. Post QC reception
+        $response = $this->actingAs($this->admin)->post('/nota-produksi/terima/store', [
+            'job_order_id' => $job->id,
+            'qty_accepted' => 10,
+            'qty_rejected_defect' => 0,
+            'qty_rejected' => 0,
+            'ongkir_hasil_produksi' => 5000,
+            'biaya_rework_tambahan' => 0,
+            'catatan_qc' => 'Test setoran',
+        ]);
+
+        $this->assertEquals(10, $this->varian->fresh()->stok_tersedia);
+        $this->assertEquals(8500, $this->varian->fresh()->harga_avg_produk);
+
+        $hasil = \App\Models\HasilProduksi::where('job_order_id', $job->id)->first();
+        $this->assertNotNull($hasil);
+
+        // 3. Cancel the QC reception
+        $response = $this->actingAs($this->admin)->post("/hasil-produksi/batal/{$hasil->id}");
+        $response->assertSessionHas('success');
+
+        // 4. Verify everything is reverted
+        $this->assertDatabaseMissing('hasil_produksi', ['id' => $hasil->id]);
+        $this->assertEquals(0, $this->varian->fresh()->stok_tersedia);
+        $this->assertEquals(0, $this->varian->fresh()->harga_avg_produk);
+        $this->assertEquals('Diproduksi', $job->fresh()->status_pesanan);
+    }
 }

@@ -124,7 +124,7 @@
             </li>
             <li>
                 <a href="/penjahit" class="nav-link {{ Request::is('penjahit*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-user-tie"></i> Mitra Penjahit
+                    <i class="fa-solid fa-user-tie"></i> Penjahit
                 </a>
             </li>
             <li>
