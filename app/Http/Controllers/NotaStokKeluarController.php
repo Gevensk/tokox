@@ -256,6 +256,17 @@ class NotaStokKeluarController extends Controller
         }
     }
 
+    public function show($id)
+    {
+        $nota = NotaStokKeluar::with([
+            'customer',
+            'nota_order',
+            'nota_keluar.produk_varian.produk'
+        ])->findOrFail($id);
+
+        return view('nota_keluar.show', compact('nota'));
+    }
+
     public function cetakPdf($id)
     {
         $nota = NotaStokKeluar::with(['customer', 'nota_order', 'nota_keluar.produk_varian.produk'])->findOrFail($id);

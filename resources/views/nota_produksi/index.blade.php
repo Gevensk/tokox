@@ -72,7 +72,7 @@
                                         <form action="{{ route('nota_production.destroy', $prod->id) }}" method="POST" onsubmit="return confirm('Hapus?')" class="d-inline m-0">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                                            <button type="submit" class="btn btn-danger btn-sm">Batal</button>
                                         </form>
 
                                         @if(($prod->status_kirim ?? 'Belum Dikirim') == 'Belum Dikirim')

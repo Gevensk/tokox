@@ -561,6 +561,20 @@ class NotaProduksiTest extends TestCase
         $this->assertEquals('Belum Lunas', $this->notaOrder->fresh()->status_bayar);
     }
 
+    public function test_user_can_view_nota_stok_keluar_detail(): void
+    {
+        $nota = \App\Models\NotaStokKeluar::create([
+            'customer_id' => $this->customer->id,
+            'tipe_keluar' => 'penjualan_langsung',
+            'total_bayar' => 50000,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get("/nota-stok-keluar/{$nota->id}");
+        $response->assertStatus(200);
+        $response->assertSee('Detail Nota Stok Keluar');
+        $response->assertSee('#' . $nota->id);
+    }
+
     public function test_edit_nota_produksi_recalculates_hpp_and_updates_data(): void
     {
         // 1. Create a Nota Produksi first

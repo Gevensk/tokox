@@ -130,6 +130,7 @@ Route::middleware('auth')->group(function () {
     Route::get('nota-stok-keluar/create', [NotaStokKeluarController::class, 'create'])->name('nota_keluar.create');
     Route::post('nota-stok-keluar', [NotaStokKeluarController::class, 'store'])->name('nota_keluar.store');
     Route::get('nota-stok-keluar/{id}/print', [NotaStokKeluarController::class, 'cetakPdf'])->name('nota_keluar.print');
+    Route::get('nota-stok-keluar/{id}', [NotaStokKeluarController::class, 'show'])->name('nota_keluar.show');
 
     // Production Notes and Hasil Produksi are available to everyone for transactions
     Route::post('nota_produksi/hitung_bom', [NotaProduksiController::class, 'hitungBom'])->name('nota_produksi.hitung_bom');

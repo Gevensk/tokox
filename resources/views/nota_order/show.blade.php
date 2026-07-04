@@ -13,30 +13,35 @@
         }
     @endphp
 
-<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
         <div>
-            <a href="{{ route('nota_order.index') }}" class="btn btn-sm btn-outline-secondary">← Kembali ke Daftar</a>
+            <h3 class="mb-1 fw-bold text-dark">Detail Nota Order: #{{ $notaOrder->id }}</h3>
+            <p class="text-muted mb-0">No. Order: <strong>{{ $notaOrder->no_order }}</strong> | Tanggal: <strong>{{ \Carbon\Carbon::parse($notaOrder->tgl_order)->format('d M Y') }}</strong></p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('nota_order.print', $notaOrder->id) }}" target="_blank" class="btn btn-success fw-bold">
-                Cetak / Simpan PDF
-            </a>
-            
+        <div class="d-flex gap-2 align-items-center">
             {{-- Tombol Edit & Hapus hanya tampil jika admin dan belum diproduksi --}}
             @if(Auth::user()->isAdmin())
                 @if($bisaDimodifikasi)
-                    <a href="{{ route('nota_order.edit', $notaOrder->id) }}" class="btn btn-warning fw-bold">
+                    <a href="{{ route('nota_order.edit', $notaOrder->id) }}" class="btn btn-warning btn-sm fw-bold">
                         Edit Order
                     </a>
-                    <form action="{{ route('nota_order.destroy', $notaOrder->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus total nota order ini?')">
+                    <form action="{{ route('nota_order.destroy', $notaOrder->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus total nota order ini?')" class="d-inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger fw-bold">Hapus Total</button>
+                        <button type="submit" class="btn btn-danger btn-sm fw-bold">Batal Order</button>
                     </form>
                 @else
-                    <button class="btn btn-secondary fw-bold" disabled title="Sudah diproduksi"> Locked / Sedang Diproduksi</button>
+                    <button class="btn btn-secondary btn-sm fw-bold" disabled title="Sudah diproduksi">Locked / Produksi</button>
                 @endif
             @endif
+            
+            <a href="{{ route('nota_order.print', $notaOrder->id) }}" target="_blank" class="btn btn-info text-white btn-sm fw-bold">
+                🖨️ Cetak Nota
+            </a>
+            
+            <a href="{{ route('nota_order.index') }}" class="btn btn-secondary btn-sm">
+                Kembali
+            </a>
         </div>
     </div>
 
@@ -103,7 +108,7 @@
 
             <div class="col-md-8 section-job">
                 <div class="card shadow-sm border-0 print-card">
-                    <div class="card-header bg-primary text-white fw-bold py-3 no-print-bg">
+                    <div class="card-header bg-secondary text-white fw-bold py-3 no-print-bg">
                         Detail Item Pesanan & Alokasi Kebutuhan Kain
                     </div>
                     <div class="card-body p-0">

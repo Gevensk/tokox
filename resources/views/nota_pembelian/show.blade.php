@@ -3,10 +3,14 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="mb-0 fw-bold text-dark">Detail Nota Pembelian: #{{ $nota->id }}</h3>
         <div>
-            <a href="{{ route('nota_pembelian.index') }}" class="btn btn-outline-secondary shadow-sm">
-                <i class="fa-solid fa-arrow-left me-1"></i> Kembali ke Daftar
+            <h3 class="mb-1 fw-bold text-dark">Detail Nota Pembelian: #{{ $nota->id }}</h3>
+            <p class="text-muted mb-0">Tanggal Pembelian: <strong class="text-dark">{{ date('d M Y H:i', strtotime($nota->tgl_beli)) }}</strong></p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+
+            <a href="{{ route('nota_pembelian.index') }}" class="btn btn-secondary btn-sm">
+                Kembali
             </a>
         </div>
     </div>

@@ -69,6 +69,7 @@
                         <td class="text-nowrap" style="width: 1%;">
                             <div class="d-flex justify-content-start align-items-center gap-1">
                                 <a href="{{ route('nota_keluar.print', $nota->id) }}" class="btn btn-info btn-sm text-white" target="_blank">Cetak</a>
+                                <a href="{{ route('nota_keluar.show', $nota->id) }}" class="btn btn-secondary btn-sm">Detail</a>
                                 @if(Auth::check() && Auth::user()->isAdmin())
                                     <form action="{{ route('nota_keluar.destroy', $nota->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan nota stok keluar ini? Stok produk toko akan dikembalikan.')" class="d-inline">
                                         @csrf

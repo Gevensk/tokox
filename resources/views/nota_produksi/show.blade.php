@@ -3,13 +3,19 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Detail Nota Produksi: {{ $nota->no_surat_jalan }}</h3>
         <div>
-        <a href="{{ route('nota_production.cetak_surat_jalan', $nota->id) }}" class="btn btn-warning text-dark me-2" target="_blank">
-            🖨 Cetak Surat Jalan (PDF)
-        </a>
-        <a href="{{ route('nota_production.index') }}" class="btn btn-outline-secondary">⬅ Kembali</a>
-    </div>
+            <h3 class="mb-1 fw-bold text-dark">Detail Nota Produksi: #{{ $nota->id }}</h3>
+            <p class="text-muted mb-0">No. Surat Jalan: <strong>{{ $nota->no_surat_jalan }}</strong> | Tanggal Kirim: <strong>{{ $nota->tgl_kirim ? date('d M Y H:i', strtotime($nota->tgl_kirim)) : 'Belum Dikirim' }}</strong></p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+           
+            <a href="{{ route('nota_production.cetak_surat_jalan', $nota->id) }}" class="btn btn-info text-white btn-sm fw-bold" target="_blank">
+                🖨️ Cetak Surat Jalan
+            </a>
+            <a href="{{ route('nota_production.index') }}" class="btn btn-secondary btn-sm">
+                Kembali
+            </a>
+        </div>
     </div>
 
     @php

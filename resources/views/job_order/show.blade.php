@@ -2,15 +2,18 @@
 
 @section('content')
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="h4 mb-1 fw-bold text-dark">📊 Detail Evaluasi HPP & Ongkir</h1>
-            <p class="text-muted small mb-0">Job Order: <strong>#{{ $job->id }}</strong> | Vendor: {{ $job->nota_produksi->penjahit->nama ?? 'N/A' }}</p>
+            <h3 class="mb-1 fw-bold text-dark">Detail Akumulasi Evaluasi HPP: #{{ $job->id }}</h3>
+            <p class="text-muted mb-0">Vendor: <strong>{{ $job->nota_produksi->penjahit->nama ?? 'N/A' }}</strong> | Status Job: <strong>{{ $job->status_pesanan }}</strong></p>
         </div>
-        <a href="{{ route('job_order.index') }}" class="btn btn-light btn-sm border fw-bold">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </a>
+        <div class="d-flex gap-2 align-items-center">
+            <a href="{{ route('job_order.index') }}" class="btn btn-secondary btn-sm">
+                Kembali
+            </a>
+        </div>
     </div>
+    <hr>
 
     @php
         $targetPcs = max(1, $job->jumlah);
@@ -39,8 +42,10 @@
     <div class="row g-4">
         <div class="col-lg-6">
             <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white fw-bold py-3">
+                    🧮 Alur Akumulasi Biaya
+                </div>
                 <div class="card-body">
-                    <h6 class="fw-bold text-secondary mb-3">🧮 Alur Akumulasi Biaya</h6>
                     
                     <table class="table table-sm table-borderless align-middle mb-3">
                         <tbody>
@@ -81,8 +86,8 @@
 
                         <small class="text-success fw-bold d-block mb-1">TOTAL AVERAGE HPP</small>
                         <h3 class="fw-bold text-success mb-0">Rp {{ number_format($hppAktualSatuan, 0, ',', '.') }} <span class="fs-6 text-muted">/ Pcs</span></h3>
-                        <small class="text-muted mt-2 d-block" style="font-size: 0.75rem;">
-                            *Sudah membebankan biaya baju rusak total ({{ $totalRusak }} pcs), biaya rework tambahan, and semua ongkir balik ke baju layak jual ({{ $totalLayakJual }} pcs).
+                        <small class="text-muted mt-2 d-block" style="font-size: 0.82rem;">
+                            *Sudah membebankan biaya baju rusak total ({{ $totalRusak }} pcs), biaya rework tambahan, dan semua ongkir balik ke baju layak jual ({{ $totalLayakJual }} pcs).
                         </small>
                     </div>
                 </div>
@@ -91,31 +96,33 @@
 
         <div class="col-lg-6">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-body">
-                    <h6 class="fw-bold text-secondary mb-3">📦 Riwayat Terima & Ongkir Parsial</h6>
+                <div class="card-header bg-secondary text-white fw-bold py-3">
+                    📦 Riwayat Terima & Ongkir Parsial
+                </div>
+                <div class="card-body p-0">
                     
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.95rem;">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Batch / Tgl</th>
+                                    <th class="ps-3">Batch / Tgl</th>
                                     <th class="text-center text-success">Layak (A+B)</th>
                                     <th class="text-center text-danger">Gagal</th>
                                     <th class="text-end">Rework Cost</th>
-                                    <th class="text-end">Ongkir Balik</th>
+                                    <th class="text-end pe-3">Ongkir Balik</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($job->hasil_produksis as $index => $history)
                                 <tr>
-                                    <td>
+                                    <td class="ps-3">
                                         <span class="fw-bold d-block">Batch #{{ $index + 1 }}</span>
-                                        <small class="text-muted" style="font-size: 0.75rem;">{{ date('d/m/y', strtotime($history->tgl_terima)) }}</small>
+                                        <small class="text-muted" style="font-size: 0.82rem;">{{ date('d/m/y', strtotime($history->tgl_terima)) }}</small>
                                     </td>
                                     <td class="text-center fw-semibold">{{ $history->qty_accepted + $history->qty_rejected_defect }} pcs</td>
                                     <td class="text-center text-danger">{{ $history->qty_rejected }} pcs</td>
                                     <td class="text-end font-monospace text-muted">Rp {{ number_format($history->biaya_rework_tambahan, 0, ',', '.') }}</td>
-                                    <td class="text-end font-monospace text-muted">Rp {{ number_format($history->ongkir, 0, ',', '.') }}</td>
+                                    <td class="text-end font-monospace text-muted pe-3">Rp {{ number_format($history->ongkir, 0, ',', '.') }}</td>
                                 </tr>
                                 @empty
                                 <tr>
@@ -126,11 +133,11 @@
                             @if($job->hasil_produksis->count() > 0)
                             <tfoot class="table-light fw-bold border-top">
                                 <tr>
-                                    <td>TOTAL</td>
+                                    <td class="ps-3">TOTAL</td>
                                     <td class="text-center text-success">{{ $totalLayakJual }} pcs</td>
                                     <td class="text-center text-danger">{{ $totalRusak }} pcs</td>
                                     <td class="text-end text-dark">Rp {{ number_format($totalRework, 0, ',', '.') }}</td>
-                                    <td class="text-end text-dark">Rp {{ number_format($totalOngkirBalik, 0, ',', '.') }}</td>
+                                    <td class="text-end text-dark pe-3">Rp {{ number_format($totalOngkirBalik, 0, ',', '.') }}</td>
                                 </tr>
                             </tfoot>
                             @endif
