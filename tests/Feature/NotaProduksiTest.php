@@ -845,4 +845,49 @@ class NotaProduksiTest extends TestCase
         $this->assertEquals(0, $this->varian->fresh()->harga_avg_produk);
         $this->assertEquals('Diproduksi', $job->fresh()->status_pesanan);
     }
+
+    public function test_release_and_cancel_defect_stock()
+    {
+        $this->varian->update([
+            'stok_tersedia' => 5,
+            'stok_defect' => 10,
+        ]);
+
+        // 1. Release 3 pcs of defect stock
+        $response = $this->actingAs($this->admin)->post('/nota-stok-keluar', [
+            'tipe_keluar' => 'penjualan_langsung',
+            'total_bayar' => 30000,
+            'items' => [
+                [
+                    'produk_varian_id' => $this->varian->id,
+                    'kondisi' => 'defect',
+                    'qty' => 3,
+                    'harga_satuan' => 10000,
+                ]
+            ]
+        ]);
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        // 2. Verify stock
+        $this->assertEquals(7, $this->varian->fresh()->stok_defect);
+        $this->assertEquals(5, $this->varian->fresh()->stok_tersedia);
+
+        // Verify pivot database record has 'defect' kondisi
+        $this->assertDatabaseHas('nota_stok_keluar_has_produk_varian', [
+            'produk_varian_id' => $this->varian->id,
+            'kondisi' => 'defect',
+            'qty' => 3,
+        ]);
+
+        // 3. Cancel the release note
+        $nota = \App\Models\NotaStokKeluar::latest()->first();
+        $response = $this->actingAs($this->admin)->delete("/nota-stok-keluar/{$nota->id}");
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        // 4. Verify stock is restored
+        $this->assertEquals(10, $this->varian->fresh()->stok_defect);
+        $this->assertEquals(5, $this->varian->fresh()->stok_tersedia);
+    }
 }

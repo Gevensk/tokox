@@ -141,6 +141,9 @@
                                             @if($isCustom)
                                                 <span class="badge bg-warning text-dark mt-1" style="font-size: 0.68rem;">Custom Spec</span>
                                             @endif
+                                            @if($detail->kondisi === 'defect')
+                                                <span class="badge bg-danger text-white mt-1" style="font-size: 0.68rem;">Defect (Grade B)</span>
+                                            @endif
                                         </td>
                                         <td class="text-center fw-bold text-dark" style="font-size: 1rem;">
                                             {{ $detail->qty }} <span class="fw-normal text-secondary" style="font-size: 0.85rem;">pcs</span>

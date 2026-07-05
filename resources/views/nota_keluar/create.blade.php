@@ -118,9 +118,10 @@
                     <table class="table table-hover table-bordered align-middle mb-0 text-secondary" id="tabel-items" style="min-width: 1000px; font-size: 0.85rem;">
                         <thead class="table-dark text-nowrap">
                             <tr>
-                                <th style="width: 45%" class="py-3">Produk Varian</th>
+                                <th style="width: 35%" class="py-3">Produk Varian</th>
+                                <th style="width: 20%" class="py-3">Kondisi Stok</th>
                                 <th style="width: 15%" class="text-center py-3">Qty</th>
-                                <th style="width: 25%" class="py-3">Harga Satuan (Rp)</th>
+                                <th style="width: 15%" class="py-3">Harga Satuan (Rp)</th>
                                 <th style="width: 15%" class="text-center py-3">Aksi</th>
                             </tr>
                         </thead>
@@ -222,9 +223,15 @@
                         <option value="">-- Pilih Varian --</option>
                         @foreach($produkVarians as $pv)
                             <option value="{{ $pv->id }}">
-                                {{ $pv->produk->nama ?? '' }} [Warna: {{ $pv->warna }}, Ukuran: {{ $pv->ukuran }}] (Stok: {{ $pv->stok_tersedia }})
+                                {{ $pv->produk->nama ?? '' }} [Warna: {{ $pv->warna }}, Ukuran: {{ $pv->ukuran }}] (Normal: {{ $pv->stok_tersedia }} | Defect: {{ $pv->stok_defect }})
                             </option>
                         @endforeach
+                    </select>
+                </td>
+                <td class="py-2">
+                    <select name="items[${itemIdx}][kondisi]" class="form-select" required>
+                        <option value="normal">Normal (Grade A)</option>
+                        <option value="defect">Defect (Grade B)</option>
                     </select>
                 </td>
                 <td class="py-2">
@@ -353,6 +360,12 @@
                         <input type="hidden" name="items[${itemIdx}][produk_varian_id]" value="${item.produk_varian_id}">
                         <span class="fw-bold text-dark d-block mb-0.5" style="font-size: 0.88rem;">${item.produk_nama}</span>
                         <div class="small text-muted" style="font-size: 0.78rem;">Warna: ${item.warna} | Ukuran: ${item.ukuran}</div>
+                    </td>
+                    <td class="py-2">
+                        <select name="items[${itemIdx}][kondisi]" class="form-select" required>
+                            <option value="normal">Normal (Grade A)</option>
+                            <option value="defect">Defect (Grade B)</option>
+                        </select>
                     </td>
                     <td class="py-2">
                         <input type="number" name="items[${itemIdx}][qty]" class="form-control text-center bg-white" min="1" max="${item.qty_sisa}" value="${item.qty_sisa}" required>

@@ -26,8 +26,10 @@ class NotaStokKeluarController extends Controller
     {
         $customers = Customer::all();
         
-        // Ambil produk varian yang stoknya ready untuk skenario beli langsung
-        $produkVarians = ProdukVarian::where('stok_tersedia', '>', 0)->get();
+        // Ambil produk varian yang stoknya ready untuk skenario beli langsung (baik normal maupun defect)
+        $produkVarians = ProdukVarian::where('stok_tersedia', '>', 0)
+            ->orWhere('stok_defect', '>', 0)
+            ->get();
 
         // Ambil nota order yang belum lunas ATAU sudah lunas tapi belum semua barang diambil (Hanya tipe Customer)
         $notaOrders = NotaOrder::with(['customer', 'job_orders.produk_varian.produk'])
@@ -59,6 +61,7 @@ class NotaStokKeluarController extends Controller
             'total_bayar'   => 'required|numeric|min:0',
             'items'         => 'required|array|min:1',
             'items.*.produk_varian_id' => 'required|exists:produk_varian,id',
+            'items.*.kondisi'          => 'nullable|in:normal,defect',
             'items.*.qty'              => 'required|integer|min:1',
             'items.*.harga_satuan'     => 'required|numeric|min:0',
         ]);
@@ -115,6 +118,7 @@ class NotaStokKeluarController extends Controller
         foreach ($request->items as $item) {
             $produkVarian = ProdukVarian::findOrFail($item['produk_varian_id']);
             $subtotal = $item['qty'] * $item['harga_satuan'];
+            $kondisi = $item['kondisi'] ?? 'normal';
 
             // VALIDASI SISA PESANAN YANG BELUM DIAMBIL (BAIK CUSTOM MAUPUN STANDAR)
             if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
@@ -153,16 +157,18 @@ class NotaStokKeluarController extends Controller
 
             if ($isCustomOrder) {
                 // SKENARIO A: Pengambilan Pesanan Custom (Milik Budi / Siti)
-                // 1. Hitung total baju custom yang selesai diproduksi
+                // 1. Hitung total baju custom yang selesai diproduksi (sesuai kondisi normal/defect)
+                $qtyField = ($kondisi === 'defect') ? 'qty_rejected_defect' : 'qty_accepted';
                 $stokCustomReady = \App\Models\HasilProduksi::where('produk_varian_id', $item['produk_varian_id'])
                     ->whereHas('job_order', function($query) use ($notaOrderId) {
                         $query->where('nota_order_id', $notaOrderId);
                     })
                     ->where('status_alokasi', 'Pesanan Customer')
-                    ->sum('qty_accepted');
+                    ->sum($qtyField);
 
                 // 2. Hitung total baju custom yang SUDAH diambil sebelumnya lewat Nota Stok Keluar
                 $qtySudahDiambil = \App\Models\NotaStokKeluarHasProdukVarian::where('produk_varian_id', $item['produk_varian_id'])
+                    ->where('kondisi', $kondisi)
                     ->whereHas('nota_keluar', function($query) use ($notaOrderId) {
                         $query->where('nota_order_id', $notaOrderId);
                     })
@@ -171,19 +177,26 @@ class NotaStokKeluarController extends Controller
                 $sisaStokCustom = max(0, $stokCustomReady - $qtySudahDiambil);
 
                 if ($sisaStokCustom < $item['qty']) {
-                    throw new \Exception("Gagal Keluar! Sisa baju custom yang selesai diproduksi & belum diambil ({$sisaStokCustom} Pcs) kurang dari jumlah yang mau diambil ({$item['qty']} Pcs).");
+                    $stokLabel = ($kondisi === 'defect') ? 'defect' : 'bagus';
+                    throw new \Exception("Gagal Keluar! Sisa baju custom {$stokLabel} yang selesai diproduksi & belum diambil ({$sisaStokCustom} Pcs) kurang dari jumlah yang mau diambil ({$item['qty']} Pcs).");
                 }
 
                 // Untuk pesanan custom, kita TIDAK memotong $produkVarian->stok_tersedia 
                 // karena stoknya dicatat dinamis melalui hasil_produksi & detail pengeluarannya.
             } else {
                 // SKENARIO B: Penjualan Langsung Toko ATAU Pesanan Order Standar (Ready Stock)
-                // Validasi & Potong Stok Toko Ready
-                if ($produkVarian->stok_tersedia < $item['qty']) {
-                    throw new \Exception("Stok toko tidak mencukupi untuk varian produk: {$produkVarian->warna} - {$produkVarian->ukuran}");
+                // Validasi & Potong Stok Toko Ready (Bagus vs Defect)
+                if ($kondisi === 'defect') {
+                    if ($produkVarian->stok_defect < $item['qty']) {
+                        throw new \Exception("Stok defect tidak mencukupi untuk varian produk: {$produkVarian->warna} - {$produkVarian->ukuran}");
+                    }
+                    $produkVarian->stok_defect -= $item['qty'];
+                } else {
+                    if ($produkVarian->stok_tersedia < $item['qty']) {
+                        throw new \Exception("Stok toko tidak mencukupi untuk varian produk: {$produkVarian->warna} - {$produkVarian->ukuran}");
+                    }
+                    $produkVarian->stok_tersedia -= $item['qty'];
                 }
-                
-                $produkVarian->stok_tersedia -= $item['qty'];
                 $produkVarian->save();
             }
             // =========================================================================
@@ -191,6 +204,7 @@ class NotaStokKeluarController extends Controller
             // Simpan ke tabel pivot detail
             $notaKeluar->nota_keluar()->create([
                 'produk_varian_id' => $item['produk_varian_id'],
+                'kondisi'          => $kondisi,
                 'qty'              => $item['qty'],
                 'harga_satuan'     => $item['harga_satuan'],
                 'subtotal'         => $subtotal,
@@ -240,7 +254,11 @@ class NotaStokKeluarController extends Controller
 
                 // Hanya kembalikan stok jika bukan pesanan kustom (Skenario B / stok toko ready)
                 if (!$isCustomOrder) {
-                    $produkVarian->stok_tersedia += $detail->qty;
+                    if ($detail->kondisi === 'defect') {
+                        $produkVarian->stok_defect += $detail->qty;
+                    } else {
+                        $produkVarian->stok_tersedia += $detail->qty;
+                    }
                     $produkVarian->save();
                 }
             }

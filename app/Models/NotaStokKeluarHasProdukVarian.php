@@ -14,6 +14,7 @@ class NotaStokKeluarHasProdukVarian extends Model
     protected $fillable = [
         'nota_stok_keluar_id', 
         'produk_varian_id', 
+        'kondisi',
         'qty', 
         'harga_satuan', 
         'subtotal'

@@ -60,6 +60,9 @@
                                     <li>
                                         {{ $detail->produk_varian->produk->nama_product ?? $detail->produk_varian->warna ?? 'Varian ID: '.$detail->produk_varian_id }} 
                                         <span class="fw-bold text-dark">x{{ $detail->qty }} pcs</span>
+                                        @if($detail->kondisi === 'defect')
+                                            <span class="text-danger small fw-bold">(Defect)</span>
+                                        @endif
                                     </li>
                                 @endforeach
                             </ul>

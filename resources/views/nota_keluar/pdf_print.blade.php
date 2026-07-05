@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Nota Stok Keluar - #{{ $nota->id }}</title>
     <style>
+        
         body { 
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
             font-size: 11px; 
@@ -11,6 +12,16 @@
             line-height: 1.4; 
             margin: 10px;
             position: relative;
+        }
+
+        @media print {
+            @page {
+                margin: 0;
+            }
+            body {
+                margin: 0;
+                padding: 1.5cm;
+            }
         }
         
         /* KONTEN UTAMA NOTA (Lapisan Bawah) */
