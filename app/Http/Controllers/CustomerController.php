@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Customer;
+use Illuminate\Database\QueryException;
 
 class CustomerController extends Controller
 {
@@ -65,7 +66,7 @@ class CustomerController extends Controller
             $customer = Customer::findOrFail($id);
             $customer->delete();
             return redirect('/customer')->with('success', 'Data berhasil dihapus!');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ($e->getCode() === '23000') {
                 return redirect()->back()->with('error', 'Customer ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Nota Order / Produk Custom).');
             }

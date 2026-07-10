@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\HasilProduksi;
 use App\Models\JobOrder;
 use App\Models\ProdukVarian;
+use App\Models\NotaStokKeluar;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class HasilProduksiController extends Controller
 {
@@ -74,7 +76,7 @@ class HasilProduksiController extends Controller
             }
 
             // === AUTOMATION ALOKASI BERDASARKAN STATUS CUSTOM ===
-            if ($job->is_custom == 1 && $job->nota_order && !is_null($job->nota_order->customer_id)) {
+            if ($job->is_custom == 1 && !is_null($job->nota_order?->customer_id)) {
                 $alokasiOtomatis = 'Pesanan Customer';
             } else {
                 $alokasiOtomatis = 'Stok Toko';
@@ -93,27 +95,27 @@ class HasilProduksiController extends Controller
             $hasil->status_alokasi      = $alokasiOtomatis;
             $hasil->save();
 
-            // Total fisik yang selamat dan bernilai ekonomis (bisa dijual) pada batch ini
+            // Total fisik yang selamat dan bernilai ekonomis (bisa dijual) pada job ini
             $totalBarangLayakJual = $request->qty_accepted + $request->qty_rejected_defect;
 
             // ========================================================================
-            // HITUNG HPP AKTUAL & MOVING AVERAGE (LOGIKA AKUNTANSI KONVEKSI)
+            // HITUNG HPP AKTUAL & AVERAGE (LOGIKA AKUNTANSI)
             // ========================================================================
             if ($totalBarangLayakJual > 0) {
                 $varianNormal = $job->produk_varian;
 
                 if ($varianNormal) {
                     // A. Ambil porsi nilai Job Order induk (Bahan baku + Jasa + Ongkir Kirim Awal) yang tersimpan di total_hpp_job
-                    $porsiModalIndukBatchIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
+                    $porsiModalIndukJobIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
 
-                    // B. Tambahkan biaya ongkir kurir balik (ongkir hasil produksi) secara penuh untuk batch penerimaan saat ini
-                    $totalModalAktualBatchIni = $porsiModalIndukBatchIni + $request->ongkir_hasil_produksi;
+                    // B. Tambahkan biaya ongkir kurir balik (ongkir hasil produksi) secara penuh untuk job penerimaan saat ini
+                    $totalModalAktualjobIni = $porsiModalIndukJobIni + $request->ongkir_hasil_produksi;
 
-                    // C. Hitung HPP Satuan Aktual Baru untuk batch ini
-                    $hppSatuanAktual = $totalModalAktualBatchIni / $totalBarangLayakJual;
+                    // C. Hitung HPP Satuan Aktual Baru untuk job ini
+                    $hppSatuanAktual = $totalModalAktualjobIni / $totalBarangLayakJual;
 
                     // HANYA UPDATE STOK JIKA INI PESANAN INTERNAL (Isi Stok Toko)
-                    if ($job->is_custom == 0 || is_null($job->nota_order->customer_id)) {
+                    if ($job->is_custom == 0 || is_null($job->nota_order?->customer_id)) {
                         
                         // 3. TAMBAH STOK & HITUNG MOVING AVERAGE PRODUK BAGUS (GRADE A - ACCEPTED)
                         if ($request->qty_accepted > 0) {
@@ -128,7 +130,7 @@ class HasilProduksiController extends Controller
                                 if ($stokLamaA > 0) {
                                     $hargaAvgBaruA = (($stokLamaA * $hargaAvgLamaA) + ($request->qty_accepted * $hppSatuanAktual)) / ($stokLamaA + $request->qty_accepted);
                                 } else {
-                                    // Jika stok lama 0 atau minus, langsung pakai HPP aktual batch ini
+                                    // Jika stok lama 0 atau minus, langsung pakai HPP aktual job ini
                                     $hargaAvgBaruA = $hppSatuanAktual;
                                 }
                                 
@@ -220,7 +222,7 @@ class HasilProduksiController extends Controller
      */
     public function cancelQC($id)
     {
-        if (!auth()->user()->isAdmin()) {
+        if (!Auth::check() || !Auth::user()->isAdmin()) {
             return redirect()->back()->with('error', 'Akses ditolak! Hanya Admin yang dapat membatalkan setoran QC.');
         }
 
@@ -232,7 +234,7 @@ class HasilProduksiController extends Controller
 
             // 2. CHECK RULE 1: Jika produk custom dan sudah ada Nota Stok Keluar, pembatalan ditolak
             if ($job->is_custom == 1 && $job->nota_order_id) {
-                $hasStokKeluar = \App\Models\NotaStokKeluar::where('nota_order_id', $job->nota_order_id)->exists();
+                $hasStokKeluar = NotaStokKeluar::where('nota_order_id', $job->nota_order_id)->exists();
                 if ($hasStokKeluar) {
                     DB::rollBack();
                     return redirect()->back()->with('error', 'Gagal membatalkan setoran QC! Produk custom untuk order ini sudah dibuatkan Nota Stok Keluar (barang sudah diambil oleh pelanggan).');
@@ -247,9 +249,9 @@ class HasilProduksiController extends Controller
             $varianNormal = $job->produk_varian;
 
             if ($varianNormal) {
-                // Di store, penambahan stok dan moving average hanya berlaku jika:
+                // Di store, penambahan stok dan average hanya berlaku jika:
                 // ($job->is_custom == 0 || is_null($job->nota_order->customer_id))
-                $shouldRevertStock = ($job->is_custom == 0 || is_null($job->nota_order->customer_id ?? null));
+                $shouldRevertStock = ($job->is_custom == 0 || is_null($job->nota_order?->customer_id));
 
                 if ($shouldRevertStock) {
                     // Validasi kecukupan stok agar tidak minus
@@ -263,11 +265,11 @@ class HasilProduksiController extends Controller
                         return redirect()->back()->with('error', "Gagal membatalkan! Stok barang cacat (defect) di toko tidak mencukupi (Stok saat ini: {$varianNormal->stok_defect} pcs, stok yang dibutuhkan untuk pembatalan: {$qtyDefectToSubtract} pcs).");
                     }
 
-                    // Rekalkulasi (Reversi) Moving Average Produk
+                    // Rekalkulasi (Reversi) Average Produk
                     if ($qtyAcceptedToSubtract > 0 && $totalBarangLayakJual > 0) {
-                        $porsiModalIndukBatchIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
-                        $totalModalAktualBatchIni = $porsiModalIndukBatchIni + $hasil->ongkir;
-                        $hppSatuanAktual = $totalModalAktualBatchIni / $totalBarangLayakJual;
+                        $porsiModalIndukJobIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
+                        $totalModalAktualjobIni = $porsiModalIndukJobIni + $hasil->ongkir;
+                        $hppSatuanAktual = $totalModalAktualjobIni / $totalBarangLayakJual;
 
                         $stokLamaA = $varianNormal->stok_tersedia;
                         $hargaAvgLamaA = $varianNormal->harga_avg_produk;

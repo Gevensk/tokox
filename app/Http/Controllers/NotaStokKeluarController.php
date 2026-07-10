@@ -7,6 +7,9 @@ use App\Models\Customer;
 use App\Models\NotaStokKeluar;
 use App\Models\NotaOrder;
 use App\Models\ProdukVarian;
+use App\Models\JobOrder;
+use App\Models\NotaStokKeluarHasProdukVarian;
+use App\Models\HasilProduksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -42,7 +45,7 @@ class NotaStokKeluarController extends Controller
                 }
                 
                 $totalOrdered = $order->job_orders->sum('jumlah');
-                $totalReleased = \App\Models\NotaStokKeluarHasProdukVarian::whereHas('nota_keluar', function($q) use ($order) {
+                $totalReleased = NotaStokKeluarHasProdukVarian::whereHas('nota_keluar', function($q) use ($order) {
                     $q->where('nota_order_id', $order->id);
                 })->sum('qty');
                 
@@ -122,11 +125,11 @@ class NotaStokKeluarController extends Controller
 
             // VALIDASI SISA PESANAN YANG BELUM DIAMBIL (BAIK CUSTOM MAUPUN STANDAR)
             if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
-                $jobQtyOrdered = \App\Models\JobOrder::where('nota_order_id', $notaOrderId)
+                $jobQtyOrdered = JobOrder::where('nota_order_id', $notaOrderId)
                     ->where('produk_varian_id', $item['produk_varian_id'])
                     ->value('jumlah') ?? 0;
 
-                $qtySudahDiambil = \App\Models\NotaStokKeluarHasProdukVarian::where('produk_varian_id', $item['produk_varian_id'])
+                $qtySudahDiambil =NotaStokKeluarHasProdukVarian::where('produk_varian_id', $item['produk_varian_id'])
                     ->whereHas('nota_keluar', function($query) use ($notaOrderId) {
                         $query->where('nota_order_id', $notaOrderId);
                     })
@@ -146,7 +149,7 @@ class NotaStokKeluarController extends Controller
 
             if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
                 // Cari apakah ada JobOrder terkait yang bertipe custom
-                $jobOrder = \App\Models\JobOrder::where('nota_order_id', $notaOrderId)
+                $jobOrder = JobOrder::where('nota_order_id', $notaOrderId)
                     ->where('produk_varian_id', $item['produk_varian_id'])
                     ->first();
                 
@@ -159,7 +162,7 @@ class NotaStokKeluarController extends Controller
                 // SKENARIO A: Pengambilan Pesanan Custom (Milik Budi / Siti)
                 // 1. Hitung total baju custom yang selesai diproduksi (sesuai kondisi normal/defect)
                 $qtyField = ($kondisi === 'defect') ? 'qty_rejected_defect' : 'qty_accepted';
-                $stokCustomReady = \App\Models\HasilProduksi::where('produk_varian_id', $item['produk_varian_id'])
+                $stokCustomReady = HasilProduksi::where('produk_varian_id', $item['produk_varian_id'])
                     ->whereHas('job_order', function($query) use ($notaOrderId) {
                         $query->where('nota_order_id', $notaOrderId);
                     })
@@ -167,7 +170,7 @@ class NotaStokKeluarController extends Controller
                     ->sum($qtyField);
 
                 // 2. Hitung total baju custom yang SUDAH diambil sebelumnya lewat Nota Stok Keluar
-                $qtySudahDiambil = \App\Models\NotaStokKeluarHasProdukVarian::where('produk_varian_id', $item['produk_varian_id'])
+                $qtySudahDiambil = NotaStokKeluarHasProdukVarian::where('produk_varian_id', $item['produk_varian_id'])
                     ->where('kondisi', $kondisi)
                     ->whereHas('nota_keluar', function($query) use ($notaOrderId) {
                         $query->where('nota_order_id', $notaOrderId);
@@ -243,7 +246,7 @@ class NotaStokKeluarController extends Controller
 
                 $isCustomOrder = false;
                 if ($nota->tipe_keluar === 'penjualan_order' && $notaOrderId) {
-                    $jobOrder = \App\Models\JobOrder::where('nota_order_id', $notaOrderId)
+                    $jobOrder = JobOrder::where('nota_order_id', $notaOrderId)
                         ->where('produk_varian_id', $detail->produk_varian_id)
                         ->first();
                     

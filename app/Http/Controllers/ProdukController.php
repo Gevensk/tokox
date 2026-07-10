@@ -7,6 +7,7 @@ use App\Models\ProdukVarian;
 use App\Models\HasilProduksi;
 use App\Models\JobOrder;
 use App\Models\Customer;
+use App\Models\NotaStokKeluarHasProdukVarian;
 use Illuminate\Http\Request;
 
 class ProdukController extends Controller
@@ -69,7 +70,7 @@ class ProdukController extends Controller
                 ->sum('qty_accepted');
 
             // 3. Kuantitas Custom Order yang sudah diambil lewat Nota Stok Keluar
-            $qtySudahDiambil = \App\Models\NotaStokKeluarHasProdukVarian::where('produk_varian_id', $varian->id)
+            $qtySudahDiambil = NotaStokKeluarHasProdukVarian::where('produk_varian_id', $varian->id)
                 ->whereHas('nota_keluar.nota_order', function($query) {
                     $query->whereNotNull('customer_id');
                 })
@@ -87,7 +88,7 @@ class ProdukController extends Controller
                 if ($job->nota_order && $job->nota_order->customer) {
                     $produced = HasilProduksi::where('job_order_id', $job->id)->sum('qty_accepted') ?? 0;
                     
-                    $taken = \App\Models\NotaStokKeluarHasProdukVarian::where('produk_varian_id', $varian->id)
+                    $taken = NotaStokKeluarHasProdukVarian::where('produk_varian_id', $varian->id)
                         ->whereHas('nota_keluar', function($q) use ($job) {
                             $q->where('nota_order_id', $job->nota_order_id);
                         })

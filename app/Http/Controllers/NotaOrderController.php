@@ -114,7 +114,7 @@ class NotaOrderController extends Controller
                     'nota_order_id' => $nota->id,
                     'produk_varian_id' => $item['produk_varian_id'],
                     'jumlah' => $item['jumlah'],
-                    'biaya_jasa_satuan' => 0, // ✨ PERBAIKAN: Sesuai aturan bisnismu, jasa internal dikosongkan dulu
+                    'biaya_jasa_satuan' => 0,
                     'is_custom' => $item['is_custom'] ?? 0,
                     'catatan_custom' => $item['catatan_custom'] ?? null,
                     'foto_desain' => $namaFileGambar, 

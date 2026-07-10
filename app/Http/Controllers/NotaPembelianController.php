@@ -50,7 +50,7 @@ class NotaPembelianController extends Controller
                 $alokasiOngkir = ($totalHargaBahan > 0) ? ($totalOngkir / $totalHargaBahan) * $hargaSatuanBeli : 0;
                 $hargaBeliNetto = $hargaSatuanBeli + $alokasiOngkir; // Ini harga beli yang sudah kemasukan ongkir
 
-                // --- LOGIKA MOVING AVERAGE DENGAN HARGA NETTO ---
+                // --- LOGIKA AVERAGE DENGAN HARGA NETTO ---
                 $stokLama = $bahan->stok_total;
                 $hargaRataLama = $bahan->harga_rata_rata;
                 $stokBeli = $item['jumlah'];

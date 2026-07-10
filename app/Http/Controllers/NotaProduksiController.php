@@ -50,13 +50,13 @@ class NotaProduksiController extends Controller
 
         try {
             $tahunBulan = date('Ym');
-            $hitungProdBulanIni = \App\Models\NotaProduksi::whereYear('tgl_order', date('Y'))
+            $hitungProdBulanIni = NotaProduksi::whereYear('tgl_order', date('Y'))
                                                                 ->whereMonth('tgl_order', date('m'))
                                                                 ->count();
             $nomorUrutNext = $hitungProdBulanIni + 1;
             $noProdOtomatis = 'PROD-' . $tahunBulan . '-' . str_pad($nomorUrutNext, 4, '0', STR_PAD_LEFT);
 
-            $notaProduksi = \App\Models\NotaProduksi::create([
+            $notaProduksi = NotaProduksi::create([
                 'penjahit_id' => $request->penjahit_id,
                 'no_surat_jalan' => $noProdOtomatis, 
                 'tgl_order' => now(),
@@ -671,7 +671,7 @@ class NotaProduksiController extends Controller
                 }
 
                 // Hitung ulang biaya bahan baku terencana
-                $plannedBOMCost = \App\Models\PemakaianBahan::where('job_order_id', $job->id)
+                $plannedBOMCost =PemakaianBahan::where('job_order_id', $job->id)
                     ->where('tipe', 'bom')
                     ->whereNull('tgl_keluar')
                     ->with('bahan_baku')
