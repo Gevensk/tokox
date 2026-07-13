@@ -33,8 +33,10 @@
         // Total Biaya Rework dari semua setoran parsial
         $totalRework = $job->hasil_produksis->sum('biaya_rework_tambahan');
 
-        // Rumus Pembebanan Biaya (Sesuai kode awalmu)
-        $porsiModalDiserap = $totalLayakJual > 0 ? (($totalLayakJual / $targetPcs) * $job->total_hpp_job) : 0;
+        // Rumus Pembebanan Biaya (Jika job order sudah Selesai, seluruh biaya awal diserap habis)
+        $porsiModalDiserap = ($job->status_pesanan === 'Selesai')
+            ? $job->total_hpp_job
+            : ($totalLayakJual > 0 ? (($totalLayakJual / $targetPcs) * $job->total_hpp_job) : 0);
         $totalModalAktual = $porsiModalDiserap + $totalOngkirBalik + $totalRework;
         $hppAktualSatuan = $totalLayakJual > 0 ? ($totalModalAktual / $totalLayakJual) : 0;
     @endphp

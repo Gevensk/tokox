@@ -99,14 +99,25 @@ class HasilProduksiController extends Controller
             $totalBarangLayakJual = $request->qty_accepted + $request->qty_rejected_defect;
 
             // ========================================================================
-            // HITUNG HPP AKTUAL & AVERAGE (LOGIKA AKUNTANSI)
+            // HITUNG HPP AKTUAL & AVERAGE 
             // ========================================================================
             if ($totalBarangLayakJual > 0) {
                 $varianNormal = $job->produk_varian;
 
                 if ($varianNormal) {
                     // A. Ambil porsi nilai Job Order induk (Bahan baku + Jasa + Ongkir Kirim Awal) yang tersimpan di total_hpp_job
-                    $porsiModalIndukJobIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
+                    // Jika ini adalah setoran terakhir yang menyelesaikan Job Order, serap seluruh sisa modal jahit yang belum diserap sebelumnya
+                    $totalSetelahQCBaru = (int)$totalSudahQC + (int)$totalInputSekarang;
+                    $targetJumlah = (int)$job->jumlah;
+                    
+                    if ($totalSetelahQCBaru >= $targetJumlah) {
+                        $totalLayakSebelumnya = HasilProduksi::where('job_order_id', $job->id)
+                            ->selectRaw('SUM(qty_accepted + qty_rejected_defect) as total')
+                            ->value('total') ?? 0;
+                        $porsiModalIndukJobIni = $job->total_hpp_job - (($totalLayakSebelumnya / $job->jumlah) * $job->total_hpp_job);
+                    } else {
+                        $porsiModalIndukJobIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
+                    }
 
                     // B. Tambahkan biaya ongkir kurir balik (ongkir hasil produksi) secara penuh untuk job penerimaan saat ini
                     $totalModalAktualjobIni = $porsiModalIndukJobIni + $request->ongkir_hasil_produksi;
@@ -222,7 +233,7 @@ class HasilProduksiController extends Controller
      */
     public function cancelQC($id)
     {
-        if (!Auth::check() || !Auth::user()->isAdmin()) {
+        if (Auth::user()->role != 'admin') {
             return redirect()->back()->with('error', 'Akses ditolak! Hanya Admin yang dapat membatalkan setoran QC.');
         }
 
@@ -267,7 +278,20 @@ class HasilProduksiController extends Controller
 
                     // Rekalkulasi (Reversi) Average Produk
                     if ($qtyAcceptedToSubtract > 0 && $totalBarangLayakJual > 0) {
-                        $porsiModalIndukJobIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
+                        // Cek apakah batch ini adalah batch yang menyelesaikan Job Order
+                        $totalTerQCSebelumDihapus = HasilProduksi::where('job_order_id', $job->id)
+                            ->selectRaw('SUM(qty_accepted + qty_rejected_defect + qty_rejected) as total')
+                            ->value('total') ?? 0;
+                        
+                        if ($totalTerQCSebelumDihapus >= $job->jumlah) {
+                            $totalLayakSebelumnya = HasilProduksi::where('job_order_id', $job->id)
+                                ->where('id', '!=', $hasil->id)
+                                ->selectRaw('SUM(qty_accepted + qty_rejected_defect) as total')
+                                ->value('total') ?? 0;
+                            $porsiModalIndukJobIni = $job->total_hpp_job - (($totalLayakSebelumnya / $job->jumlah) * $job->total_hpp_job);
+                        } else {
+                            $porsiModalIndukJobIni = ($totalBarangLayakJual / $job->jumlah) * $job->total_hpp_job;
+                        }
                         $totalModalAktualjobIni = $porsiModalIndukJobIni + $hasil->ongkir;
                         $hppSatuanAktual = $totalModalAktualjobIni / $totalBarangLayakJual;
 

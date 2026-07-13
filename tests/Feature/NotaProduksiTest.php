@@ -299,11 +299,11 @@ class NotaProduksiTest extends TestCase
         // totalLayakJual = accepted (4+4) + defect (1+0) = 9
         // targetPcs = 10
         // total_hpp_job = 120000 + 15000 = 135000
-        // porsiModalDiserap = (9 / 10) * 135000 = 121500
-        // totalModalAktual = porsiModalDiserap (121500) + totalOngkirBalik (7000) + biaya_rework_tambahan (25000) = 153500
-        // hppAktualSatuan = 153500 / 9 = 17056
-        $auditResponse->assertSee('Rp 153.500'); // Total HPP
-        $auditResponse->assertSee('Rp 17.056'); // Average HPP / Pcs
+        // Since job is 'Selesai', porsiModalDiserap = 135000
+        // totalModalAktual = porsiModalDiserap (135000) + totalOngkirBalik (7000) + biaya_rework_tambahan (25000) = 167000
+        // hppAktualSatuan = 167000 / 9 = 18556
+        $auditResponse->assertSee('Rp 167.000'); // Total HPP
+        $auditResponse->assertSee('Rp 18.556'); // Average HPP / Pcs
         $auditResponse->assertSee('Total Biaya Rework Tambahan'); // Rework cost section
     }
 
