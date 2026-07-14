@@ -14,13 +14,13 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. Core Production counters
-        $queueJobsCount = JobOrder::where('status_pesanan', 'Antrean')->count();
-        $activeJobsCount = JobOrder::where('status_pesanan', 'Diproduksi')->count();
-        $waitingQcCount = JobOrder::whereIn('status_pesanan', ['Diproduksi', 'Selesai Parsial'])->count();
+        // 1. Hitung jumlah status produksi utama
+        $jumlahAntreanJahit = JobOrder::where('status_pesanan', 'Antrean')->count();
+        $jumlahJobAktif     = JobOrder::where('status_pesanan', 'Diproduksi')->count();
+        $jumlahMenungguQc   = JobOrder::whereIn('status_pesanan', ['Diproduksi', 'Selesai Parsial'])->count();
         
-        // 2. Job Orders approaching deadline (sorted by tgl_deadline asc)
-        $approachingDeadlineJobs = JobOrder::with(['nota_order.customer', 'produk_varian.produk', 'nota_produksi.penjahit'])
+        // 2. Job Order yang mendekati deadline (diurutkan dari tanggal deadline paling dekat)
+        $jobMendekatiDeadline = JobOrder::with(['nota_order.customer', 'produk_varian.produk', 'nota_produksi.penjahit'])
             ->whereIn('status_pesanan', ['Antrean', 'Diproduksi', 'Selesai Parsial'])
             ->whereHas('nota_order', function($query) {
                 $query->whereNotNull('tgl_deadline');
@@ -31,18 +31,18 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
         
-        // 3. Active Penjahit Workload Overview
+        // 3. Ringkasan beban kerja penjahit aktif
         $penjahits = Penjahit::all();
-        $penjahitWorkload = [];
+        $bebanKerjaPenjahit = [];
         foreach ($penjahits as $p) {
-            // Count active job orders assigned to this penjahit (status_pesanan 'Diproduksi')
+            // Hitung job order aktif yang sedang dikerjakan penjahit ini
             $activeJobs = JobOrder::whereHas('nota_produksi', function($query) use ($p) {
                 $query->where('penjahit_id', $p->id);
             })->where('status_pesanan', 'Diproduksi')->get();
 
             $totalActiveQty = $activeJobs->sum('jumlah');
 
-            $penjahitWorkload[] = [
+            $bebanKerjaPenjahit[] = [
                 'nama' => $p->nama,
                 'no_hp' => $p->telp,
                 'active_jobs_count' => $activeJobs->count(),
@@ -50,37 +50,37 @@ class DashboardController extends Controller
             ];
         }
 
-        // Sort tailors by workload (descending)
-        usort($penjahitWorkload, function($a, $b) {
+        // Urutkan penjahit berdasarkan beban jumlah jahitan terbanyak
+        usort($bebanKerjaPenjahit, function($a, $b) {
             return $b['total_qty'] <=> $a['total_qty'];
         });
         
-        // 4. Low stock alerts (items with stock < 15)
-        $lowStockMaterials = BahanBaku::where('stok_total', '<', 15)
+        // 4. Peringatan stok bahan baku menipis (stok kurang dari 15)
+        $bahanStokMenipis = BahanBaku::where('stok_total', '<', 15)
             ->orderBy('stok_total', 'asc')
             ->take(10)
             ->get();
             
-        // 5. Recent activities
-        $recentProduction = NotaProduksi::with('penjahit')
+        // 5. Aktivitas terbaru
+        $produksiTerbaru = NotaProduksi::with('penjahit')
             ->latest()
             ->take(5)
             ->get();
             
-        $recentQcSetoran = HasilProduksi::with(['job_order.produk_varian.produk'])
+        $setoranQcTerbaru = HasilProduksi::with(['job_order.produk_varian.produk'])
             ->latest()
             ->take(5)
             ->get();
 
         return view('dashboard', compact(
-            'queueJobsCount',
-            'activeJobsCount',
-            'waitingQcCount',
-            'approachingDeadlineJobs',
-            'penjahitWorkload',
-            'lowStockMaterials',
-            'recentProduction',
-            'recentQcSetoran'
+            'jumlahAntreanJahit',
+            'jumlahJobAktif',
+            'jumlahMenungguQc',
+            'jobMendekatiDeadline',
+            'bebanKerjaPenjahit',
+            'bahanStokMenipis',
+            'produksiTerbaru',
+            'setoranQcTerbaru'
         ));
     }
 }

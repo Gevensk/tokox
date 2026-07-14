@@ -9,10 +9,8 @@ class HasilProduksi extends Model
 {
     use HasFactory;
 
-    // Sesuai dengan nama tabel di ERD kamu
     protected $table = 'hasil_produksi';
 
-    // Daftarkan semua field dari gambar ERD agar bisa diisi (Mass Assignment)
     protected $fillable = [
         'job_order_id',
         'produk_varian_id',
@@ -25,7 +23,6 @@ class HasilProduksi extends Model
         'biaya_rework_tambahan',
     ];
 
-    // Relasi balik ke Job Order (Opsional tapi sangat berguna untuk panggil data)
     public function job_order()
     {
         return $this->belongsTo(JobOrder::class, 'job_order_id');

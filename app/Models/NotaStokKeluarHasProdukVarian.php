@@ -26,7 +26,6 @@ class NotaStokKeluarHasProdukVarian extends Model
         return $this->belongsTo(NotaStokKeluar::class, 'nota_stok_keluar_id');
     }
 
-    // Relasi ke Varian Produk untuk tahu warna/ukuran barangnya
     public function produk_varian()
     {
         return $this->belongsTo(ProdukVarian::class, 'produk_varian_id');

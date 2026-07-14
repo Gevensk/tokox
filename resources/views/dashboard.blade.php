@@ -34,7 +34,7 @@
                         <i class="fa-solid fa-hourglass-start fa-3x"></i>
                     </div>
                     <span class="small text-uppercase fw-semibold" style="letter-spacing: 0.5px;">Antrean Job Order</span>
-                    <h2 class="fw-bold mt-2 mb-1">{{ $queueJobsCount }}</h2>
+                    <h2 class="fw-bold mt-2 mb-1">{{ $jumlahAntreanJahit }}</h2>
                     <span class="small opacity-75">Menunggu alokasi produksi</span>
                 </div>
             </div>
@@ -48,7 +48,7 @@
                         <i class="fa-solid fa-scissors fa-3x"></i>
                     </div>
                     <span class="small text-uppercase fw-semibold" style="letter-spacing: 0.5px;">Sedang Dijahit (Proses)</span>
-                    <h2 class="fw-bold mt-2 mb-1">{{ $activeJobsCount }}</h2>
+                    <h2 class="fw-bold mt-2 mb-1">{{ $jumlahJobAktif }}</h2>
                     <span class="small opacity-75">Sedang dikerjakan vendor jahit</span>
                 </div>
             </div>
@@ -62,7 +62,7 @@
                         <i class="fa-solid fa-shirt fa-3x"></i>
                     </div>
                     <span class="small text-uppercase fw-semibold" style="letter-spacing: 0.5px;">Menunggu Proses QC</span>
-                    <h2 class="fw-bold mt-2 mb-1">{{ number_format($waitingQcCount, 0, ',', '.') }}</h2>
+                    <h2 class="fw-bold mt-2 mb-1">{{ number_format($jumlahMenungguQc, 0, ',', '.') }}</h2>
                     <span class="small opacity-75">Job order belum ditutup</span>
                 </div>
             </div>
@@ -106,7 +106,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($approachingDeadlineJobs as $job)
+                                @forelse($jobMendekatiDeadline as $job)
                                     @php
                                         $deadline = \Carbon\Carbon::parse($job->nota_order->tgl_deadline);
                                         $today = \Carbon\Carbon::today();
@@ -177,7 +177,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($penjahitWorkload as $load)
+                                @forelse($bebanKerjaPenjahit as $load)
                                 <tr>
                                     <td class="ps-3">
                                         <div class="fw-bold text-dark" style="font-size: 1.05rem;">{{ $load['nama'] }}</div>
@@ -223,7 +223,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($lowStockMaterials as $material)
+                                @forelse($bahanStokMenipis as $material)
                                 <tr>
                                     <td class="ps-3">
                                         <div class="fw-bold text-dark">{{ $material->nama }}</div>
@@ -258,7 +258,7 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush" style="max-height: 275px; overflow-y: auto;">
-                        @forelse($recentQcSetoran as $qc)
+                        @forelse($setoranQcTerbaru as $qc)
                         <div class="list-group-item p-3 border-0 border-bottom">
                             <div class="d-flex justify-content-between mb-1">
                                 <span class="fw-bold text-dark" style="font-size: 0.95rem;">JOB-{{ $qc->job_order_id }}</span>

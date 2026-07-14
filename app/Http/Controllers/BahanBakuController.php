@@ -88,17 +88,14 @@ class BahanBakuController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
         try {
             $bahan_baku = BahanBaku::findOrFail($id);
             $bahan_baku->delete();
             return redirect('/bahan_baku')->with('success', 'Data berhasil dihapus!');
         } catch (QueryException $e) {
-            if ($e->getCode() === '23000') {
-                return redirect()->back()->with('error', 'Bahan baku ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Pembelian / Pemakaian / Penyesuaian Stok).');
-            }
-            throw $e;
+            return redirect()->back()->with('error', 'Gagal menghapus! Bahan baku ini masih digunakan dalam transaksi.');
         }
     }
 

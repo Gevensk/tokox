@@ -13,22 +13,23 @@ class BillOfMaterialController extends Controller
 {
     //
     public function index()
-{
+    {
+        $boms = BillOfMaterial::with(['varian.produk', 'bahan_baku'])
+                ->get()
+                ->groupBy('produk_varian_id');
 
-    $boms = BillOfMaterial::with(['varian.produk', 'bahan_baku'])
-            ->get()
-            ->groupBy('produk_varian_id');
-
-    return view('bill_of_material.index', compact('boms'));
-}
-    public function create(){
+        return view('bill_of_material.index', compact('boms'));
+    }
+    public function create()
+    {
         $varians =ProdukVarian::with('produk')->get();
         $bahan_bakus = BahanBaku::all();
 
         return view('bill_of_material.create',compact('varians','bahan_bakus'));
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
         $request->validate([
             'produk_varian_id'=>'required|exists:produk_varian,id',
             'items' => 'required|array',

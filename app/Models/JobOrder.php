@@ -64,9 +64,6 @@ class JobOrder extends Model
         );
     }
 
-    /**
-     * Relasi ke hasil produksi / setoran QC
-     */
     public function hasil_produksis()
     {
         return $this->hasMany(HasilProduksi::class, 'job_order_id'); 

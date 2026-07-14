@@ -14,11 +14,9 @@ class NotaProduksi extends Model
 
     public function penjahit()
     {
-        // Hubungkan foreign key penjahit_id ke model Penjahit
         return $this->belongsTo(Penjahit::class, 'penjahit_id');
     }
 
-    // Relasi ke data anak (Job Order) jika nanti dibutuhkan
     public function jobOrders()
     {
         return $this->hasMany(JobOrder::class, 'nota_produksi_id');

@@ -9,7 +9,7 @@ class PemakaianBahan extends Model
 {
     use HasFactory;
 
-    protected $table = 'pemakaian_bahan'; // Sesuai nama tabel di ERD
+    protected $table = 'pemakaian_bahan'; 
 
     protected $fillable = [
         'bahan_baku_id',
