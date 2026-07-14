@@ -148,17 +148,25 @@ class BahanBakuController extends Controller
                 DB::raw("CONCAT('Penyesuaian stok. Alasan: ', IFNULL(keterangan, '-')) as keterangan")
             ]);
 
-        // Gabungkan seluruh mutasi dan urutkan berdasarkan tanggal
+        // Gabungkan seluruh mutasi dan urutkan berdasarkan tanggal secara ascending (dari tertua ke terbaru)
         $mutations = $purchases->unionAll($usages)->unionAll($adjustments)
             ->orderBy('tanggal', 'asc')
             ->get();
 
-        // Hitung saldo berjalan (stok kumulatif)
-        $runningSaldo = 0;
+        // Hitung saldo awal agar saldo berjalan di baris akhir cocok dengan stok fisik saat ini
+        $totalNettoMutation = $mutations->sum(function ($m) {
+            return $m->masuk - $m->keluar;
+        });
+        
+        $runningSaldo = (float)$bahan->stok_total - $totalNettoMutation;
+
         foreach ($mutations as $m) {
             $runningSaldo += ($m->masuk - $m->keluar);
             $m->saldo = $runningSaldo;
         }
+
+        // Balikkan urutan koleksi agar yang terbaru tampil di atas pada tabel view
+        $mutations = $mutations->reverse();
 
         return view('bahan_baku.kartu_stok', compact('bahan', 'mutations'));
     }

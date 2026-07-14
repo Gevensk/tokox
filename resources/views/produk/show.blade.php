@@ -56,33 +56,16 @@
                                 <input type="text" name="warna" class="form-control" placeholder="Contoh: Hitam" required>
                             </div>
                             
-                            {{-- Pilihan Banyak Ukuran Sekaligus menggunakan Checkbox --}}
+                            {{-- Input Teks Ukuran --}}
                             <div class="col-md-6 mb-3 mb-md-0">
-                                <label class="form-label fw-bold small text-secondary d-block">Pilih Ukuran yang Tersedia</label>
-                                <div class="d-flex gap-3 flex-wrap p-2 border rounded bg-light">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="S" id="sizeS" checked>
-                                        <label class="form-check-label fw-semibold" for="sizeS">S</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="M" id="sizeM" checked>
-                                        <label class="form-check-label fw-semibold" for="sizeM">M</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="L" id="sizeL" checked>
-                                        <label class="form-check-label fw-semibold" for="sizeL">L</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="ukuran[]" value="XL" id="sizeXL" checked>
-                                        <label class="form-check-label fw-semibold" for="sizeXL">XL</label>
-                                    </div>                                 
-                                </div>
+                                <label class="form-label fw-bold small text-secondary">Ukuran</label>
+                                <input type="text" name="ukuran" class="form-control" placeholder="Contoh: S" required>
                             </div>
                             
-                            {{-- Tombol Eksekusi Masal --}}
+                            {{-- Tombol Simpan Varian --}}
                             <div class="col-md-3">
                                 <button type="submit" class="btn btn-primary w-100">
-                                    <i class="bi bi-save"></i> Simpan Semua Varian
+                                    <i class="bi bi-save"></i> Simpan Varian
                                 </button>
                             </div>
                         </div>

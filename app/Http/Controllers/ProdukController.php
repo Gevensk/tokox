@@ -180,52 +180,32 @@ class ProdukController extends Controller
         $request->validate([
             'produk_id' => 'required|exists:produk,id',
             'warna'     => 'required|string|max:50',
-            'ukuran'    => 'required|array|min:1', 
+            'ukuran'    => 'required|string|max:50', 
         ]);
 
         $produkId = $request->produk_id;
         $warnaInput = ucwords(strtolower(trim($request->warna))); 
-        $ukurans = $request->ukuran; 
+        $ukuranInput = trim($request->ukuran); 
 
-        $varianBerhasil = 0;
-        $varianDuplikat = [];
+        $cekDuplikat = ProdukVarian::where('produk_id', $produkId)
+                        ->where('warna', $warnaInput)
+                        ->where('ukuran', $ukuranInput)
+                        ->first();
 
-        foreach ($ukurans as $ukuranRaw) {
-            $ukuranInput = trim($ukuranRaw);
-
-            $cekDuplikat = ProdukVarian::where('produk_id', $produkId)
-                            ->where('warna', $warnaInput)
-                            ->where('ukuran', $ukuranInput)
-                            ->first();
-
-            if ($cekDuplikat) {
-                $varianDuplikat[] = $ukuranInput;
-                continue; 
-            }
-
-            ProdukVarian::create([
-                'produk_id'        => $produkId,
-                'warna'            => $warnaInput,
-                'ukuran'           => $ukuranInput,
-                'stok_tersedia'    => 0,
-                'stok_defect'      => 0,
-                'harga_avg_produk' => 0,
-            ]);
-
-            $varianBerhasil++;
+        if ($cekDuplikat) {
+            return redirect()->back()->withInput()->with('error', "Gagal! Ukuran $ukuranInput untuk warna $warnaInput sudah terdaftar.");
         }
 
-        if ($varianBerhasil === 0 && count($varianDuplikat) > 0) {
-            $listDuplikat = implode(', ', $varianDuplikat);
-            return redirect()->back()->withInput()->with('error', "Gagal! Ukuran [$listDuplikat] untuk warna $warnaInput sudah terdaftar.");
-        }
+        ProdukVarian::create([
+            'produk_id'        => $produkId,
+            'warna'            => $warnaInput,
+            'ukuran'           => $ukuranInput,
+            'stok_tersedia'    => 0,
+            'stok_defect'      => 0,
+            'harga_avg_produk' => 0,
+        ]);
 
-        if (count($varianDuplikat) > 0) {
-            $listDuplikat = implode(', ', $varianDuplikat);
-            return redirect()->back()->with('success', "Berhasil menambah $varianBerhasil varian baru untuk warna $warnaInput. (Catatan: Ukuran [$listDuplikat] dilewati karena sudah ada).");
-        }
-
-        return redirect()->back()->with('success', "Semua varian ukuran untuk warna $warnaInput berhasil ditambahkan!");
+        return redirect()->back()->with('success', "Varian warna $warnaInput ukuran $ukuranInput berhasil ditambahkan!");
     }
 
     public function destroyVarian(string $id)
