@@ -67,21 +67,21 @@
                             {{-- Qty Lolos QC (Accepted) --}}
                             <div class="col-md-4 mb-3">
                                 <label for="qty_accepted" class="form-label text-success fw-bold">1. Qty Accepted (Lolos QC)</label>
-                                <input type="number" name="qty_accepted" id="qty_accepted" class="form-control form-control-lg border-success input-hitung" value="{{ old('qty_accepted') }}" placeholder="0" min="0" required>
+                                <input type="number" name="qty_accepted" id="qty_accepted" class="form-control form-control-lg border-success input-hitung" value="{{ old('qty_accepted') }}" placeholder="0" min="0">
                                 <small class="text-muted">Akan menambah stok gudang baju jadi.</small>
                             </div>
 
                             {{-- Qty Defect (Bisa Diperbaiki) --}}
                             <div class="col-md-4 mb-3">
                                 <label for="qty_rejected_defect" class="form-label text-warning fw-bold">2. Qty Defect (Rework)</label>
-                                <input type="number" name="qty_rejected_defect" id="qty_rejected_defect" class="form-control form-control-lg border-warning input-hitung" value="{{ old('qty_rejected_defect') }}" placeholder="0" min="0" required>
+                                <input type="number" name="qty_rejected_defect" id="qty_rejected_defect" class="form-control form-control-lg border-warning input-hitung" value="{{ old('qty_rejected_defect') }}" placeholder="0" min="0">
                                 <small class="text-muted">Baju reject yang bisa diperbaiki/dijahit ulang.</small>
                             </div>
 
                             {{-- Qty Rejected (Rusak Total / Buang) --}}
                             <div class="col-md-4 mb-3">
                                 <label for="qty_rejected" class="form-label text-danger fw-bold">3. Qty Reject (Rusak Total)</label>
-                                <input type="number" name="qty_rejected" id="qty_rejected" class="form-control form-control-lg border-danger input-hitung" value="{{ old('qty_rejected') }}" placeholder="0" min="0" required>
+                                <input type="number" name="qty_rejected" id="qty_rejected" class="form-control form-control-lg border-danger input-hitung" value="{{ old('qty_rejected') }}" placeholder="0" min="0">
                                 <small class="text-muted">Rusak parah, kain bolong, atau tidak bisa dipakai.</small>
                             </div>
                         </div>
@@ -100,7 +100,7 @@
                                 <label for="ongkir_hasil_produksi" class="form-label fw-bold">Ongkos Kirim Balik Setoran (Rp)</label>
                                 <div class="input-group">
                                     <span class="input-group-text">Rp</span>
-                                    <input type="number" name="ongkir_hasil_produksi" id="ongkir_hasil_produksi" class="form-control" value="{{ old('ongkir_hasil_produksi') }}" placeholder="0" min="0" required>
+                                    <input type="number" name="ongkir_hasil_produksi" id="ongkir_hasil_produksi" class="form-control" value="{{ old('ongkir_hasil_produksi') }}" placeholder="0" min="0">
                                 </div>
                                 <small class="text-muted">Biaya logistik pengiriman baju dari penjahit ke gudang Anda.</small>
                             </div>
@@ -110,7 +110,7 @@
                                 <label for="biaya_rework_tambahan" class="form-label fw-bold">Biaya Rework Tambahan (Rp)</label>
                                 <div class="input-group">
                                     <span class="input-group-text">Rp</span>
-                                    <input type="number" name="biaya_rework_tambahan" id="biaya_rework_tambahan" class="form-control" value="{{ old('biaya_rework_tambahan') }}" placeholder="0" min="0" required>
+                                    <input type="number" name="biaya_rework_tambahan" id="biaya_rework_tambahan" class="form-control" value="{{ old('biaya_rework_tambahan') }}" placeholder="0" min="0">
                                 </div>
                                 <small class="text-muted">Biaya tambahan untuk penjahit jahit ulang baju cacat.</small>
                             </div>

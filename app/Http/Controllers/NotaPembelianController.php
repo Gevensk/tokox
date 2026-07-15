@@ -96,7 +96,7 @@ class NotaPembelianController extends Controller
 
     public function index()
     {
-        $history = NotaPembelian::with('supplier')->orderBy('tgl_beli', 'desc')->get();
+        $history = NotaPembelian::with('supplier')->orderBy('tgl_beli', 'desc')->paginate(10);
         return view('nota_pembelian.index', compact('history'));
     }
 

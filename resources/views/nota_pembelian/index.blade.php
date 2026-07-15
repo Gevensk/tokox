@@ -58,5 +58,28 @@
             </table>
         </div>
     </div>
+    
+    @if($history->hasPages())
+        <div class="card-footer bg-white border-top py-3">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                <div class="text-muted small">
+                    Menampilkan <strong>{{ $history->currentPage() }}</strong> dari <strong>{{ $history->lastPage() }}</strong> (Total: {{ $history->total() }} data)
+                </div>
+                <div class="pagination-clean m-0">
+                    {{ $history->links() }}
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
+
+<style>
+    .pagination-clean .pagination {
+        margin-bottom: 0 !important;
+    }
+    .pagination-clean .page-link {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+</style>
 @endsection
