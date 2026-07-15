@@ -8,13 +8,14 @@ use App\Models\HasilProduksi;
 use App\Models\JobOrder;
 use App\Models\Customer;
 use App\Models\NotaStokKeluarHasProdukVarian;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class ProdukController extends Controller
 {
     public function index()
     {
-        // Mengambil produk beserta variannya dan customer
         $produk = Produk::with(['varians', 'customer'])->get();
         return view('produk.index', compact('produk'));
     }
@@ -110,7 +111,6 @@ class ProdukController extends Controller
                 }
             }
         }
-
         return view('produk.show', compact('produk', 'varians', 'detailStokCustom'));
     }
 
@@ -143,7 +143,7 @@ class ProdukController extends Controller
         if ($request->hasFile('foto')) {
             // Hapus file lama jika ada
             if ($produk->foto) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete('produk_katalog/' . $produk->foto);
+                Storage::disk('public')->delete('produk_katalog/' . $produk->foto);
             }
             
             $file = $request->file('foto');
@@ -163,17 +163,13 @@ class ProdukController extends Controller
             $produk = Produk::findOrFail($id);
             $produk->delete();
             return redirect('/produk')->with('success', 'Produk berhasil dihapus!');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ($e->getCode() === '23000') {
                 return redirect()->back()->with('error', 'Produk ini tidak dapat dihapus karena salah satu variannya sudah memiliki riwayat transaksi.');
             }
             throw $e;
         }
     }
-
-    // ==========================================
-    // BAGIAN VARIANS (TETAP SAMA SEPERTI AWAL)
-    // ==========================================
 
     public function storeVarian(Request $request)
     {
@@ -214,7 +210,7 @@ class ProdukController extends Controller
             $varian = ProdukVarian::findOrFail($id);
             $varian->delete();
             return redirect()->back()->with('success', 'Varian berhasil dihapus!');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ($e->getCode() === '23000') {
                 return redirect()->back()->with('error', 'Varian produk ini tidak dapat dihapus karena sudah memiliki riwayat transaksi.');
             }

@@ -108,8 +108,9 @@
                             <thead class="table-light">
                                 <tr>
                                     <th class="ps-3">Batch / Tgl</th>
-                                    <th class="text-center text-success">Layak (A+B)</th>
-                                    <th class="text-center text-danger">Gagal</th>
+                                    <th class="text-center text-success">Accepted</th>
+                                    <th class="text-center text-warning">Defect</th>
+                                    <th class="text-center text-danger">Reject</th>
                                     <th class="text-end">Rework Cost</th>
                                     <th class="text-end">Ongkir Balik</th>
                                     <th class="text-center pe-3" style="width: 1%;">Aksi</th>
@@ -122,8 +123,9 @@
                                         <span class="fw-bold d-block">Batch #{{ $index + 1 }}</span>
                                         <small class="text-muted" style="font-size: 0.82rem;">{{ date('d/m/y', strtotime($history->tgl_terima)) }}</small>
                                     </td>
-                                    <td class="text-center fw-semibold">{{ $history->qty_accepted + $history->qty_rejected_defect }} pcs</td>
-                                    <td class="text-center text-danger">{{ $history->qty_rejected }} pcs</td>
+                                    <td class="text-center text-success fw-semibold">{{ $history->qty_accepted }} pcs</td>
+                                    <td class="text-center text-warning fw-semibold">{{ $history->qty_rejected_defect }} pcs</td>
+                                    <td class="text-center text-danger fw-semibold">{{ $history->qty_rejected }} pcs</td>
                                     <td class="text-end text-dark">Rp {{ number_format($history->biaya_rework_tambahan, 0, ',', '.') }}</td>
                                     <td class="text-end text-dark">Rp {{ number_format($history->ongkir, 0, ',', '.') }}</td>
                                     <td class="text-center pe-3">
@@ -135,7 +137,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">Belum ada riwayat setoran QC.</td>
+                                    <td colspan="7" class="text-center text-muted py-4">Belum ada riwayat setoran QC.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -143,7 +145,8 @@
                             <tfoot class="table-light fw-bold border-top">
                                 <tr>
                                     <td class="ps-3">TOTAL</td>
-                                    <td class="text-center text-success">{{ $totalLayakJual }} pcs</td>
+                                    <td class="text-center text-success">{{ $totalBagus }} pcs</td>
+                                    <td class="text-center text-warning">{{ $totalCacat }} pcs</td>
                                     <td class="text-center text-danger">{{ $totalRusak }} pcs</td>
                                     <td class="text-end text-dark">Rp {{ number_format($totalRework, 0, ',', '.') }}</td>
                                     <td class="text-end text-dark">Rp {{ number_format($totalOngkirBalik, 0, ',', '.') }}</td>

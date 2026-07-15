@@ -379,6 +379,15 @@ class NotaProduksiController extends Controller
     // 4. Menerima Hasil Jadi & QC secara Parsial / Bertahap
     public function storeHasilProduksi(Request $request)
     {
+        // Set default 0 jika input kosong (karena value kosong di-submit dari placeholder)
+        $request->merge([
+            'qty_accepted'          => $request->qty_accepted ?? 0,
+            'qty_rejected_defect'   => $request->qty_rejected_defect ?? 0,
+            'qty_rejected'          => $request->qty_rejected ?? 0,
+            'ongkir_hasil_produksi' => $request->ongkir_hasil_produksi ?? 0,
+            'biaya_rework_tambahan' => $request->biaya_rework_tambahan ?? 0,
+        ]);
+
         $request->validate([
             'job_order_id' => 'required|exists:job_order,id',
             'qty_accepted' => 'required|integer|min:0',

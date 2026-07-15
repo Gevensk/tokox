@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Supplier; // 1. WAJIB DITAMBAHKAN
+use App\Models\Supplier; 
+use Illuminate\Database\QueryException;
 
 class SupplierController extends Controller
 {
     public function index()
     {
-        // Menggunakan variabel 'supplier' agar konsisten dengan view sebelumnya
         $supplier = Supplier::all(); 
         return view('supplier.index', compact('supplier'));
     }
@@ -36,11 +36,10 @@ class SupplierController extends Controller
     public function edit($id)
     {
         $supplier = Supplier::find($id);
-        // Pastikan 'supplier' huruf kecil sesuai nama folder di resources/views
         return view('supplier.edit', compact('supplier')); 
     }
 
-    public function update(Request $request, $id) // 2. TAMBAHKAN $id DI SINI
+    public function update(Request $request, $id)
     {
         $request->validate([
             'nama'   => 'required',
@@ -60,7 +59,7 @@ class SupplierController extends Controller
             $supplier = Supplier::findOrFail($id);
             $supplier->delete();
             return redirect('/supplier')->with('success', 'Data berhasil dihapus!');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ($e->getCode() === '23000') {
                 return redirect()->back()->with('error', 'Supplier ini tidak dapat dihapus karena sudah memiliki riwayat transaksi (Nota Pembelian).');
             }

@@ -265,8 +265,11 @@
                                 <small class="text-muted" style="font-size: 0.85rem;">{{ date('d-m-Y', strtotime($qc->tgl_terima)) }}</small>
                             </div>
                             <div class="text-secondary mb-2" style="font-size: 0.92rem;">{{ $qc->job_order->produk_varian->produk->nama ?? 'Produk' }}</div>
-                            <div class="d-flex gap-2">
-                                <span class="badge bg-success-subtle text-success border border-success-subtle py-1.5 px-2.5" style="font-size: 0.88rem;">Layak: {{ $qc->qty_accepted + $qc->qty_rejected_defect }} pcs</span>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle py-1.5 px-2.5" style="font-size: 0.88rem;">Accepted: {{ $qc->qty_accepted }} pcs</span>
+                                @if($qc->qty_rejected_defect > 0)
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-1.5 px-2.5" style="font-size: 0.88rem;">Defect: {{ $qc->qty_rejected_defect }} pcs</span>
+                                @endif
                                 @if($qc->qty_rejected > 0)
                                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1.5 px-2.5" style="font-size: 0.88rem;">Reject: {{ $qc->qty_rejected }} pcs</span>
                                 @endif

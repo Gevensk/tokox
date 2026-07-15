@@ -49,7 +49,7 @@
                     </div>
                     <div class="col-md-4 mb-2">
                         <label class="form-label fw-bold text-dark">Nominal Uang DP Masuk (Rp)</label>
-                        <input type="number" name="nominal_dp_masuk" class="form-control text-success fw-bold fs-5" value="{{ (int)$notaOrder->nominal_dp_masuk }}" required>
+                        <input type="number" name="nominal_dp_masuk" class="form-control text-success fw-bold fs-5" value="{{ (int)$notaOrder->nominal_dp_masuk }}" onfocus="this.select()" required>
                     </div>
                     <div class="col-md-4 mb-2">
                         <label class="form-label fw-bold text-dark">Status Bayar</label>
@@ -97,10 +97,10 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[{{ $index }}][jumlah]" class="form-control input-qty text-center" min="1" value="{{ $job->jumlah }}" required>
+                                    <input type="number" name="items[{{ $index }}][jumlah]" class="form-control input-qty text-center" min="1" value="{{ $job->jumlah }}" onfocus="this.select()" required>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[{{ $index }}][harga_satuan_jual]" class="form-control input-harga" placeholder="0" min="0" value="{{ $notaOrder->harga_satuan_items > 0 ? (int)$notaOrder->harga_satuan_items : (int)$job->biaya_jasa_satuan }}" required>
+                                    <input type="number" name="items[{{ $index }}][harga_satuan_jual]" class="form-control input-harga" placeholder="0" min="0" value="{{ $notaOrder->harga_satuan_items > 0 ? (int)$notaOrder->harga_satuan_items : (int)$job->biaya_jasa_satuan }}" onfocus="this.select()" required>
                                 </td>
                                 <td>
                                     <select name="items[{{ $index }}][is_custom]" class="form-select select-is-custom">

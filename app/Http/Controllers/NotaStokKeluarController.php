@@ -142,9 +142,8 @@ class NotaStokKeluarController extends Controller
                 }
             }
 
-            // =========================================================================
+
             // PERUBAHAN LOGIKA POTONG STOK (MENGAKOMODASI STOK TOKO & CUSTOM)
-            // =========================================================================
             $isCustomOrder = false;
 
             if ($request->tipe_keluar === 'penjualan_order' && $notaOrderId) {
@@ -202,7 +201,6 @@ class NotaStokKeluarController extends Controller
                 }
                 $produkVarian->save();
             }
-            // =========================================================================
 
             // Simpan ke tabel pivot detail
             $notaKeluar->nota_keluar()->create([

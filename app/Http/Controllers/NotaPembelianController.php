@@ -48,7 +48,7 @@ class NotaPembelianController extends Controller
                 
                 $hargaSatuanBeli = $item['harga_satuan'];
                 $alokasiOngkir = ($totalHargaBahan > 0) ? ($totalOngkir / $totalHargaBahan) * $hargaSatuanBeli : 0;
-                $hargaBeliNetto = $hargaSatuanBeli + $alokasiOngkir; // Ini harga beli yang sudah kemasukan ongkir
+                $hargaBeliNetto = $hargaSatuanBeli + $alokasiOngkir; // Ini harga beli yang sudah ada ongkirnya
 
                 // --- LOGIKA AVERAGE DENGAN HARGA NETTO ---
                 $stokLama = $bahan->stok_total;
@@ -97,7 +97,6 @@ class NotaPembelianController extends Controller
 
     public function index()
     {
-        // Mengambil semua nota pembelian, diurutkan dari yang terbaru
         $history = NotaPembelian::with('supplier')->orderBy('tgl_beli', 'desc')->get();
         return view('nota_pembelian.index', compact('history'));
     }

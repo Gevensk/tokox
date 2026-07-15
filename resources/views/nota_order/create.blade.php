@@ -53,7 +53,7 @@
                         <label class="form-label fw-bold text-dark">Nominal Uang DP Masuk (Rp)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0 text-muted small">Rp</span>
-                            <input type="number" name="nominal_dp_masuk" class="form-control border-start-0 text-success fw-bold" placeholder="Isi 0 jika belum bayar" min="0" value="0" required>
+                            <input type="number" name="nominal_dp_masuk" class="form-control border-start-0 text-success fw-bold" placeholder="Isi 0 jika belum bayar" min="0" value="0" onfocus="this.select()" required>
                         </div>
                     </div>
                 </div>
@@ -92,12 +92,12 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[0][jumlah]" class="form-control input-qty text-center fw-semibold text-primary" min="1" value="1" required>
+                                    <input type="number" name="items[0][jumlah]" class="form-control input-qty text-center fw-semibold text-primary" min="1" value="1" onfocus="this.select()" required>
                                 </td>
                                 <td>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light text-muted small">Rp</span>
-                                        <input type="number" name="items[0][harga_satuan_jual]" class="form-control input-harga text-end fw-semibold text-success" placeholder="0" min="0" required>
+                                        <input type="number" name="items[0][harga_satuan_jual]" class="form-control input-harga text-end fw-semibold text-success" placeholder="0" min="0" onfocus="this.select()" required>
                                     </div>
                                 </td>
                                 <td>

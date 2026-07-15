@@ -32,16 +32,24 @@ class HasilProduksiController extends Controller
     }
 
     /**
-     * Menyimpan data QC hasil jahit secara Parsial / Sekaligus
+     * Menyimpan data QC hasil jahit secara bertahap / Sekaligus
      */
     public function store(Request $request)
     {
+        // Set default 0 jika input kosong (karena value kosong di-submit dari placeholder)
+        $request->merge([
+            'qty_accepted'          => $request->qty_accepted ?? 0,
+            'qty_rejected_defect'   => $request->qty_rejected_defect ?? 0,
+            'qty_rejected'          => $request->qty_rejected ?? 0,
+            'ongkir_hasil_produksi' => $request->ongkir_hasil_produksi ?? 0,
+        ]);
+
         // 1. Validasi request form input
         $request->validate([
             'job_order_id'          => 'required|exists:job_order,id',
             'qty_accepted'          => 'required|integer|min:0',
-            'qty_rejected_defect'   => 'required|integer|min:0', // Cacat mikro (Masuk ke kolom stok_defect)
-            'qty_rejected'          => 'required|integer|min:0', // Gagal total (Sampah, tidak masuk stok sama sekali)
+            'qty_rejected_defect'   => 'required|integer|min:0', 
+            'qty_rejected'          => 'required|integer|min:0', 
             'ongkir_hasil_produksi' => 'required|numeric|min:0', 
             'catatan_qc'            => 'nullable|string|max:45',
         ]);
@@ -98,9 +106,7 @@ class HasilProduksiController extends Controller
             // Total fisik yang selamat dan bernilai ekonomis (bisa dijual) pada job ini
             $totalBarangLayakJual = $request->qty_accepted + $request->qty_rejected_defect;
 
-            // ========================================================================
             // HITUNG HPP AKTUAL & AVERAGE 
-            // ========================================================================
             if ($totalBarangLayakJual > 0) {
                 $varianNormal = $job->produk_varian;
 
@@ -128,14 +134,14 @@ class HasilProduksiController extends Controller
                     // HANYA UPDATE STOK JIKA INI PESANAN INTERNAL (Isi Stok Toko)
                     if ($job->is_custom == 0 || is_null($job->nota_order?->customer_id)) {
                         
-                        // 3. TAMBAH STOK & HITUNG MOVING AVERAGE PRODUK BAGUS (GRADE A - ACCEPTED)
+                        // 3. TAMBAH STOK & HITUNG AVERAGE PRODUK BAGUS (GRADE A - ACCEPTED)
                         if ($request->qty_accepted > 0) {
                             $stokLamaA = $varianNormal->stok_tersedia;
                             
                             // PERBAIKAN: Ganti nama kolom dari harga_rata_rata ke harga_avg_produk
                             $hargaAvgLamaA = $varianNormal->harga_avg_produk;
 
-                            // Rumus Baku Moving Average
+                            // Rumus Baku Average
                             if (($stokLamaA + $request->qty_accepted) > 0) {
                                 // Jika stok lama ada, jalankan akumulasi rata-rata bergulir
                                 if ($stokLamaA > 0) {

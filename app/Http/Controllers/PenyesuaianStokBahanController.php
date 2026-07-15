@@ -14,9 +14,7 @@ class PenyesuaianStokBahanController extends Controller
      */
     public function index()
     {
-        // Mengambil data riwayat, diurutkan dari yang terbaru, beserta relasi data bahan bakunya
         $penyesuaianStoks = PenyesuaianStokBahan::with('bahan_baku')->latest()->paginate(10);
-        
         return view('penyesuaian_stok.index', compact('penyesuaianStoks'));
     }
 
@@ -27,7 +25,6 @@ class PenyesuaianStokBahanController extends Controller
     {
         // Mengambil semua data master bahan baku untuk pilihan dropdown di form
         $bahanBakus = BahanBaku::all();
-        
         return view('penyesuaian_stok.create', compact('bahanBakus'));
     }
 
@@ -36,7 +33,6 @@ class PenyesuaianStokBahanController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi Input
         $request->validate([
             'bahan_baku_id' => 'required|exists:bahan_baku,id',
             'jumlah'        => 'required|numeric|min:0.01',
@@ -65,9 +61,9 @@ class PenyesuaianStokBahanController extends Controller
 
             // Update otomatis stok_total utama di tabel bahan_baku
             if ($request->tipe == 'in') {
-                $bahan->stok_total += $request->jumlah; // Menggunakan stok_total
+                $bahan->stok_total += $request->jumlah; 
             } else {
-                $bahan->stok_total -= $request->jumlah; // Menggunakan stok_total
+                $bahan->stok_total -= $request->jumlah; 
             }
             $bahan->save();
 

@@ -78,7 +78,7 @@
                                     <td>
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text bg-light text-muted small">Rp</span>
-                                            <input type="number" name="biaya_jasa[{{ $job->id }}]" class="form-control input-biaya-jasa" placeholder="Upah per pcs" min="0" required {{ !$isChecked ? 'disabled' : '' }} value="{{ old('biaya_jasa.' . $job->id) }}">
+                                            <input type="number" name="biaya_jasa[{{ $job->id }}]" class="form-control input-biaya-jasa" placeholder="Biaya per pcs" min="0" required {{ !$isChecked ? 'disabled' : '' }} value="{{ old('biaya_jasa.' . $job->id) }}">
                                         </div>
                                         <small class="text-muted" style="font-size: 0.75rem;">*Tarif jahit per pcs</small>
                                     </td>
