@@ -118,6 +118,7 @@ class HasilProduksiController extends Controller
                     
                     if ($totalSetelahQCBaru >= $targetJumlah) {
                         $totalLayakSebelumnya = HasilProduksi::where('job_order_id', $job->id)
+                            ->where('id', '!=', $hasil->id)
                             ->selectRaw('SUM(qty_accepted + qty_rejected_defect) as total')
                             ->value('total') ?? 0;
                         $porsiModalIndukJobIni = $job->total_hpp_job - (($totalLayakSebelumnya / $job->jumlah) * $job->total_hpp_job);

@@ -123,7 +123,7 @@
                                                         Warna: {{ $job->produk_varian->warna ?? '-' }} | Ukuran: {{ $job->produk_varian->ukuran ?? '-' }}
                                                     </div>
                                                     <div class="mt-1 small text-secondary" style="font-size: 0.76rem;">
-                                                        <i class="fa-solid fa-user me-1 text-info"></i> Pelanggan: <strong>{{ $job->nota_order->customer->nama ?? $job->nota_order->customer->nama_customer ?? 'N/A' }}</strong> 
+                                                        <i class="fa-solid fa-user me-1 text-info"></i> Pelanggan: <strong>{{ ($job->nota_order && $job->nota_order->tipe_order === 'Internal') ? 'Produksi Internal' : ($job->nota_order->customer->nama ?? 'Customer Tanpa Nama') }}</strong> 
                                                         <span class="text-muted ms-1">(Nota #{{ $job->nota_order_id }})</span>
                                                     </div>
                                                 </div>

@@ -133,7 +133,7 @@
                             Warna: {{ $job->produk_varian->warna }} | Ukuran: {{ $job->produk_varian->ukuran }}
                         </span><br>
                         <span style="color: #444; font-size: 11px; font-weight: bold;">
-                            Pelanggan: {{ $job->nota_order->customer->nama ?? $job->nota_order->customer->nama_customer ?? 'N/A' }} (Nota #{{ $job->nota_order_id }})
+                            Pelanggan: {{ ($job->nota_order && $job->nota_order->tipe_order === 'Internal') ? 'Produksi Internal' : ($job->nota_order->customer->nama ?? 'Customer Tanpa Nama') }} (Nota #{{ $job->nota_order_id }})
                         </span>
                     </td>
                     <td style="text-align: center; font-weight: bold;">{{ $job->jumlah }} Pcs</td>
