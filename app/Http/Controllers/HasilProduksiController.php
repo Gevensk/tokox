@@ -42,6 +42,7 @@ class HasilProduksiController extends Controller
             'qty_rejected_defect'   => $request->qty_rejected_defect ?? 0,
             'qty_rejected'          => $request->qty_rejected ?? 0,
             'ongkir_hasil_produksi' => $request->ongkir_hasil_produksi ?? 0,
+            'biaya_rework_tambahan' => $request->biaya_rework_tambahan ?? 0, 
         ]);
 
         // 1. Validasi request form input
@@ -51,6 +52,7 @@ class HasilProduksiController extends Controller
             'qty_rejected_defect'   => 'required|integer|min:0', 
             'qty_rejected'          => 'required|integer|min:0', 
             'ongkir_hasil_produksi' => 'required|numeric|min:0', 
+            'biaya_rework_tambahan' => 'required|numeric|min:0', 
             'catatan_qc'            => 'nullable|string|max:45',
         ]);
 
@@ -96,6 +98,7 @@ class HasilProduksiController extends Controller
             $hasil->produk_varian_id    = $job->produk_varian_id; 
             $hasil->tgl_terima          = now();
             $hasil->ongkir              = $request->ongkir_hasil_produksi; 
+            $hasil->biaya_rework_tambahan = $request->biaya_rework_tambahan; 
             $hasil->qty_accepted        = $request->qty_accepted;
             $hasil->qty_rejected_defect = $request->qty_rejected_defect;
             $hasil->qty_rejected        = $request->qty_rejected;
