@@ -41,7 +41,6 @@ class NotaPembelianController extends Controller
                 $bahan = BahanBaku::findOrFail($item['bahan_baku_id']);
 
                 // --- LOGIKA ALOKASI ONGKIR ---
-                // Kita hitung berapa "beban ongkir" untuk setiap 1 Rupiah harga bahan
                 // Contoh: Harga bahan 10.000, Ongkir 5.000, Total Belanja 100.000. 
                 // Rasio ongkir = 5.000 / 100.000 = 0.05
                 // Ongkir per item = 0.05 * 10.000 = 500. Jadi harga beli asli adalah 10.500
