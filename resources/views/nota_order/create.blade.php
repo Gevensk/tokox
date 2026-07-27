@@ -71,6 +71,7 @@
                                 <th style="width: 20%;">Pilih Varian</th>
                                 <th style="width: 8%;" class="text-center">Qty</th>
                                 <th style="width: 16%;">Harga Jual Satuan</th>
+                                {{-- <th style="width:10%;">Estimasi Kebutuhan Bom</th> --}}
                                 <th style="width: 10%;">Tipe</th>
                                 <th style="width: 20%;">Spesifikasi Kustomisasi</th>
                                 <th style="width: 4%;" class="text-center">Aksi</th>
@@ -100,7 +101,13 @@
                                         <input type="number" name="items[0][harga_satuan_jual]" class="form-control input-harga text-end fw-semibold text-success" placeholder="0" min="0" onfocus="this.select()" required>
                                     </div>
                                 </td>
-                                <td>
+                                {{-- untuk menambah estimasi kebutuhan bahan baku  --}}
+                                {{-- <td>
+                                    @foreach($produk as $p)
+                                    <td>{{$p->total}}</td>
+                                    @endforeach
+                                </td> --}}
+                                <td> 
                                     <select name="items[0][is_custom]" class="form-select select-is-custom">
                                         <option value="0">Standard</option>
                                         <option value="1">Custom</option>
@@ -219,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectVarian.innerHTML = '<option value="">-- Pilih Varian --</option>';
                     if (data.length > 0) {
                         data.forEach(varian => {
-                            selectVarian.innerHTML += `<option value="${varian.id}">${varian.warna} - [Sizing: ${varian.ukuran}]</option>`;
+                            selectVarian.innerHTML += `<option value="${varian.id}">${varian.warna} - [Sizing: ${varian.ukuran}]- ${varian.total}</option>`;
                         });
                         selectVarian.removeAttribute('disabled');
                     } else {

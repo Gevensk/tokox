@@ -148,8 +148,13 @@ class NotaOrderController extends Controller
         $notaOrder = NotaOrder::with([
             'customer',
             'job_orders.produk_varian.produk',
-            'job_orders.pemakaian_bahan.bahan_baku'
+            'job_orders.pemakaian_bahan.bahan_baku',
+            'job_orders.produk_varian.total'
         ])->findOrFail($id);
+
+                // $boms = BillOfMaterial::with(['varian.produk', 'bahan_baku'])
+                // ->get()
+                // ->groupBy('produk_varian_id');
 
         return view('nota_order.show', compact('notaOrder'));
     }
