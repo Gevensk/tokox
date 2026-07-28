@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectVarian.innerHTML = '<option value="">-- Pilih Varian --</option>';
                     if (data.length > 0) {
                         data.forEach(varian => {
-                            selectVarian.innerHTML += `<option value="${varian.id}">${varian.warna} - [Sizing: ${varian.ukuran}]- ${varian.total}</option>`;
+                            selectVarian.innerHTML += `<option value="${varian.id}">${varian.warna} - [Sizing: ${varian.ukuran}]</option>`;
                         });
                         selectVarian.removeAttribute('disabled');
                     } else {
